@@ -1,0 +1,137 @@
+// ==================== REGISTER RESPONSE MODEL ====================
+class RegisterResponse {
+  final String message;
+  final String email;
+
+  RegisterResponse({
+    required this.message,
+    required this.email,
+  });
+
+  factory RegisterResponse.fromJson(Map<String, dynamic> json) {
+    return RegisterResponse(
+      message: json['message'] ?? 'Registration successful',
+      email: json['email'] ?? '',
+    );
+  }
+}
+
+// ==================== LOGIN RESPONSE MODEL (UPDATED) ====================
+class LoginResponse {
+  final String accessToken;
+  final String refreshToken;
+  final UserData user;
+
+  LoginResponse({
+    required this.accessToken,
+    required this.refreshToken,
+    required this.user,
+  });
+
+  factory LoginResponse.fromJson(Map<String, dynamic> json) {
+    // Handle nested 'data' structure
+    final data = json['data'] ?? json;
+
+    return LoginResponse(
+      accessToken: data['access'] ?? '',
+      refreshToken: data['refresh'] ?? '',
+      user: UserData.fromJson(data['user'] ?? {}),
+    );
+  }
+}
+
+// ==================== USER DATA MODEL (UPDATED) ====================
+class UserData {
+  final String id;
+  final String email;
+  final String fullName;
+  final String? role; // Nullable because API might return null
+  final bool isVerified;
+
+  UserData({
+    required this.id,
+    required this.email,
+    this.fullName = '',
+    this.role,
+    this.isVerified = false,
+  });
+
+  factory UserData.fromJson(Map<String, dynamic> json) {
+    return UserData(
+      id: json['id']?.toString() ?? '',
+      email: json['email'] ?? '',
+      fullName: json['full_name'] ?? json['name'] ?? '',
+      role: json['role'], // Can be null
+      isVerified: json['is_verified'] ?? json['email_verified'] ?? false,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'email': email,
+      'full_name': fullName,
+      'role': role,
+      'is_verified': isVerified,
+    };
+  }
+
+  // Helper method to get role safely
+  String getRoleSafe() {
+    if (role == null || role!.isEmpty) {
+      return 'unknown';
+    }
+    return role!.toLowerCase();
+  }
+}
+
+// ==================== VERIFY EMAIL RESPONSE ====================
+class VerifyEmailResponse {
+  final String message;
+  final bool isVerified;
+
+  VerifyEmailResponse({
+    required this.message,
+    required this.isVerified,
+  });
+
+  factory VerifyEmailResponse.fromJson(Map<String, dynamic> json) {
+    return VerifyEmailResponse(
+      message: json['message'] ?? 'Email verified successfully',
+      isVerified: json['is_verified'] ?? true,
+    );
+  }
+}
+
+// ==================== FORGOT PASSWORD RESPONSE ====================
+class ForgotPasswordResponse {
+  final String message;
+  final String email;
+
+  ForgotPasswordResponse({
+    required this.message,
+    required this.email,
+  });
+
+  factory ForgotPasswordResponse.fromJson(Map<String, dynamic> json) {
+    return ForgotPasswordResponse(
+      message: json['message'] ?? 'OTP sent successfully',
+      email: json['email'] ?? '',
+    );
+  }
+}
+
+// ==================== RESET PASSWORD RESPONSE ====================
+class ResetPasswordResponse {
+  final String message;
+
+  ResetPasswordResponse({
+    required this.message,
+  });
+
+  factory ResetPasswordResponse.fromJson(Map<String, dynamic> json) {
+    return ResetPasswordResponse(
+      message: json['message'] ?? 'Password reset successful',
+    );
+  }
+}

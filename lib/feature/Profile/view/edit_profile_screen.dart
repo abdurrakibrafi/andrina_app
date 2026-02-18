@@ -1,0 +1,523 @@
+import 'package:chatter_bee/config/app_colors.dart';
+import 'package:chatter_bee/config/imagesUrl.dart';
+import 'package:chatter_bee/feature/Profile/controller/edit_profile_controller.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+class EditProfileScreen extends GetView<EditProfileController> {
+  const EditProfileScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.bgColor,
+      appBar: AppBar(
+        backgroundColor: AppColors.bgColor,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Get.back(),
+        ),
+        title: Text(
+          'Edit Profile',
+          style: GoogleFonts.nunito(
+            color: Colors.black,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Image.asset(
+              ImagesLink.logo,
+              height: 50,
+            ),
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Profile Avatar
+              Center(
+                child: Stack(
+                  children: [
+                    Container(
+                      width: 85,
+                      height: 85,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.person,
+                        size: 50,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: SvgPicture.asset(ImagesLink.cameraIcon,),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 30),
+
+              // Full Name
+              Text(
+                'Full Name',
+                style: GoogleFonts.nunito(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 6),
+              SizedBox(
+                height: 48,
+                child: TextField(
+                  controller: controller.fullNameController,
+                  decoration: InputDecoration(
+                    hintText: 'Enter your full name',
+                    prefixIcon: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: SvgPicture.asset(
+                        ImagesLink.parsonIcon,
+                        width: 20,
+                        height: 20,
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFFFC857), width: 1),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Language
+              Text(
+                'Language',
+                style: GoogleFonts.nunito(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Obx(() => Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey[300]!),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: controller.selectedLanguage.value,
+                    isExpanded: true,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    icon: const Icon(Icons.keyboard_arrow_down),
+                    items: controller.languages.map((String language) {
+                      return DropdownMenuItem<String>(
+                        value: language,
+                        child: Row(
+                          children: [
+                            SvgPicture.asset(ImagesLink.language,),
+                            const SizedBox(width: 12),
+                            Text(language),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        controller.selectLanguage(newValue);
+                      }
+                    },
+                  ),
+                ),
+              )),
+              const SizedBox(height: 20),
+
+              // Buddy Bee Mode
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Buddy Bee Mode',
+                    style: GoogleFonts.nunito(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Obx(() => CustomSwitch(
+                    value: controller.isBuddyBeeMode.value,
+                    onChanged: (val) {
+                      controller.isBuddyBeeMode.value = val;
+                      controller.toggleBuddyBeeMode(val);
+                    },
+                  )),
+                ],
+              ),
+
+              Text(
+                'Toggle ON for a child-friendly, colorful\nversion. Toggle OFF for a plain adult version.',
+                style: GoogleFonts.nunito(
+                  fontSize: 14,
+                  color: Color(0xFF636F85),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Linked Accounts
+              Row(
+                children: [
+                  Text(
+                    'Linked Accounts',
+                    style: GoogleFonts.nunito(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(width: 8,),
+                  Text(
+                    '( Communicator )',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF636F85),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Dashed border circle
+                  CustomPaint(
+                    size: const Size(88, 88),
+                    painter: DashedCirclePainter(
+                      color: const Color(0xFFB5CFD1),
+                      strokeWidth: 2,
+                      dashWidth: 8,
+                      dashSpace: 4,
+                    ),
+                  ),
+                  // Profile image
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                    ),
+                    child: ClipOval(
+                      child: Image.asset(
+                        ImagesLink.profileImg,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: Colors.grey[300],
+                            child: const Icon(Icons.person, size: 40),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              // Voice Type
+              Text(
+                'Voice Type',
+                style: GoogleFonts.nunito(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 12),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 2.5,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                ),
+                itemCount: controller.voiceTypes.length,
+                itemBuilder: (context, index) {
+                  final voiceType = controller.voiceTypes[index];
+
+                  return Obx(() {
+                    final isSelected = controller.selectedVoiceType.value == voiceType['type'];
+
+                    return GestureDetector(
+                      onTap: () => controller.selectVoiceType(voiceType['type']),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppColors.primaryColor.withOpacity(0.1)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isSelected ? AppColors.primaryColor : Colors.grey[300]!,
+                            width: isSelected ? 1 : 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SvgPicture.asset(
+                              voiceType['icon'],
+                              width: 20,
+                              height: 20,
+                              colorFilter: ColorFilter.mode(
+                                isSelected ? AppColors.primaryColor : Colors.black,
+                                BlendMode.srcIn,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                voiceType['type'],
+                                style: TextStyle(
+                                  color: isSelected ? AppColors.primaryColor : Colors.black,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  });
+                },
+              ),
+
+              // Preview Voice Button
+              Center(
+                child: TextButton.icon(
+                  onPressed: () {
+                    Get.snackbar(
+                      'Preview',
+                      'Voice preview would play here',
+                      snackPosition: SnackPosition.BOTTOM,
+                    );
+                  },
+                  icon: SvgPicture.asset(ImagesLink.voiceIcon),
+                  label: Text(
+                    'Preview Voice',
+                    style: GoogleFonts.nunito(color: AppColors.primaryColor,fontWeight: FontWeight.w700, fontSize: 18 ),
+                  ),
+                ),
+              ),
+              // Upload Voice Button
+              Center(
+                child: TextButton.icon(
+                  onPressed: () {
+                    Get.snackbar(
+                      'Upload',
+                      'Voice upload functionality',
+                      snackPosition: SnackPosition.BOTTOM,
+                    );
+                  },
+                  icon: SvgPicture.asset(ImagesLink.voiceMic),
+                  label: Text(
+                    'Upload a Voice',
+                    style: GoogleFonts.nunito(color: Color(0xFFb5cfd1),fontWeight: FontWeight.w700, fontSize: 18 ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 30),
+
+              // Continue Button
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: controller.onContinue,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    'Continue',
+                    style: GoogleFonts.nunito(
+                      color: Colors.black,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class CustomSwitch extends StatefulWidget {
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const CustomSwitch({
+    Key? key,
+    required this.value,
+    required this.onChanged,
+  }) : super(key: key);
+
+  @override
+  State<CustomSwitch> createState() => _CustomSwitchState();
+}
+
+class _CustomSwitchState extends State<CustomSwitch>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+      value: widget.value ? 1.0 : 0.0,
+    );
+
+    _animation = _controller.drive(CurveTween(curve: Curves.easeInOut));
+  }
+
+  @override
+  void didUpdateWidget(covariant CustomSwitch oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.value) {
+      _controller.forward();
+    } else {
+      _controller.reverse();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => widget.onChanged(!widget.value),
+      child: AnimatedBuilder(
+        animation: _animation,
+        builder: (context, child) {
+          return Container(
+            width: 40,
+            height: 22,
+            padding: const EdgeInsets.symmetric(horizontal: 1,vertical: 3),
+            decoration: BoxDecoration(
+              color: widget.value ? AppColors.primaryColor : Colors.grey[300],
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Stack(
+              children: [
+                Align(
+                  alignment: Alignment.lerp(
+                      Alignment.centerLeft, Alignment.centerRight, _animation.value)!,
+                  child: Container(
+                    width: 20,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 4,
+                          offset: const Offset(1, 2),
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class DashedCirclePainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double dashWidth;
+  final double dashSpace;
+
+  DashedCirclePainter({
+    required this.color,
+    required this.strokeWidth,
+    required this.dashWidth,
+    required this.dashSpace,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    final radius = size.width / 2;
+    final center = Offset(size.width / 2, size.height / 2);
+    final circumference = 2 * 3.14159 * radius;
+    final dashCount = (circumference / (dashWidth + dashSpace)).floor();
+
+    for (int i = 0; i < dashCount; i++) {
+      final startAngle = (i * (dashWidth + dashSpace) / radius);
+      final sweepAngle = dashWidth / radius;
+
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        startAngle,
+        sweepAngle,
+        false,
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}

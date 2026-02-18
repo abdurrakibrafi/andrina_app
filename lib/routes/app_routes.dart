@@ -1,0 +1,177 @@
+import 'package:chatter_bee/feature/Profile/binding/Profile_binding.dart';
+import 'package:chatter_bee/feature/Profile/binding/change_password_binding.dart';
+import 'package:chatter_bee/feature/Profile/binding/edit_profile_binding.dart';
+import 'package:chatter_bee/feature/Profile/binding/language_binding.dart';
+import 'package:chatter_bee/feature/Profile/binding/privacy_policy_binding.dart';
+import 'package:chatter_bee/feature/Profile/binding/subscription_binding.dart';
+import 'package:chatter_bee/feature/Profile/binding/support_bonding.dart';
+import 'package:chatter_bee/feature/Profile/view/change_password_screen.dart';
+import 'package:chatter_bee/feature/Profile/view/edit_profile_screen.dart';
+import 'package:chatter_bee/feature/Profile/view/language_screen.dart';
+import 'package:chatter_bee/feature/Profile/view/privacy_policy_screen.dart';
+import 'package:chatter_bee/feature/Profile/view/profile_screen.dart';
+import 'package:chatter_bee/feature/Profile/view/subscription_screen.dart';
+import 'package:chatter_bee/feature/Profile/view/support_screen.dart';
+import 'package:chatter_bee/feature/add_button_screen/add_button_binding.dart';
+import 'package:chatter_bee/feature/add_button_screen/add_button_screen.dart';
+import 'package:chatter_bee/feature/authentication/binding/create_new_password_binding.dart';
+import 'package:chatter_bee/feature/authentication/binding/forgot_password_binding.dart';
+import 'package:chatter_bee/feature/authentication/binding/forgot_verification_binding.dart';
+import 'package:chatter_bee/feature/authentication/binding/loginBinding.dart';
+import 'package:chatter_bee/feature/authentication/binding/signup_binding.dart';
+import 'package:chatter_bee/feature/authentication/binding/verification_binding.dart';
+import 'package:chatter_bee/feature/authentication/screen/create_new_password_screen.dart';
+import 'package:chatter_bee/feature/authentication/screen/forgot_password_screen.dart';
+import 'package:chatter_bee/feature/authentication/screen/forgot_verification_screen.dart';
+import 'package:chatter_bee/feature/authentication/screen/loginScreen.dart';
+import 'package:chatter_bee/feature/authentication/screen/signup_screen.dart';
+import 'package:chatter_bee/feature/authentication/screen/verification_screen.dart';
+import 'package:chatter_bee/feature/communicator/binding/action_binding.dart';
+import 'package:chatter_bee/feature/communicator/binding/activities_binding.dart';
+import 'package:chatter_bee/feature/communicator/binding/add_activity_binding.dart';
+import 'package:chatter_bee/feature/communicator/binding/core_words_binding.dart';
+import 'package:chatter_bee/feature/communicator/binding/emotions_binding.dart';
+import 'package:chatter_bee/feature/communicator/binding/food_drink_binding.dart';
+import 'package:chatter_bee/feature/communicator/binding/greetings_binding.dart';
+import 'package:chatter_bee/feature/communicator/binding/health_binding.dart';
+import 'package:chatter_bee/feature/communicator/binding/people_binding.dart';
+import 'package:chatter_bee/feature/communicator/binding/places_binding.dart';
+import 'package:chatter_bee/feature/communicator/binding/question_binding.dart';
+import 'package:chatter_bee/feature/communicator/binding/text_to_speak_binding.dart';
+import 'package:chatter_bee/feature/communicator/binding/things_binding.dart';
+import 'package:chatter_bee/feature/communicator/binding/visual_schedules_binding.dart';
+import 'package:chatter_bee/feature/communicator/screen/action_screen.dart';
+import 'package:chatter_bee/feature/communicator/screen/activities_screen.dart';
+import 'package:chatter_bee/feature/communicator/screen/add_activity_screen.dart';
+import 'package:chatter_bee/feature/communicator/screen/core_words_screen.dart';
+import 'package:chatter_bee/feature/communicator/screen/emotions_screen.dart';
+import 'package:chatter_bee/feature/communicator/screen/food_drink_screen.dart';
+import 'package:chatter_bee/feature/communicator/screen/greetings_screen.dart';
+import 'package:chatter_bee/feature/communicator/screen/health_screen.dart';
+import 'package:chatter_bee/feature/communicator/screen/people_screen.dart';
+import 'package:chatter_bee/feature/communicator/screen/places_screen.dart';
+import 'package:chatter_bee/feature/communicator/screen/question_screen.dart';
+import 'package:chatter_bee/feature/communicator/screen/text_to_speak.dart';
+import 'package:chatter_bee/feature/communicator/screen/things_screen.dart';
+import 'package:chatter_bee/feature/communicator/screen/visual_schedules_screen.dart';
+import 'package:chatter_bee/feature/communicator/sub_category/breakfast/breakfast_binding.dart';
+import 'package:chatter_bee/feature/communicator/sub_category/breakfast/breakfast_screen.dart';
+import 'package:chatter_bee/feature/communicator/sub_category/drinks/drinks_binding.dart';
+import 'package:chatter_bee/feature/communicator/sub_category/drinks/drinks_screen.dart';
+import 'package:chatter_bee/feature/communicator/sub_category/fruits/fruits_binding.dart';
+import 'package:chatter_bee/feature/communicator/sub_category/fruits/fruits_screen.dart';
+import 'package:chatter_bee/feature/communicator/sub_category/meals/meals_binding.dart';
+import 'package:chatter_bee/feature/communicator/sub_category/meals/meals_screen.dart';
+import 'package:chatter_bee/feature/communicator/sub_category/snacks/snacks_binding.dart';
+import 'package:chatter_bee/feature/communicator/sub_category/snacks/snacks_screen.dart';
+import 'package:chatter_bee/feature/edit_button_screen/edit_button_binding.dart';
+import 'package:chatter_bee/feature/edit_button_screen/edit_button_screen.dart';
+import 'package:chatter_bee/feature/home_screen/communicator_home_binding.dart';
+import 'package:chatter_bee/feature/home_screen/communicator_home_screen.dart';
+import 'package:chatter_bee/feature/navigation_bar/navigation_bar.dart';
+import 'package:chatter_bee/feature/navigation_bar/navigation_binding.dart';
+import 'package:chatter_bee/feature/role_selection/binding/caregiver_profile_binding.dart';
+import 'package:chatter_bee/feature/role_selection/binding/communicator_profile_binding.dart';
+import 'package:chatter_bee/feature/role_selection/binding/role_selection_binding.dart';
+import 'package:chatter_bee/feature/role_selection/view/caregiver_profile_screen.dart';
+import 'package:chatter_bee/feature/role_selection/view/communicator_profile_screen.dart';
+import 'package:chatter_bee/feature/role_selection/view/role_selection_screen.dart';
+import 'package:chatter_bee/feature/splash_screen/splash_screen.dart';
+import 'package:get/get_navigation/src/routes/get_route.dart';
+
+
+
+final List<GetPage> routes =[
+  GetPage( name: AppRoutes.SPLASHSCREEN, page: ()=>  const SplashScreen()),
+  GetPage( name: AppRoutes.SIGNINSCREEN, page: () => LoginScreen(), binding: LoginBinding()),
+  GetPage( name: AppRoutes.SIGNUPSCREEN, page: () => SignUpScreen(), binding: SignUpBinding()),
+  GetPage( name: AppRoutes.VERIFICATIONSCREEN, page: () => VerificationScreen(), binding: VerificationBinding()),
+  GetPage( name: AppRoutes.FORGOTSCREEN, page: () => ForgotPasswordScreen(), binding: ForgotPasswordBinding()),
+  GetPage( name: AppRoutes.FORGOTOTPSCREEN, page: () => ForgotVerificationScreen(), binding: ForgotVerificationBinding()),
+  GetPage( name: AppRoutes.CREATENEWPASSSCREEN, page: () => CreateNewPasswordScreen(), binding: CreateNewPasswordBinding()),
+  GetPage( name: AppRoutes.ROLESELECTION, page: () => RoleSelectionScreen(), binding: RoleSelectionBinding()),
+  GetPage( name: AppRoutes.CAREGIVERPROFILE, page: () => CaregiverProfileScreen(), binding: CaregiverProfileBinding()),
+  GetPage( name: AppRoutes.COMMUNICATORPROFILE, page: () => CommunicatorProfileScreen(), binding: CommunicatorProfileBinding()),
+  GetPage( name: AppRoutes.NAVIGATIONBAR, page: () => NavigationScreen(), binding: NavigationBinding(),),
+  GetPage( name: AppRoutes.PROFILE, page: () => ProfileScreen(), binding: ProfileBinding(),),
+  GetPage( name: AppRoutes.COMMUNICATORHOMESCREEN, page: () => CommunicatorHomeScreen(), binding: CommunicatorHomeBinding(),),
+  GetPage( name: AppRoutes.SUBSCRIPTION, page: () => SubscriptionScreen(), binding: SubscriptionBinding(),),
+  GetPage( name: AppRoutes.EDITPROFILE, page: () => EditProfileScreen(), binding: EditProfileBinding(),),
+  GetPage( name: AppRoutes.CHANGEPASSWORD, page: () => ChangePasswordScreen(), binding: ChangePasswordBinding(),),
+  GetPage( name: AppRoutes.PRIVACYPOLICY, page: () => PrivacyPolicyScreen(), binding: PrivacyPolicyBinding(),),
+  GetPage( name: AppRoutes.SUPPORT, page: () => SupportScreen(), binding: SupportBonding(),),
+  GetPage( name: AppRoutes.LANGUAGESCREEN, page: () => LanguageScreen(), binding: LanguageBinding(),),
+  GetPage( name: AppRoutes.TEXT_TO_SPEAK, page: () => TextToSpeakScreen(), binding: TextToSpeakBinding(),),
+  GetPage( name: AppRoutes.EMOTIONS, page: () => EmotionsScreen(), binding: EmotionsBinding(),),
+  GetPage( name: AppRoutes.ACTIVITIES, page: () => ActivitiesScreen(), binding: ActivitiesBinding(),),
+  GetPage( name: AppRoutes.PEOPLE, page: () => PeopleScreen(), binding: PeopleBinding(),),
+  GetPage( name: AppRoutes.VISUAL_SCHEDULES, page: () => VisualSchedulesScreen(), binding: VisualSchedulesBinding(),),
+  GetPage(name: AppRoutes.ADD_ACTIVITY, page: () => const AddActivityScreen(), binding: AddActivityBinding(),),
+  GetPage(name: AppRoutes.PLACES, page: () => const PlacesScreen(), binding: PlacesBinding(),),
+  GetPage(name: AppRoutes.FOOD_DRINK, page: () => const FoodDrinkScreen(), binding: FoodDrinkBinding(),),
+
+  GetPage(name: AppRoutes.BREAKFAST, page: () => const BreakfastScreen(), binding: BreakfastBinding(),),
+  GetPage(name: AppRoutes.MEALS, page: () => const MealsScreen(), binding: MealsBinding(),),
+  GetPage(name: AppRoutes.DRINKS, page: () => const DrinksScreen(), binding: DrinksBinding(),),
+  GetPage(name: AppRoutes.FRUITS, page: () => const FruitsScreen(), binding: FruitsBinding(),),
+  GetPage(name: AppRoutes.SNACKS, page: () => const SnacksScreen(), binding: SnacksBinding(),),
+
+  GetPage(name: AppRoutes.HEALTH, page: () => const HealthScreen(), binding: HealthBinding(),),
+  GetPage(name: AppRoutes.GREETINGS, page: () => const GreetingsScreen(), binding: GreetingsBinding(),),
+  GetPage(name: AppRoutes.QUESTION, page: () => const QuestionScreen(), binding: QuestionBinding(),),
+  GetPage(name: AppRoutes.ACTION, page: () => const ActionScreen(), binding: ActionBinding(),),
+  GetPage(name: AppRoutes.THINGS, page: () => const ThingsScreen(), binding: ThingsBinding(),),
+  GetPage(name: AppRoutes.CORE_WORDS, page: () => const CoreWordsScreen(), binding: CoreWordsBinding(),),
+  GetPage(name: AppRoutes.ADD_BUTTON, page: () => const AddButtonScreen(), binding: AddButtonBinding(),),
+  GetPage(name: AppRoutes.EDIT_BUTTON, page: () => const EditButtonScreen(), binding: EditButtonBinding(),),
+
+
+];
+
+
+class AppRoutes {
+  AppRoutes._();
+  static const String SPLASHSCREEN = "/";
+  static const String SIGNINSCREEN = "/SignInScreen";
+  static const String SIGNUPSCREEN = "/SignUpScreen";
+  static const String VERIFICATIONSCREEN = "/VerificationScreen";
+  static const String FORGOTSCREEN = "/ForgotPasswordScreen";
+  static const String FORGOTOTPSCREEN = "/ForgotVerificationScreen";
+  static const String CREATENEWPASSSCREEN = "/CreateNewPasswordScreen";
+  static const String ROLESELECTION = "/RoleSelectionScreen";
+  static const String CAREGIVERPROFILE = "/CaregiverProfileScreen";
+  static const String COMMUNICATORPROFILE = "/CommunicatorProfileScreen";
+  static const String NAVIGATIONBAR = '/navigation';
+  static const String PROFILE = '/Profile';
+  static const String COMMUNICATORHOMESCREEN = '/CommunicatorHomeScreen';
+  static const String SUBSCRIPTION = '/Subscription';
+  static const String EDITPROFILE = '/EditProfile';
+  static const String CHANGEPASSWORD = '/ChangePassword';
+  static const String PRIVACYPOLICY = '/PrivacyPolicy';
+  static const String SUPPORT = '/Support';
+  static const String LANGUAGESCREEN = '/LanguageScreen';
+  static const String TEXT_TO_SPEAK = '/text-to-speak';
+  static const String EMOTIONS = '/emotions';
+  static const String ACTIVITIES = '/activities';
+  static const String PEOPLE = '/people';
+  static const String VISUAL_SCHEDULES = '/visual-schedules';
+  static const String ADD_ACTIVITY = '/add-activity';
+  static const String PLACES = '/places';
+  static const String FOOD_DRINK = '/food_drink';
+
+  static const String BREAKFAST = '/breakfast';
+  static const String MEALS = '/meals';
+  static const String DRINKS = '/drinks';
+  static const String FRUITS = '/fruits';
+  static const String SNACKS = '/snacks';
+
+  static const String HEALTH = '/health';
+  static const String GREETINGS = '/greetings';
+  static const String QUESTION = '/question';
+  static const String ACTION = '/action';
+  static const String THINGS = '/things';
+  static const String CORE_WORDS = '/core_words';
+  static const String ADD_BUTTON = '/add-button';
+  static const String EDIT_BUTTON = '/edit-button';
+
+}
