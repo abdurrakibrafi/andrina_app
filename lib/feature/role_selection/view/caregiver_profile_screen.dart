@@ -16,10 +16,7 @@ class CaregiverProfileScreen extends GetView<CaregiverProfileController> {
       appBar: AppBar(
         backgroundColor: AppColors.bgColor,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Get.back(),
-        ),
+        automaticallyImplyLeading: false,
         title: Text('Profile Setup',
             style: GoogleFonts.nunito(color: Colors.black, fontSize: 18, fontWeight: FontWeight.w600)),
       ),

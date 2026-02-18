@@ -142,11 +142,8 @@ class CommunicatorProfileController extends GetxController {
       if (response.isSuccess) {
         Get.snackbar('Success', 'Profile updated successfully!',
             snackPosition: SnackPosition.BOTTOM, backgroundColor: const Color(0xFFE8F5E9));
-        if (Get.previousRoute.contains('Profile')) {
-          Get.back();
-        } else {
-          Get.offAllNamed(AppRoutes.COMMUNICATORHOMESCREEN);
-        }
+
+        Get.offAllNamed(AppRoutes.COMMUNICATORHOMESCREEN);
       } else {
         Get.snackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM);
       }
