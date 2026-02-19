@@ -1,6 +1,7 @@
 import 'package:chatter_bee/config/app_colors.dart';
 import 'package:chatter_bee/config/imagesUrl.dart';
 import 'package:chatter_bee/feature/role_selection/controller/communicator_profile_controller.dart';
+import 'package:chatter_bee/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -222,6 +223,12 @@ class CommunicatorProfileScreen extends GetView<CommunicatorProfileController> {
                   },
                 ),
                 const SizedBox(height: 20),
+
+                IconButton(onPressed: (){
+                  Get.toNamed(AppRoutes.COMMUNICATOR_INVITATIONS);
+                }, icon: Icon(Icons.insert_invitation)
+
+                ),
 
                 // ── Continue Button ──
                 Obx(() => SizedBox(

@@ -1,8 +1,8 @@
 class AppUrl {
   // ==================== BASE URL ====================
-  static const String baseUrl = 'https://fabrics-integral-tyler-yorkshire.trycloudflare.com';
+  static const String baseUrl = 'https://sbjct-valium-records-else.trycloudflare.com';
 
-  // ==================== REGISTRATION ENDPOINTS (SEPARATE) ====================
+  // ==================== REGISTRATION ENDPOINTS ====================
   static const String communicatorRegister = '$baseUrl/api/auth/communicator/register/';
   static const String caregiverRegister = '$baseUrl/api/auth/caregiver/register/';
 
@@ -25,4 +25,18 @@ class AppUrl {
 
   // ==================== SETTINGS ENDPOINTS ====================
   static const String privacyPolicy = '$baseUrl/api/settings/privacy-policy/';
+
+  // ==================== INVITATION ENDPOINTS ====================
+  static const String sendInvitation = '$baseUrl/api/auth/invitations/send/';
+  static const String acceptInvitation = '$baseUrl/api/auth/invitations/accept/';
+  static const String rejectInvitation = '$baseUrl/api/auth/invitations/reject/';
+  static const String listInvitations = '$baseUrl/api/auth/invitations/';
+
+  // ==================== CONNECTION ENDPOINTS ====================
+  static const String listConnections = '$baseUrl/api/auth/connections/';
+  static const String disconnectProfile = '$baseUrl/api/auth/connections/disconnect/';
+  static const String connectionStats = '$baseUrl/api/auth/connections/stats/';
+
+  // ==================== CAREGIVER ENDPOINTS ====================
+  static const String copyDefaultContent = '$baseUrl/api/caregiver/customization/copy-defaults/';
 }

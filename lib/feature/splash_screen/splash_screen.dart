@@ -30,23 +30,37 @@ class _SplashScreenState extends State<SplashScreen> {
       // Get token from secure storage
       final token = await _secureStorage.getAccessToken();
 
+      // Get role from secure storage
+      final role = await _secureStorage.getUserRole();
+
       // Get login status from SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
 
       if (token != null && token.isNotEmpty && isLoggedIn) {
-        // Has token → Home
-        Get.offAllNamed(AppRoutes.NAVIGATIONBAR);
+        // ✅ Token exists → Navigate based on role
+
+        if (role == "caregiver") {
+          Get.offAllNamed(AppRoutes.NAVIGATIONBAR);
+        }
+        else if (role == "communicator") {
+          Get.offAllNamed(AppRoutes.COMMUNICATORHOMESCREEN);
+        }
+        else {
+          // যদি role null বা unknown হয়
+          Get.offAllNamed(AppRoutes.SIGNINSCREEN);
+        }
+
       } else {
-        // No token → Sign In
+        // ❌ No token → Sign In
         Get.offAllNamed(AppRoutes.SIGNINSCREEN);
       }
     } catch (e) {
       print('Error checking auth: $e');
-      // On error, go to sign in
       Get.offAllNamed(AppRoutes.SIGNINSCREEN);
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

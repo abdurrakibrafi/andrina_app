@@ -68,6 +68,9 @@ import 'package:chatter_bee/feature/edit_button_screen/edit_button_binding.dart'
 import 'package:chatter_bee/feature/edit_button_screen/edit_button_screen.dart';
 import 'package:chatter_bee/feature/home_screen/communicator_home_binding.dart';
 import 'package:chatter_bee/feature/home_screen/communicator_home_screen.dart';
+import 'package:chatter_bee/feature/invitations/buindings/invitations_buindings.dart';
+import 'package:chatter_bee/feature/invitations/view/caregiver_connect_sereen.dart';
+import 'package:chatter_bee/feature/invitations/view/communicator_invitations_screen.dart';
 import 'package:chatter_bee/feature/navigation_bar/navigation_bar.dart';
 import 'package:chatter_bee/feature/navigation_bar/navigation_binding.dart';
 import 'package:chatter_bee/feature/role_selection/binding/caregiver_profile_binding.dart';
@@ -124,7 +127,16 @@ final List<GetPage> routes =[
   GetPage(name: AppRoutes.CORE_WORDS, page: () => const CoreWordsScreen(), binding: CoreWordsBinding(),),
   GetPage(name: AppRoutes.ADD_BUTTON, page: () => const AddButtonScreen(), binding: AddButtonBinding(),),
   GetPage(name: AppRoutes.EDIT_BUTTON, page: () => const EditButtonScreen(), binding: EditButtonBinding(),),
-
+GetPage(
+    name: AppRoutes.CAREGIVER_CONNECTIONS,
+    page: () => const CaregiverConnectionsScreen(),
+    binding: CaregiverInvitationBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.COMMUNICATOR_INVITATIONS,
+    page: () => const CommunicatorInvitationsScreen(),
+    binding: CommunicatorInvitationBinding(),
+  ),
 
 ];
 
@@ -173,5 +185,9 @@ class AppRoutes {
   static const String CORE_WORDS = '/core_words';
   static const String ADD_BUTTON = '/add-button';
   static const String EDIT_BUTTON = '/edit-button';
+
+  //===============Invitations Routes===============
+  static const String CAREGIVER_CONNECTIONS = '/caregiver-connections';
+  static const String COMMUNICATOR_INVITATIONS = '/communicator-invitations';
 
 }
