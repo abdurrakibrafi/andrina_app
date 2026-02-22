@@ -98,13 +98,13 @@ class _InvitationCard extends StatelessWidget {
               CircleAvatar(
                 radius: 26,
                 backgroundColor: const Color(0xFFFFF3CC),
-                backgroundImage: invitation.senderAvatar != null && invitation.senderAvatar!.isNotEmpty
-                    ? NetworkImage(invitation.senderAvatar!)
+                backgroundImage: invitation.caregiverAvatar != null && invitation.caregiverAvatar!.isNotEmpty
+                    ? NetworkImage(invitation.caregiverAvatar!)
                     : null,
-                child: invitation.senderAvatar == null || invitation.senderAvatar!.isEmpty
+                child: invitation.caregiverAvatar == null || invitation.caregiverAvatar!.isEmpty
                     ? Text(
-                    invitation.senderName?.isNotEmpty == true
-                        ? invitation.senderName![0].toUpperCase()
+                    invitation.caregiverName?.isNotEmpty == true
+                        ? invitation.caregiverName![0].toUpperCase()
                         : 'C',
                     style: const TextStyle(
                         fontSize: 20, fontWeight: FontWeight.w700, color: Color(0xFFFFC857)))
@@ -115,10 +115,10 @@ class _InvitationCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(invitation.senderName ?? 'Caregiver',
+                    Text(invitation.caregiverName ?? 'Caregiver',
                         style: GoogleFonts.nunito(
                             fontSize: 15, fontWeight: FontWeight.w700, color: Colors.black)),
-                    Text(invitation.email,
+                    Text(invitation.caregiverEmail ?? '',
                         style: GoogleFonts.nunito(fontSize: 12, color: const Color(0xFF636F85))),
                   ],
                 ),

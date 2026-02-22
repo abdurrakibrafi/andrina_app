@@ -4,8 +4,9 @@ class InvitationModel {
   final String email;
   final String status; // pending, accepted, rejected
   final String type;   // sent, received
-  final String? senderName;
-  final String? senderAvatar;
+  final String? caregiverName;
+  final String? caregiverEmail;
+  final String? caregiverAvatar;
   final String? receiverName;
   final String? receiverAvatar;
   final String? createdAt;
@@ -15,8 +16,9 @@ class InvitationModel {
     required this.email,
     required this.status,
     required this.type,
-    this.senderName,
-    this.senderAvatar,
+    this.caregiverName,
+    this.caregiverAvatar,
+    this.caregiverEmail,
     this.receiverName,
     this.receiverAvatar,
     this.createdAt,
@@ -28,8 +30,9 @@ class InvitationModel {
       email: json['email'] ?? '',
       status: json['status'] ?? 'pending',
       type: json['type'] ?? 'sent',
-      senderName: json['sender']?['full_name'] ?? json['sender_name'],
-      senderAvatar: json['sender']?['avatar'] ?? json['sender_avatar'],
+      caregiverName: json['sender']?['caregiver_name'] ?? json['caregiver_name'],
+      caregiverAvatar: json['sender']?['caregiver_avatar'] ?? json['caregiver_avatar'],
+      caregiverEmail: json['sender']?['caregiver_email'] ?? json['caregiver_email'],
       receiverName: json['receiver']?['full_name'] ?? json['receiver_name'],
       receiverAvatar: json['receiver']?['avatar'] ?? json['receiver_avatar'],
       createdAt: json['created_at'],

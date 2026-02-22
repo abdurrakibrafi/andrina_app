@@ -1,4 +1,6 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chatter_bee/config/app_colors.dart';
+import 'package:chatter_bee/config/app_url.dart';
 import 'package:chatter_bee/feature/invitations/controller/caregiver_invitation_controller.dart';
 import 'package:chatter_bee/models/profile_invitation_model/profile_invitation_model.dart';
 import 'package:flutter/material.dart';
@@ -222,7 +224,7 @@ class _CommunicatorCard extends StatelessWidget {
                   backgroundColor: Colors.grey[200],
                   backgroundImage: connection.communicatorAvatar != null &&
                       connection.communicatorAvatar!.isNotEmpty
-                      ? NetworkImage(connection.communicatorAvatar!)
+                      ? CachedNetworkImageProvider("${AppUrl.baseUrl}${connection.communicatorAvatar}")
                       : null,
                   child: connection.communicatorAvatar == null ||
                       connection.communicatorAvatar!.isEmpty

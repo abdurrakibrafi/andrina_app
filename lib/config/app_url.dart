@@ -1,6 +1,6 @@
 class AppUrl {
   // ==================== BASE URL ====================
-  static const String baseUrl = 'https://sbjct-valium-records-else.trycloudflare.com';
+  static const String baseUrl = 'https://height-manhattan-belfast-modem.trycloudflare.com';
 
   // ==================== REGISTRATION ENDPOINTS ====================
   static const String communicatorRegister = '$baseUrl/api/auth/communicator/register/';

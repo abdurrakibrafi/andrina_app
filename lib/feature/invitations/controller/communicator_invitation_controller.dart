@@ -64,7 +64,7 @@ class CommunicatorInvitationController extends GetxController {
         receivedInvitations.removeWhere((inv) => inv.id == invitation.id);
         Get.snackbar(
           'Connected! 🎉',
-          'You are now connected with ${invitation.senderName ?? 'the caregiver'}',
+          'You are now connected with ${invitation.caregiverName ?? 'the caregiver'}',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: const Color(0xFFE8F5E9),
           duration: const Duration(seconds: 3),

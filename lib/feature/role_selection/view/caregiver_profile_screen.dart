@@ -1,4 +1,6 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chatter_bee/config/app_colors.dart';
+import 'package:chatter_bee/config/app_url.dart';
 import 'package:chatter_bee/config/imagesUrl.dart';
 import 'package:chatter_bee/feature/invitations/controller/caregiver_invitation_controller.dart';
 import 'package:chatter_bee/feature/role_selection/controller/caregiver_profile_controller.dart';
@@ -241,7 +243,7 @@ class CaregiverProfileScreen extends GetView<CaregiverProfileController> {
                                           : Colors.grey[200],
                                       // ✅ FIX: null/empty check করে তবেই NetworkImage
                                       backgroundImage: _hasValidUrl(connection.communicatorAvatar)
-                                          ? NetworkImage(connection.communicatorAvatar!)
+                                          ?CachedNetworkImageProvider("${AppUrl.baseUrl}${connection.communicatorAvatar}")
                                           : null,
                                       child: !_hasValidUrl(connection.communicatorAvatar)
                                           ? Text(
