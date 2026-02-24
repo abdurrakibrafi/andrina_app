@@ -66,6 +66,9 @@ import 'package:chatter_bee/feature/communicator/sub_category/snacks/snacks_bind
 import 'package:chatter_bee/feature/communicator/sub_category/snacks/snacks_screen.dart';
 import 'package:chatter_bee/feature/edit_button_screen/edit_button_binding.dart';
 import 'package:chatter_bee/feature/edit_button_screen/edit_button_screen.dart';
+import 'package:chatter_bee/feature/home_screen/caregiver/buinding/caregiver_item_buinding.dart';
+import 'package:chatter_bee/feature/home_screen/caregiver/view/caregiver_item_screen.dart';
+import 'package:chatter_bee/feature/home_screen/caregiver/view/caregiver_sub_catagory_screen.dart';
 import 'package:chatter_bee/feature/home_screen/communicator_home_binding.dart';
 import 'package:chatter_bee/feature/home_screen/communicator_home_screen.dart';
 import 'package:chatter_bee/feature/invitations/buindings/invitations_buindings.dart';
@@ -81,6 +84,8 @@ import 'package:chatter_bee/feature/role_selection/view/communicator_profile_scr
 import 'package:chatter_bee/feature/role_selection/view/role_selection_screen.dart';
 import 'package:chatter_bee/feature/splash_screen/splash_screen.dart';
 import 'package:get/get_navigation/src/routes/get_route.dart';
+
+import '../feature/home_screen/caregiver/buinding/caregiver_sub_catagory_buinding.dart' show CaregiverSubCatagoryBuinding;
 
 
 
@@ -125,8 +130,8 @@ final List<GetPage> routes =[
   GetPage(name: AppRoutes.ACTION, page: () => const ActionScreen(), binding: ActionBinding(),),
   GetPage(name: AppRoutes.THINGS, page: () => const ThingsScreen(), binding: ThingsBinding(),),
   GetPage(name: AppRoutes.CORE_WORDS, page: () => const CoreWordsScreen(), binding: CoreWordsBinding(),),
-  GetPage(name: AppRoutes.ADD_BUTTON, page: () => const AddButtonScreen(), binding: AddButtonBinding(),),
-  GetPage(name: AppRoutes.EDIT_BUTTON, page: () => const EditButtonScreen(), binding: EditButtonBinding(),),
+  // GetPage(name: AppRoutes.ADD_BUTTON, page: () => const AddButtonScreen(), binding: AddButtonBinding(),),
+  // GetPage(name: AppRoutes.EDIT_BUTTON, page: () => const EditButtonScreen(), binding: EditButtonBinding(),),
 GetPage(
     name: AppRoutes.CAREGIVER_CONNECTIONS,
     page: () => const CaregiverConnectionsScreen(),
@@ -137,7 +142,8 @@ GetPage(
     page: () => const CommunicatorInvitationsScreen(),
     binding: CommunicatorInvitationBinding(),
   ),
-
+  GetPage(name: '/sub-category', page: () => const CaregiverSubCategoryScreen(), binding: CaregiverSubCatagoryBuinding()),
+  GetPage(name: '/item-screen', page: () => const CaregiverItemScreen(), binding: CaregiverItemBuinding()),
 ];
 
 

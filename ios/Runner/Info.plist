@@ -45,5 +45,12 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	
+	  <key>NSMicrophoneUsageDescription</key>
+      <string>We need microphone access to record custom audio for your buttons</string>
+      <key>NSPhotoLibraryUsageDescription</key>
+      <string>We need photo library access to set custom images</string>
+      <key>NSCameraUsageDescription</key>
+      <string>We need camera access to take photos for your buttons</string>
 </dict>
 </plist>

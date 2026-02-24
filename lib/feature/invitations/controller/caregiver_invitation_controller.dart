@@ -1,5 +1,6 @@
 import 'package:chatter_bee/Repository/profile_invitation_repo.dart';
 import 'package:chatter_bee/models/profile_invitation_model/profile_invitation_model.dart';
+import 'package:chatter_bee/services/communicator_session_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -56,8 +57,16 @@ class CaregiverInvitationController extends GetxController {
         // Pre-selected communicator mark করা
         final selected = connections.firstWhereOrNull((c) => c.isSelected);
         if (selected != null) selectedConnectionId.value = selected.id;
-
         debugPrint('✅ Loaded ${connections.length} connections');
+
+        // connections load শেষে এই ২ লাইন যোগ করো
+        final saved = CommunicatorSessionService.to.communicatorId.value;
+        if (saved != 0) {
+          final c = connections.firstWhereOrNull((c) => c.communicatorId == saved);
+          if (c != null) selectedConnectionId.value = c.id;
+        }
+
+
       }
     } catch (e) {
       debugPrint('Load connections error: $e');
@@ -164,6 +173,13 @@ class CaregiverInvitationController extends GetxController {
       );
       if (response.isSuccess) {
         selectedConnectionId.value = connection.id;
+
+        // save in communicator session
+        await CommunicatorSessionService.to.setSelected(
+          connection.communicatorId,
+          connection.communicatorName,
+        );
+
         Get.snackbar(
           'Switched!',
           'Now viewing ${connection.communicatorName}\'s profile',

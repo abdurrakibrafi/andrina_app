@@ -1,4 +1,5 @@
 import 'package:chatter_bee/config/app_colors.dart';
+import 'package:chatter_bee/config/app_url.dart';
 import 'package:chatter_bee/feature/invitations/controller/communicator_invitation_controller.dart';
 import 'package:chatter_bee/models/profile_invitation_model/profile_invitation_model.dart';
 import 'package:flutter/material.dart';
@@ -99,7 +100,7 @@ class _InvitationCard extends StatelessWidget {
                 radius: 26,
                 backgroundColor: const Color(0xFFFFF3CC),
                 backgroundImage: invitation.caregiverAvatar != null && invitation.caregiverAvatar!.isNotEmpty
-                    ? NetworkImage(invitation.caregiverAvatar!)
+                    ? NetworkImage("${AppUrl.baseUrl}${invitation.caregiverAvatar}")
                     : null,
                 child: invitation.caregiverAvatar == null || invitation.caregiverAvatar!.isEmpty
                     ? Text(

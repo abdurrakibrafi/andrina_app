@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:chatter_bee/config/app_colors.dart';
 import 'package:chatter_bee/config/imagesUrl.dart';
 import 'package:chatter_bee/feature/Notification/notification_screen.dart';
-import 'package:chatter_bee/feature/home_screen/home_screen.dart';
+import 'package:chatter_bee/feature/home_screen/caregiver/view/caregiver_home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -30,7 +30,7 @@ class NavigationScreen extends GetView<NavigationController> {
           Obx(() => IndexedStack(
             index: controller.selectedIndex.value,
             children: const [
-              HomeScreen(),
+              CaregiverHomeScreen(),
               NotificationScreen(),
             ],
           )),

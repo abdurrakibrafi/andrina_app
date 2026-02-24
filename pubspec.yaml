@@ -45,6 +45,9 @@ dependencies:
   flutter_secure_storage: ^9.0.0
   shared_preferences: ^2.5.4
   logger: ^2.0.2
+  flutter_sound: ^9.2.13       # Audio recording
+  audioplayers: ^6.0.0         # Audio playback
+  permission_handler: ^11.3.0  # Microphone permission
 
 
 
