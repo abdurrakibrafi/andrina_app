@@ -1,3 +1,7 @@
+import 'package:chatter_bee/feature/Activity/activities_binding.dart';
+import 'package:chatter_bee/feature/Activity/activities_screen.dart';
+import 'package:chatter_bee/feature/Activity/add_activity_binding.dart';
+import 'package:chatter_bee/feature/Activity/add_activity_screen.dart';
 import 'package:chatter_bee/feature/Profile/binding/Profile_binding.dart';
 import 'package:chatter_bee/feature/Profile/binding/change_password_binding.dart';
 import 'package:chatter_bee/feature/Profile/binding/edit_profile_binding.dart';
@@ -27,8 +31,6 @@ import 'package:chatter_bee/feature/authentication/screen/loginScreen.dart';
 import 'package:chatter_bee/feature/authentication/screen/signup_screen.dart';
 import 'package:chatter_bee/feature/authentication/screen/verification_screen.dart';
 import 'package:chatter_bee/feature/communicator/binding/action_binding.dart';
-import 'package:chatter_bee/feature/communicator/binding/activities_binding.dart';
-import 'package:chatter_bee/feature/communicator/binding/add_activity_binding.dart';
 import 'package:chatter_bee/feature/communicator/binding/core_words_binding.dart';
 import 'package:chatter_bee/feature/communicator/binding/emotions_binding.dart';
 import 'package:chatter_bee/feature/communicator/binding/food_drink_binding.dart';
@@ -41,8 +43,6 @@ import 'package:chatter_bee/feature/communicator/binding/text_to_speak_binding.d
 import 'package:chatter_bee/feature/communicator/binding/things_binding.dart';
 import 'package:chatter_bee/feature/communicator/binding/visual_schedules_binding.dart';
 import 'package:chatter_bee/feature/communicator/screen/action_screen.dart';
-import 'package:chatter_bee/feature/communicator/screen/activities_screen.dart';
-import 'package:chatter_bee/feature/communicator/screen/add_activity_screen.dart';
 import 'package:chatter_bee/feature/communicator/screen/core_words_screen.dart';
 import 'package:chatter_bee/feature/communicator/screen/emotions_screen.dart';
 import 'package:chatter_bee/feature/communicator/screen/food_drink_screen.dart';
@@ -69,8 +69,12 @@ import 'package:chatter_bee/feature/edit_button_screen/edit_button_screen.dart';
 import 'package:chatter_bee/feature/home_screen/caregiver/buinding/caregiver_item_buinding.dart';
 import 'package:chatter_bee/feature/home_screen/caregiver/view/caregiver_item_screen.dart';
 import 'package:chatter_bee/feature/home_screen/caregiver/view/caregiver_sub_catagory_screen.dart';
-import 'package:chatter_bee/feature/home_screen/communicator_home_binding.dart';
-import 'package:chatter_bee/feature/home_screen/communicator_home_screen.dart';
+import 'package:chatter_bee/feature/home_screen/communicator/buinding/communicator_home_binding.dart';
+import 'package:chatter_bee/feature/home_screen/communicator/buinding/communicator_item_binding.dart';
+import 'package:chatter_bee/feature/home_screen/communicator/buinding/communicator_sub_category_binding.dart';
+import 'package:chatter_bee/feature/home_screen/communicator/view/communicator_home_screen.dart';
+import 'package:chatter_bee/feature/home_screen/communicator/view/communicator_item_screen.dart';
+import 'package:chatter_bee/feature/home_screen/communicator/view/communicator_sub_category_screen.dart';
 import 'package:chatter_bee/feature/invitations/buindings/invitations_buindings.dart';
 import 'package:chatter_bee/feature/invitations/view/caregiver_connect_sereen.dart';
 import 'package:chatter_bee/feature/invitations/view/communicator_invitations_screen.dart';
@@ -85,54 +89,201 @@ import 'package:chatter_bee/feature/role_selection/view/role_selection_screen.da
 import 'package:chatter_bee/feature/splash_screen/splash_screen.dart';
 import 'package:get/get_navigation/src/routes/get_route.dart';
 
-import '../feature/home_screen/caregiver/buinding/caregiver_sub_catagory_buinding.dart' show CaregiverSubCatagoryBuinding;
+import '../feature/home_screen/caregiver/buinding/caregiver_sub_catagory_buinding.dart'
+    show CaregiverSubCatagoryBuinding;
 
+final List<GetPage> routes = [
+  GetPage(name: AppRoutes.SPLASHSCREEN, page: () => const SplashScreen()),
+  GetPage(
+    name: AppRoutes.SIGNINSCREEN,
+    page: () => LoginScreen(),
+    binding: LoginBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.SIGNUPSCREEN,
+    page: () => SignUpScreen(),
+    binding: SignUpBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.VERIFICATIONSCREEN,
+    page: () => VerificationScreen(),
+    binding: VerificationBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.FORGOTSCREEN,
+    page: () => ForgotPasswordScreen(),
+    binding: ForgotPasswordBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.FORGOTOTPSCREEN,
+    page: () => ForgotVerificationScreen(),
+    binding: ForgotVerificationBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.CREATENEWPASSSCREEN,
+    page: () => CreateNewPasswordScreen(),
+    binding: CreateNewPasswordBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.ROLESELECTION,
+    page: () => RoleSelectionScreen(),
+    binding: RoleSelectionBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.CAREGIVERPROFILE,
+    page: () => CaregiverProfileScreen(),
+    binding: CaregiverProfileBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.COMMUNICATORPROFILE,
+    page: () => CommunicatorProfileScreen(),
+    binding: CommunicatorProfileBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.NAVIGATIONBAR,
+    page: () => NavigationScreen(),
+    binding: NavigationBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.PROFILE,
+    page: () => ProfileScreen(),
+    binding: ProfileBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.COMMUNICATORHOMESCREEN,
+    page: () => CommunicatorHomeScreen(),
+    binding: CommunicatorHomeBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.SUBSCRIPTION,
+    page: () => SubscriptionScreen(),
+    binding: SubscriptionBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.EDITPROFILE,
+    page: () => EditProfileScreen(),
+    binding: EditProfileBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.CHANGEPASSWORD,
+    page: () => ChangePasswordScreen(),
+    binding: ChangePasswordBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.PRIVACYPOLICY,
+    page: () => PrivacyPolicyScreen(),
+    binding: PrivacyPolicyBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.SUPPORT,
+    page: () => SupportScreen(),
+    binding: SupportBonding(),
+  ),
+  GetPage(
+    name: AppRoutes.LANGUAGESCREEN,
+    page: () => LanguageScreen(),
+    binding: LanguageBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.TEXT_TO_SPEAK,
+    page: () => TextToSpeakScreen(),
+    binding: TextToSpeakBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.EMOTIONS,
+    page: () => EmotionsScreen(),
+    binding: EmotionsBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.ACTIVITIES,
+    page: () => ActivitiesScreen(),
+    binding: ActivitiesBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.PEOPLE,
+    page: () => PeopleScreen(),
+    binding: PeopleBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.VISUAL_SCHEDULES,
+    page: () => VisualSchedulesScreen(),
+    binding: VisualSchedulesBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.ADD_ACTIVITY,
+    page: () => const AddActivityScreen(),
+    binding: AddActivityBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.PLACES,
+    page: () => const PlacesScreen(),
+    binding: PlacesBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.FOOD_DRINK,
+    page: () => const FoodDrinkScreen(),
+    binding: FoodDrinkBinding(),
+  ),
 
+  GetPage(
+    name: AppRoutes.BREAKFAST,
+    page: () => const BreakfastScreen(),
+    binding: BreakfastBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.MEALS,
+    page: () => const MealsScreen(),
+    binding: MealsBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.DRINKS,
+    page: () => const DrinksScreen(),
+    binding: DrinksBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.FRUITS,
+    page: () => const FruitsScreen(),
+    binding: FruitsBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.SNACKS,
+    page: () => const SnacksScreen(),
+    binding: SnacksBinding(),
+  ),
 
-final List<GetPage> routes =[
-  GetPage( name: AppRoutes.SPLASHSCREEN, page: ()=>  const SplashScreen()),
-  GetPage( name: AppRoutes.SIGNINSCREEN, page: () => LoginScreen(), binding: LoginBinding()),
-  GetPage( name: AppRoutes.SIGNUPSCREEN, page: () => SignUpScreen(), binding: SignUpBinding()),
-  GetPage( name: AppRoutes.VERIFICATIONSCREEN, page: () => VerificationScreen(), binding: VerificationBinding()),
-  GetPage( name: AppRoutes.FORGOTSCREEN, page: () => ForgotPasswordScreen(), binding: ForgotPasswordBinding()),
-  GetPage( name: AppRoutes.FORGOTOTPSCREEN, page: () => ForgotVerificationScreen(), binding: ForgotVerificationBinding()),
-  GetPage( name: AppRoutes.CREATENEWPASSSCREEN, page: () => CreateNewPasswordScreen(), binding: CreateNewPasswordBinding()),
-  GetPage( name: AppRoutes.ROLESELECTION, page: () => RoleSelectionScreen(), binding: RoleSelectionBinding()),
-  GetPage( name: AppRoutes.CAREGIVERPROFILE, page: () => CaregiverProfileScreen(), binding: CaregiverProfileBinding()),
-  GetPage( name: AppRoutes.COMMUNICATORPROFILE, page: () => CommunicatorProfileScreen(), binding: CommunicatorProfileBinding()),
-  GetPage( name: AppRoutes.NAVIGATIONBAR, page: () => NavigationScreen(), binding: NavigationBinding(),),
-  GetPage( name: AppRoutes.PROFILE, page: () => ProfileScreen(), binding: ProfileBinding(),),
-  GetPage( name: AppRoutes.COMMUNICATORHOMESCREEN, page: () => CommunicatorHomeScreen(), binding: CommunicatorHomeBinding(),),
-  GetPage( name: AppRoutes.SUBSCRIPTION, page: () => SubscriptionScreen(), binding: SubscriptionBinding(),),
-  GetPage( name: AppRoutes.EDITPROFILE, page: () => EditProfileScreen(), binding: EditProfileBinding(),),
-  GetPage( name: AppRoutes.CHANGEPASSWORD, page: () => ChangePasswordScreen(), binding: ChangePasswordBinding(),),
-  GetPage( name: AppRoutes.PRIVACYPOLICY, page: () => PrivacyPolicyScreen(), binding: PrivacyPolicyBinding(),),
-  GetPage( name: AppRoutes.SUPPORT, page: () => SupportScreen(), binding: SupportBonding(),),
-  GetPage( name: AppRoutes.LANGUAGESCREEN, page: () => LanguageScreen(), binding: LanguageBinding(),),
-  GetPage( name: AppRoutes.TEXT_TO_SPEAK, page: () => TextToSpeakScreen(), binding: TextToSpeakBinding(),),
-  GetPage( name: AppRoutes.EMOTIONS, page: () => EmotionsScreen(), binding: EmotionsBinding(),),
-  GetPage( name: AppRoutes.ACTIVITIES, page: () => ActivitiesScreen(), binding: ActivitiesBinding(),),
-  GetPage( name: AppRoutes.PEOPLE, page: () => PeopleScreen(), binding: PeopleBinding(),),
-  GetPage( name: AppRoutes.VISUAL_SCHEDULES, page: () => VisualSchedulesScreen(), binding: VisualSchedulesBinding(),),
-  GetPage(name: AppRoutes.ADD_ACTIVITY, page: () => const AddActivityScreen(), binding: AddActivityBinding(),),
-  GetPage(name: AppRoutes.PLACES, page: () => const PlacesScreen(), binding: PlacesBinding(),),
-  GetPage(name: AppRoutes.FOOD_DRINK, page: () => const FoodDrinkScreen(), binding: FoodDrinkBinding(),),
-
-  GetPage(name: AppRoutes.BREAKFAST, page: () => const BreakfastScreen(), binding: BreakfastBinding(),),
-  GetPage(name: AppRoutes.MEALS, page: () => const MealsScreen(), binding: MealsBinding(),),
-  GetPage(name: AppRoutes.DRINKS, page: () => const DrinksScreen(), binding: DrinksBinding(),),
-  GetPage(name: AppRoutes.FRUITS, page: () => const FruitsScreen(), binding: FruitsBinding(),),
-  GetPage(name: AppRoutes.SNACKS, page: () => const SnacksScreen(), binding: SnacksBinding(),),
-
-  GetPage(name: AppRoutes.HEALTH, page: () => const HealthScreen(), binding: HealthBinding(),),
-  GetPage(name: AppRoutes.GREETINGS, page: () => const GreetingsScreen(), binding: GreetingsBinding(),),
-  GetPage(name: AppRoutes.QUESTION, page: () => const QuestionScreen(), binding: QuestionBinding(),),
-  GetPage(name: AppRoutes.ACTION, page: () => const ActionScreen(), binding: ActionBinding(),),
-  GetPage(name: AppRoutes.THINGS, page: () => const ThingsScreen(), binding: ThingsBinding(),),
-  GetPage(name: AppRoutes.CORE_WORDS, page: () => const CoreWordsScreen(), binding: CoreWordsBinding(),),
+  GetPage(
+    name: AppRoutes.HEALTH,
+    page: () => const HealthScreen(),
+    binding: HealthBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.GREETINGS,
+    page: () => const GreetingsScreen(),
+    binding: GreetingsBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.QUESTION,
+    page: () => const QuestionScreen(),
+    binding: QuestionBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.ACTION,
+    page: () => const ActionScreen(),
+    binding: ActionBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.THINGS,
+    page: () => const ThingsScreen(),
+    binding: ThingsBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.CORE_WORDS,
+    page: () => const CoreWordsScreen(),
+    binding: CoreWordsBinding(),
+  ),
   // GetPage(name: AppRoutes.ADD_BUTTON, page: () => const AddButtonScreen(), binding: AddButtonBinding(),),
   // GetPage(name: AppRoutes.EDIT_BUTTON, page: () => const EditButtonScreen(), binding: EditButtonBinding(),),
-GetPage(
+  GetPage(
     name: AppRoutes.CAREGIVER_CONNECTIONS,
     page: () => const CaregiverConnectionsScreen(),
     binding: CaregiverInvitationBinding(),
@@ -142,10 +293,28 @@ GetPage(
     page: () => const CommunicatorInvitationsScreen(),
     binding: CommunicatorInvitationBinding(),
   ),
-  GetPage(name: '/sub-category', page: () => const CaregiverSubCategoryScreen(), binding: CaregiverSubCatagoryBuinding()),
-  GetPage(name: '/item-screen', page: () => const CaregiverItemScreen(), binding: CaregiverItemBuinding()),
-];
+  GetPage(
+    name: '/sub-category',
+    page: () => const CaregiverSubCategoryScreen(),
+    binding: CaregiverSubCatagoryBuinding(),
+  ),
+  GetPage(
+    name: '/item-screen',
+    page: () => const CaregiverItemScreen(),
+    binding: CaregiverItemBuinding(),
+  ),
 
+  GetPage(
+    name: AppRoutes.COMMUNICATOR_SUB_CATEGORY,
+    page: () => const CommunicatorSubCategoryScreen(),
+    binding: CommunicatorSubCategoryBinding(),
+  ),
+  GetPage(
+    name: AppRoutes.COMMUNICATOR_ITEM,
+    page: () => const CommunicatorItemScreen(),
+    binding: CommunicatorItemBinding(),
+  ),
+];
 
 class AppRoutes {
   AppRoutes._();
@@ -195,5 +364,7 @@ class AppRoutes {
   //===============Invitations Routes===============
   static const String CAREGIVER_CONNECTIONS = '/caregiver-connections';
   static const String COMMUNICATOR_INVITATIONS = '/communicator-invitations';
-
+  //===============Communicator Routes===============
+  static const String COMMUNICATOR_SUB_CATEGORY = '/communicator-sub-category';
+  static const String COMMUNICATOR_ITEM = '/communicator-item';
 }

@@ -9,7 +9,7 @@ import 'package:chatter_bee/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../communicator_home_screen.dart';
+import '../../communicator/view/communicator_home_screen.dart';
 
 class CaregiverHomeScreen extends StatelessWidget {
   const CaregiverHomeScreen({super.key});

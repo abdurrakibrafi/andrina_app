@@ -1,5 +1,7 @@
-import 'package:chatter_bee/feature/communicator/controller/add_activity_controller.dart';
+
 import 'package:get/get.dart';
+
+import 'add_activity_controller.dart';
 
 class AddActivityBinding extends Bindings {
   @override

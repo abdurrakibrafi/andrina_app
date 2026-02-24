@@ -1,7 +1,7 @@
 // lib/config/app_url.dart
 
 class AppUrl {
-  static const String baseUrl = 'https://comment-pepper-fall-listprice.trycloudflare.com';
+  static const String baseUrl = 'https://solve-lined-worker-guards.trycloudflare.com';
 
   // ==================== AUTH ====================
   static const String login = '$baseUrl/api/auth/login/';
@@ -62,6 +62,18 @@ class AppUrl {
 
   // CREATE quick speak (POST form-data: name, word, color, communicator_id, image_icon?, speak?)
   static const String createQuickSpeak = '$baseUrl/api/caregiver/content/create-quickspeak/';
+
+
+
+
+
+// ==================== COMMUNICATOR ====================
+ static const String getCommunicatorContent = '$baseUrl/api/communicator/content/';
+
+  // ── Activity Endpoints ──────────────────────────────────────────────────
+    static const String activities       = '/api/activity/activities/';
+    static const String activitiesCreate = '/api/activity/activities/create/';
+     static String activityDelete(int id) => '/api/activity/activities/$id/delete/';
 
   // ==================== MEDIA ====================
   // Converts relative path to full URL for image/audio from API
