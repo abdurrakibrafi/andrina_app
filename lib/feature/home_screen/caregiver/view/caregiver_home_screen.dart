@@ -11,8 +11,35 @@ import 'package:get/get.dart';
 
 import '../../communicator/view/communicator_home_screen.dart';
 
+// ─── Explore More Item Model ───────────────────────────────────────────────────
+class _ExploreItem {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final String route;
+
+  const _ExploreItem({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.route,
+  });
+}
+
 class CaregiverHomeScreen extends StatelessWidget {
   const CaregiverHomeScreen({super.key});
+
+  // ── Explore More items ──────────────────────────────────────────────────────
+  static const List<_ExploreItem> _exploreItems = [
+    _ExploreItem(
+      label: 'My Schedule',
+      icon: Icons.calendar_month_outlined,
+      color: Color(0xFFFDD268),
+      route: AppRoutes.ACTIVITIES,
+    ),
+    // যোগ করতে চাইলে এখানে নতুন item দাও:
+    // _ExploreItem(label: 'Goals', icon: Icons.flag_outlined, color: Color(0xFF7BC5D3), route: AppRoutes.GOALS),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +59,7 @@ class CaregiverHomeScreen extends StatelessWidget {
             color: const Color(0xFFFFC857),
             child: CustomScrollView(
               slivers: [
-                // ── Header ──────────────────────────────────────
+                // ── Header ──────────────────────────────────────────────────
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
@@ -65,31 +92,14 @@ class CaregiverHomeScreen extends StatelessWidget {
                   ),
                 ),
 
-                // ── Quick Speak Header ───────────────────────────
+                // ── Quick Speak Header ───────────────────────────────────────
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 4,
-                              height: 18,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(2),
-                                color: const Color(0xFFFFC857),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Quick Speak',
-                              style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.w700),
-                            ),
-                          ],
-                        ),
+                        const _SectionHeader(title: 'Quick Speak'),
                         Obx(() => Row(
                           children: [
                             GestureDetector(
@@ -137,8 +147,7 @@ class CaregiverHomeScreen extends StatelessWidget {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(Icons.add,
-                                          size: 14,
-                                          color: Colors.black),
+                                          size: 14, color: Colors.black),
                                       SizedBox(width: 4),
                                       Text('Add',
                                           style: TextStyle(
@@ -157,7 +166,7 @@ class CaregiverHomeScreen extends StatelessWidget {
                   ),
                 ),
 
-                // ── Quick Speak Cards ────────────────────────────
+                // ── Quick Speak Cards ────────────────────────────────────────
                 if (controller.quickSpeaks.isNotEmpty)
                   SliverToBoxAdapter(
                     child: SizedBox(
@@ -196,32 +205,14 @@ class CaregiverHomeScreen extends StatelessWidget {
                     ),
                   ),
 
-                // ── Categories Header ────────────────────────────
+                // ── Tap to Talk Header ───────────────────────────────────────
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 4,
-                              height: 18,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFFC857),
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Tap to Talk',
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700),
-                            ),
-                          ],
-                        ),
+                        const _SectionHeader(title: 'Tap to Talk'),
                         Obx(
                               () => Row(
                             children: [
@@ -237,7 +228,7 @@ class CaregiverHomeScreen extends StatelessWidget {
                   ),
                 ),
 
-                // ── Categories Grid ──────────────────────────────
+                // ── Categories Grid ──────────────────────────────────────────
                 controller.categories.isEmpty
                     ? SliverToBoxAdapter(
                   child: Center(
@@ -271,24 +262,27 @@ class CaregiverHomeScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 16, vertical: 4),
                   sliver: SliverGrid(
-                    delegate:
-                    SliverChildBuilderDelegate((_, i) {
-                      final cat = controller.categories[i];
-                      return Obx(() {
-                        final isSelected = controller
-                            .selectedCategoryIds
-                            .contains(cat.id);
-                        return _CategoryCard(
-                          category: cat,
-                          isEditMode: controller.isEditMode.value,
-                          isSelected: isSelected,
-                          onTap: () =>
-                              controller.onCategoryTap(cat),
-                          onEditTap: () =>
-                              controller.showEditCategorySheet(cat),
-                        );
-                      });
-                    }, childCount: controller.categories.length),
+                    delegate: SliverChildBuilderDelegate(
+                          (_, i) {
+                        final cat = controller.categories[i];
+                        return Obx(() {
+                          final isSelected = controller
+                              .selectedCategoryIds
+                              .contains(cat.id);
+                          return _CategoryCard(
+                            category: cat,
+                            isEditMode: controller.isEditMode.value,
+                            isSelected: isSelected,
+                            onTap: () =>
+                                controller.onCategoryTap(cat),
+                            onEditTap: () =>
+                                controller
+                                    .showEditCategorySheet(cat),
+                          );
+                        });
+                      },
+                      childCount: controller.categories.length,
+                    ),
                     gridDelegate:
                     const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 3,
@@ -299,7 +293,33 @@ class CaregiverHomeScreen extends StatelessWidget {
                   ),
                 ),
 
-                const SliverToBoxAdapter(child: SizedBox(height: 40)),
+                // ── Explore More Header ──────────────────────────────────────
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(20, 24, 20, 12),
+                    child: _SectionHeader(title: 'Explore More'),
+                  ),
+                ),
+
+                // ── Explore More Grid (same folder style) ────────────────────
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                  sliver: SliverGrid(
+                    delegate: SliverChildBuilderDelegate(
+                          (_, i) => _ExploreCard(item: _exploreItems[i]),
+                      childCount: _exploreItems.length,
+                    ),
+                    gridDelegate:
+                    const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                      childAspectRatio: 0.82,
+                    ),
+                  ),
+                ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 80)),
               ],
             ),
           );
@@ -321,6 +341,118 @@ class CaregiverHomeScreen extends StatelessWidget {
       color: _parseColor(qs.color, const Color(0xFFFFD700)),
       hasAudio: qs.speak != null,
       onPlayAudio: () => controller.playQuickSpeak(qs),
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  EXPLORE MORE CARD — same folder shape as category cards
+// ════════════════════════════════════════════════════════════════════════════
+
+class _ExploreCard extends StatelessWidget {
+  final _ExploreItem item;
+  const _ExploreCard({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Get.toNamed(item.route),
+      child: LayoutBuilder(builder: (context, constraints) {
+        final tabH = constraints.maxHeight * 0.10;
+        final contentTopPad = tabH + 6;
+
+        return CustomPaint(
+          painter: FolderShapePainter(
+            cardColor: Colors.white,
+            tabColor: item.color,
+          ),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                top: contentTopPad,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: item.color.withOpacity(0.25),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        item.icon,
+                        color: _darken(item.color, 30),
+                        size: 30,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Text(
+                        item.label,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1A1A1A),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      }),
+    );
+  }
+
+  Color _darken(Color color, int percent) {
+    final f = 1 - percent / 100;
+    return Color.fromARGB(
+      color.alpha,
+      (color.red * f).round(),
+      (color.green * f).round(),
+      (color.blue * f).round(),
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  SECTION HEADER — reusable yellow-bar title
+// ════════════════════════════════════════════════════════════════════════════
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  const _SectionHeader({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 4,
+          height: 18,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(2),
+            color: const Color(0xFFFFC857),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -490,17 +622,11 @@ class FolderShapePainter extends CustomPainter {
     path.lineTo(0, size.height - radius);
     path.close();
 
-    // Shadow
     canvas.drawShadow(path, Colors.black.withOpacity(0.10), 6.0, false);
+    canvas.drawPath(path, Paint()
+      ..color = cardColor
+      ..style = PaintingStyle.fill);
 
-    // Card body
-    canvas.drawPath(
-        path,
-        Paint()
-          ..color = cardColor
-          ..style = PaintingStyle.fill);
-
-    // Tab color area
     final tabPath = Path();
     tabPath.moveTo(0, 0);
     tabPath.lineTo(tabWidth + tabSlantWidth + radius, 0);
@@ -512,21 +638,16 @@ class FolderShapePainter extends CustomPainter {
 
     canvas.save();
     canvas.clipPath(path);
-    canvas.drawPath(
-        tabPath,
-        Paint()
-          ..color = tabColor
-          ..style = PaintingStyle.fill);
+    canvas.drawPath(tabPath, Paint()
+      ..color = tabColor
+      ..style = PaintingStyle.fill);
     canvas.restore();
 
-    // Selection border
     if (isSelected) {
-      canvas.drawPath(
-          path,
-          Paint()
-            ..color = selectedBorderColor
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 2.0);
+      canvas.drawPath(path, Paint()
+        ..color = selectedBorderColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.0);
     }
   }
 
@@ -623,9 +744,8 @@ class _QuickSpeakCard extends StatelessWidget {
           width: 90,
           child: LayoutBuilder(
             builder: (context, constraints) {
-              // tab height is 10% of card height — compute exact top padding
               final tabH = constraints.maxHeight * 0.10;
-              final contentTopPad = tabH + 8; // tab + small gap
+              final contentTopPad = tabH + 8;
 
               return CustomPaint(
                 painter: FolderShapePainter(
@@ -634,19 +754,17 @@ class _QuickSpeakCard extends StatelessWidget {
                 ),
                 child: Stack(
                   children: [
-                    // ── Centered content below the tab ──────────
                     Positioned.fill(
                       top: contentTopPad,
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          // Image with card color as background ✅
                           Container(
                             width: 50,
                             height: 50,
                             decoration: BoxDecoration(
-                              color: bgColor, // ✅ full color as bg
+                              color: bgColor,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: ClipRRect(
@@ -686,8 +804,6 @@ class _QuickSpeakCard extends StatelessWidget {
                         ],
                       ),
                     ),
-
-                    // ── Edit button ──────────────────────────────
                     if (isEditMode)
                       Positioned(
                         top: tabH - 8,
@@ -706,8 +822,6 @@ class _QuickSpeakCard extends StatelessWidget {
                           ),
                         ),
                       ),
-
-                    // ── Audio dot ────────────────────────────────
                     if (qs.speak != null && !isEditMode)
                       Positioned(
                         bottom: 6,
@@ -774,18 +888,16 @@ class _CategoryCard extends StatelessWidget {
             ),
             child: Stack(
               children: [
-                // ── Centered content ─────────────────────────────
                 Positioned.fill(
                   top: contentTopPad,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Image with card color as background ✅
                       _CardImage(
                         imageUrl: imageUrl,
                         size: 56,
-                        bgColor: bgColor, // ✅ full color passed
+                        bgColor: bgColor,
                       ),
                       const SizedBox(height: 6),
                       Padding(
@@ -812,8 +924,6 @@ class _CategoryCard extends StatelessWidget {
                     ],
                   ),
                 ),
-
-                // ── Edit button ───────────────────────────────────
                 if (isEditMode)
                   Positioned(
                     top: tabH - 8,
@@ -831,8 +941,6 @@ class _CategoryCard extends StatelessWidget {
                       ),
                     ),
                   ),
-
-                // ── Selected checkmark ────────────────────────────
                 if (isSelected)
                   Positioned(
                     top: tabH - 8,
@@ -857,7 +965,6 @@ class _CategoryCard extends StatelessWidget {
 
 // ════════════════════════════════════════════════════════════════
 //  CARD IMAGE WIDGET
-//  bgColor = image background color (full color, not opacity) ✅
 // ════════════════════════════════════════════════════════════════
 
 class _CardImage extends StatelessWidget {
@@ -874,7 +981,7 @@ class _CardImage extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: bgColor, // ✅ full card color as image background
+        color: bgColor,
         borderRadius: BorderRadius.circular(10),
       ),
       child: ClipRRect(

@@ -1,5 +1,4 @@
 // lib/feature/home_screen/communicator_home_screen.dart
-// ── REPLACES the old dummy-data screen ────────────────────────────────────────
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chatter_bee/config/app_colors.dart';
@@ -22,6 +21,21 @@ Color _parseColor(String hex, Color fallback) {
   }
 }
 
+// ─── Explore More Item Model ──────────────────────────────────────────────────
+class _ExploreItem {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final String route;
+
+  const _ExploreItem({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.route,
+  });
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 //  COMMUNICATOR HOME SCREEN
 // ════════════════════════════════════════════════════════════════════════════
@@ -29,10 +43,21 @@ Color _parseColor(String hex, Color fallback) {
 class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
   const CommunicatorHomeScreen({super.key});
 
+  // ── Explore More items list ─────────────────────────────────────────────────
+  static const List<_ExploreItem> _exploreItems = [
+    _ExploreItem(
+      label: 'My Schedule',
+      icon: Icons.calendar_month_outlined,
+      color: Color(0xFFFDD268),
+      route: AppRoutes.ACTIVITIES,
+    ),
+    // Add more explore items here as needed
+    // _ExploreItem(label: 'Goals', icon: Icons.flag_outlined, color: Color(0xFF7BC5D3), route: AppRoutes.GOALS),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       backgroundColor: AppColors.bgColor,
       body: SafeArea(
         child: Obx(() {
@@ -47,7 +72,7 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
             color: const Color(0xFFFFC857),
             child: CustomScrollView(
               slivers: [
-                // ── Header ─────────────────────────────────────────
+                // ── Header ──────────────────────────────────────────────────
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -80,15 +105,7 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
                   ),
                 ),
 
-                SliverAppBar(
-                  actions: [
-                    ElevatedButton(onPressed: (){
-                      Get.toNamed(AppRoutes.ACTIVITIES);
-                    }, child: Text("Activity"))
-                  ],
-                ),
-
-                // ── Quick Speak Action Bar ──────────────────────────
+                // ── Quick Speak Action Bar ────────────────────────────────────
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
@@ -102,16 +119,14 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
                                 horizontal: 16),
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius:
-                              BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 width: 1,
                                 color: const Color(0xFFE3E3E9),
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color:
-                                  Colors.black.withOpacity(0.08),
+                                  color: Colors.black.withOpacity(0.08),
                                   blurRadius: 7,
                                   offset: const Offset(0, 4),
                                 ),
@@ -120,16 +135,12 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
                             child: Align(
                               alignment: Alignment.centerLeft,
                               child: Text(
-                                controller.quickSpeakText.value
-                                    .isEmpty
+                                controller.quickSpeakText.value.isEmpty
                                     ? 'Select a Quick Speak...'
-                                    : controller
-                                    .quickSpeakText.value,
+                                    : controller.quickSpeakText.value,
                                 style: GoogleFonts.nunito(
                                   fontSize: 16,
-                                  color: controller
-                                      .quickSpeakText
-                                      .value
+                                  color: controller.quickSpeakText.value
                                       .isEmpty
                                       ? Colors.grey[400]
                                       : Colors.black87,
@@ -147,12 +158,10 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
                             width: 46,
                             decoration: BoxDecoration(
                               color: const Color(0xFF7BC5D3),
-                              borderRadius:
-                              BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                    color: Colors.black
-                                        .withOpacity(0.08),
+                                    color: Colors.black.withOpacity(0.08),
                                     blurRadius: 12,
                                     offset: const Offset(0, 4)),
                               ],
@@ -177,12 +186,10 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
                             width: 46,
                             decoration: BoxDecoration(
                               color: const Color(0xFFE57373),
-                              borderRadius:
-                              BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                    color: Colors.black
-                                        .withOpacity(0.08),
+                                    color: Colors.black.withOpacity(0.08),
                                     blurRadius: 12,
                                     offset: const Offset(0, 4)),
                               ],
@@ -201,32 +208,15 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
                   ),
                 ),
 
-                // ── Quick Speak Header ──────────────────────────────
+                // ── Quick Speak Header ───────────────────────────────────────
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 4,
-                          height: 18,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(2),
-                            color: const Color(0xFFFFC857),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text('Quick Speak',
-                            style: GoogleFonts.nunito(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87)),
-                      ],
-                    ),
+                    child: _SectionHeader(title: 'Quick Speak'),
                   ),
                 ),
 
-                // ── Quick Speak Cards ───────────────────────────────
+                // ── Quick Speak Cards ────────────────────────────────────────
                 controller.quickSpeaks.isEmpty
                     ? SliverToBoxAdapter(
                   child: Padding(
@@ -240,20 +230,17 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
                   child: SizedBox(
                     height: 130,
                     child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       scrollDirection: Axis.horizontal,
                       itemCount: controller.quickSpeaks.length,
                       itemBuilder: (_, i) {
                         final qs = controller.quickSpeaks[i];
                         return Obx(() => _QsCard(
                           qs: qs,
-                          isSelected: controller
-                              .selectedQsId.value ==
-                              qs.id,
+                          isSelected:
+                          controller.selectedQsId.value == qs.id,
                           isPlaying:
-                          controller.playingId.value ==
-                              qs.id,
+                          controller.playingId.value == qs.id,
                           onTap: () =>
                               controller.onQuickSpeakTap(qs),
                           onPlayAudio: qs.speak != null
@@ -266,32 +253,15 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
                   ),
                 ),
 
-                // ── Tap to Talk Header ──────────────────────────────
+                // ── Tap to Talk Header ───────────────────────────────────────
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 4,
-                          height: 18,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(2),
-                            color: const Color(0xFFFFC857),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text('Tap to Talk',
-                            style: GoogleFonts.nunito(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87)),
-                      ],
-                    ),
+                    child: _SectionHeader(title: 'Tap to Talk'),
                   ),
                 ),
 
-                // ── Category Grid ───────────────────────────────────
+                // ── Category Grid ────────────────────────────────────────────
                 controller.categories.isEmpty
                     ? SliverToBoxAdapter(
                   child: Center(
@@ -303,8 +273,8 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
                               size: 60, color: Colors.grey[300]),
                           const SizedBox(height: 12),
                           Text('No categories available',
-                              style: TextStyle(
-                                  color: Colors.grey[500])),
+                              style:
+                              TextStyle(color: Colors.grey[500])),
                         ],
                       ),
                     ),
@@ -319,8 +289,7 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
                         return Obx(() => _CategoryCard(
                           category: cat,
                           isPlaying:
-                          controller.playingId.value ==
-                              cat.id,
+                          controller.playingId.value == cat.id,
                           onTap: () =>
                               controller.onCategoryTap(cat),
                           onPlayAudio: cat.speak != null
@@ -341,11 +310,36 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
                   ),
                 ),
 
+                // ── Explore More Header ──────────────────────────────────────
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+                    child: _SectionHeader(title: 'Explore More'),
+                  ),
+                ),
+
+                // ── Explore More Cards (folder style, same as category) ───────
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                  sliver: SliverGrid(
+                    delegate: SliverChildBuilderDelegate(
+                          (_, i) {
+                        final item = _exploreItems[i];
+                        return _ExploreCard(item: item);
+                      },
+                      childCount: _exploreItems.length,
+                    ),
+                    gridDelegate:
+                    const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 0.82,
+                    ),
+                  ),
+                ),
+
                 const SliverToBoxAdapter(child: SizedBox(height: 80)),
-
-                // ── Activity ───────────────────────────────────
-
-
               ],
             ),
           );
@@ -356,7 +350,111 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-//  QUICK SPEAK CARD — folder shape, horizontal list
+//  EXPLORE MORE CARD — same folder shape as category
+// ════════════════════════════════════════════════════════════════════════════
+
+class _ExploreCard extends StatelessWidget {
+  final _ExploreItem item;
+
+  const _ExploreCard({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Get.toNamed(item.route),
+      child: LayoutBuilder(builder: (context, constraints) {
+        final tabH = constraints.maxHeight * 0.10;
+        final topPad = tabH + 6;
+
+        return CustomPaint(
+          painter: _FolderPainter(
+            cardColor: Colors.white,
+            tabColor: item.color,
+          ),
+          // ✅ Fix: Positioned must be inside a Stack, not directly in CustomPaint
+          child: Stack(
+            children: [
+              Positioned.fill(
+                top: topPad,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: item.color.withOpacity(0.25),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        item.icon,
+                        color: item.color.darken(30),
+                        size: 30,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Text(
+                        item.label,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.nunito(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF1A1A1A),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      }),
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  SECTION HEADER — reusable yellow-bar title
+// ════════════════════════════════════════════════════════════════════════════
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  const _SectionHeader({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 18,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(2),
+            color: const Color(0xFFFFC857),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: GoogleFonts.nunito(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  QUICK SPEAK CARD
 // ════════════════════════════════════════════════════════════════════════════
 
 class _QsCard extends StatelessWidget {
@@ -408,8 +506,7 @@ class _QsCard extends StatelessWidget {
                           imageUrl: imageUrl, size: 50, bgColor: bgColor),
                       const SizedBox(height: 5),
                       Padding(
-                        padding:
-                        const EdgeInsets.symmetric(horizontal: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
                         child: Text(
                           qs.word ?? '',
                           maxLines: 2,
@@ -425,7 +522,6 @@ class _QsCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Audio dot
                 if (qs.speak != null)
                   Positioned(
                     bottom: 5,
@@ -457,7 +553,7 @@ class _QsCard extends StatelessWidget {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-//  CATEGORY CARD — folder shape, grid
+//  CATEGORY CARD
 // ════════════════════════════════════════════════════════════════════════════
 
 class _CategoryCard extends StatelessWidget {
@@ -476,8 +572,7 @@ class _CategoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final imageUrl = AppUrl.mediaUrl(category.imageIcon);
-    final bgColor =
-    _parseColor(category.color, const Color(0xFFB5CFD1));
+    final bgColor = _parseColor(category.color, const Color(0xFFB5CFD1));
 
     return GestureDetector(
       onTap: onTap,
@@ -517,13 +612,11 @@ class _CategoryCard extends StatelessWidget {
                   if (category.subCategoriesCount > 0)
                     Text(
                       '${category.subCategoriesCount} sub',
-                      style:
-                      TextStyle(fontSize: 9, color: Colors.grey[400]),
+                      style: TextStyle(fontSize: 9, color: Colors.grey[400]),
                     ),
                 ],
               ),
             ),
-            // Audio play dot (top-right)
             if (category.speak != null)
               Positioned(
                 top: tabH - 8,
@@ -590,6 +683,22 @@ class _CardImage extends StatelessWidget {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
+//  COLOR EXTENSION
+// ════════════════════════════════════════════════════════════════════════════
+
+extension _ColorX on Color {
+  Color darken(int percent) {
+    final f = 1 - percent / 100;
+    return Color.fromARGB(
+      alpha,
+      (red * f).round(),
+      (green * f).round(),
+      (blue * f).round(),
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
 //  FOLDER SHAPE PAINTER
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -608,8 +717,8 @@ class _FolderPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final radius = 16.0;
-    final topRightRadius = 8.0;
+    const radius = 16.0;
+    const topRightRadius = 8.0;
     final tabWidth = size.width * 0.55;
     final tabHeight = size.height * 0.10;
     final tabSlantWidth = tabHeight * 0.5;
@@ -636,7 +745,7 @@ class _FolderPainter extends CustomPainter {
       ..color = cardColor
       ..style = PaintingStyle.fill);
 
-    // Tab color area
+    // Tab colour area
     final tabPath = Path();
     tabPath.moveTo(0, 0);
     tabPath.lineTo(tabWidth + tabSlantWidth + radius, 0);
@@ -669,7 +778,7 @@ class _FolderPainter extends CustomPainter {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-//  DASHED CIRCLE PAINTER (kept from original)
+//  DASHED CIRCLE PAINTER
 // ════════════════════════════════════════════════════════════════════════════
 
 class DashedCirclePainter extends CustomPainter {

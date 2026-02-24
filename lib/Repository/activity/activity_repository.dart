@@ -1,32 +1,29 @@
 import 'dart:io';
-import 'package:chatter_bee/models/activity/activity_models.dart' show ActivityModel;
+import 'package:chatter_bee/models/activity/activity_models.dart';
 import 'package:chatter_bee/services/api_client.dart';
 import 'package:dio/dio.dart';
 import '../../../config/app_url.dart';
 
-
 class ActivityRepository {
   final ApiClient _apiClient = ApiClient();
 
-  /// Fetch activities list with optional filters
-  /// [days] - number of days to fetch (default 7)
-  /// [limit] - max records (default 50)
-  /// [dateFrom] - start date filter (yyyy-MM-dd)
-  /// [dateTo] - end date filter (yyyy-MM-dd)
+  /// Fetch activities list.
+  /// Bug fix: date_from/date_to পাঠালে API-র days filter conflict করে।
+  /// শুধু [days] পাঠালে সব ঠিকঠাক কাজ করে।
   Future<ApiResponse<List<ActivityModel>>> getActivities({
-    int days = 7,
-    int limit = 50,
-    String? dateFrom,
-    String? dateTo,
+    int days = 30,
+    int limit = 100,
+    String? dateFrom,  // optional — শুধু দরকার হলে পাঠাও
+    String? dateTo,    // optional — শুধু দরকার হলে পাঠাও
   }) async {
     try {
       final queryParams = <String, dynamic>{
         'days': days,
         'limit': limit,
+        // শুধু null না হলেই যোগ করো
+        if (dateFrom != null) 'date_from': dateFrom,
+        if (dateTo != null) 'date_to': dateTo,
       };
-
-      if (dateFrom != null) queryParams['date_from'] = dateFrom;
-      if (dateTo != null) queryParams['date_to'] = dateTo;
 
       final response = await _apiClient.get<dynamic>(
         AppUrl.activities,
@@ -36,12 +33,12 @@ class ActivityRepository {
       if (response.isSuccess && response.data != null) {
         final data = response.data as Map<String, dynamic>;
         final List<dynamic> rawList = data['data'] ?? [];
-        final activities = rawList
+        final activityList = rawList
             .map((e) => ActivityModel.fromJson(e as Map<String, dynamic>))
             .toList();
 
         return ApiResponse.success(
-          data: activities,
+          data: activityList,
           statusCode: response.statusCode,
           message: response.message,
         );
@@ -59,10 +56,7 @@ class ActivityRepository {
     }
   }
 
-  /// Create a new activity
-  /// [activityName] - name of the activity
-  /// [datetime]    - ISO 8601 datetime string (e.g., "2026-02-24T12:00:00Z")
-  /// [imageFile]   - optional image file to upload
+  /// Create a new activity via multipart/form-data POST
   Future<ApiResponse<ActivityModel>> createActivity({
     required String activityName,
     required String datetime,
@@ -109,14 +103,13 @@ class ActivityRepository {
     }
   }
 
-  /// Delete an activity by ID
+  /// Delete an activity by ID (returns 204 No Content on success)
   Future<ApiResponse<bool>> deleteActivity(int activityId) async {
     try {
       final response = await _apiClient.delete<dynamic>(
         AppUrl.activityDelete(activityId),
       );
 
-      // 204 No Content is success for delete
       if (response.statusCode == 204 || response.isSuccess) {
         return ApiResponse.success(
           data: true,

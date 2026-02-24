@@ -3,6 +3,7 @@ import 'package:chatter_bee/models/activity/activity_models.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+
 class ActivitiesController extends GetxController {
   final ActivityRepository _repository = ActivityRepository();
 
@@ -20,27 +21,21 @@ class ActivitiesController extends GetxController {
   }
 
   // ─── Fetch Activities ────────────────────────────────────────────────────────
+  /// Bug fix: date_from/date_to আর days একসাথে দিলে API conflict করে।
+  /// শুধু days=30 দিয়ে সব recent activity আনা হচ্ছে,
+  /// তারপর Flutter side-এ todayActivities filter করা হচ্ছে।
   Future<void> fetchActivities() async {
     isLoading.value = true;
     errorMessage.value = '';
 
     try {
-      final now = DateTime.now();
-      final dateFrom =
-          '${now.year}-${now.month.toString().padLeft(2, '0')}-01';
-      final dateTo =
-          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-
       final response = await _repository.getActivities(
-        days: 7,
-        limit: 50,
-        dateFrom: dateFrom,
-        dateTo: dateTo,
+        days: 30,   // শুধু days পাঠাও, date_from/date_to বাদ
+        limit: 100,
       );
 
       if (response.isSuccess && response.data != null) {
         activities.value = response.data!;
-        // Sort by datetime ascending
         activities.sort((a, b) => a.datetime.compareTo(b.datetime));
       } else {
         errorMessage.value = response.message;
@@ -52,7 +47,25 @@ class ActivitiesController extends GetxController {
     }
   }
 
-  // ─── Add Activity (called from AddActivityScreen result) ─────────────────────
+  // ─── Today's Activities ──────────────────────────────────────────────────────
+  /// Bug fix: API datetime UTC-তে আসে (e.g. "2026-02-24T17:47:00Z"),
+  /// .toLocal() দিয়ে device timezone-এ convert করে তারপর date compare করতে হবে।
+  List<ActivityModel> get todayActivities {
+    final now = DateTime.now();
+    return activities.where((a) {
+      try {
+        // UTC string → local device time
+        final dt = DateTime.parse(a.datetime).toLocal();
+        return dt.year == now.year &&
+            dt.month == now.month &&
+            dt.day == now.day;
+      } catch (_) {
+        return false;
+      }
+    }).toList();
+  }
+
+  // ─── Add Activity (called after returning from AddActivityScreen) ─────────────
   void onActivityAdded(ActivityModel activity) {
     activities.add(activity);
     activities.sort((a, b) => a.datetime.compareTo(b.datetime));
@@ -90,6 +103,30 @@ class ActivitiesController extends GetxController {
     }
   }
 
+  // ─── Navigate to Add Activity ─────────────────────────────────────────────────
+  Future<void> goToAddActivity() async {
+    // Get.toNamed ব্যবহার করলে ActivitiesController delete হয়ে যেতে পারে।
+    // Get.toNamed এর বদলে Get.to() ব্যবহার করছি যাতে controller
+    // route stack-এ থাকা অবস্থায় delete না হয়।
+    final result = await Get.toNamed('/add-activity');
+
+    if (result != null && result is ActivityModel) {
+      // Optimistic add — API থেকে নতুন করে fetch না করেই list-এ যোগ করো
+      onActivityAdded(result);
+      Get.snackbar(
+        'Success',
+        '${result.activityName} added successfully!',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green.shade100,
+        colorText: Colors.green.shade900,
+        duration: const Duration(seconds: 2),
+      );
+    } else if (result == null) {
+      // result না পেলে (e.g. controller recreated হয়ে গেছে) refresh করো
+      fetchActivities();
+    }
+  }
+
   // ─── Confirm Delete Dialog ───────────────────────────────────────────────────
   Future<bool> _showDeleteConfirmation(String name) async {
     final result = await Get.dialog<bool>(
@@ -111,36 +148,5 @@ class ActivitiesController extends GetxController {
       ),
     );
     return result ?? false;
-  }
-
-  // ─── Navigate to Add Activity ─────────────────────────────────────────────────
-  Future<void> goToAddActivity() async {
-    final result = await Get.toNamed('/add-activity');
-    if (result != null && result is ActivityModel) {
-      onActivityAdded(result);
-      Get.snackbar(
-        'Success',
-        '${result.activityName} added successfully!',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green.shade100,
-        colorText: Colors.green.shade900,
-        duration: const Duration(seconds: 2),
-      );
-    }
-  }
-
-  // ─── Today's Activities ──────────────────────────────────────────────────────
-  List<ActivityModel> get todayActivities {
-    final now = DateTime.now();
-    return activities.where((a) {
-      try {
-        final dt = DateTime.parse(a.datetime).toLocal();
-        return dt.year == now.year &&
-            dt.month == now.month &&
-            dt.day == now.day;
-      } catch (_) {
-        return false;
-      }
-    }).toList();
   }
 }
