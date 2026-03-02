@@ -5,6 +5,7 @@ class ActivityModel {
   final String activityName;
   final String datetime;
   final String? imageIcon;
+  final String? status;  // ✅ যোগ করা হয়েছে
   final String createdAt;
   final String updatedAt;
 
@@ -15,6 +16,7 @@ class ActivityModel {
     required this.activityName,
     required this.datetime,
     this.imageIcon,
+    this.status,  // ✅
     required this.createdAt,
     required this.updatedAt,
   });
@@ -27,6 +29,7 @@ class ActivityModel {
       activityName: json['activity_name'] ?? '',
       datetime: json['datetime'] ?? '',
       imageIcon: json['image_icon'],
+      status: json['status'] ?? 'in_progress',  // ✅
       createdAt: json['created_at'] ?? '',
       updatedAt: json['updated_at'] ?? '',
     );
@@ -40,12 +43,12 @@ class ActivityModel {
       'activity_name': activityName,
       'datetime': datetime,
       'image_icon': imageIcon,
+      'status': status,  // ✅
       'created_at': createdAt,
       'updated_at': updatedAt,
     };
   }
 
-  /// Returns formatted time string from datetime (e.g., "8:00 AM")
   String get formattedTime {
     try {
       final dt = DateTime.parse(datetime).toLocal();
@@ -59,7 +62,6 @@ class ActivityModel {
     }
   }
 
-  /// Returns formatted date string (e.g., "Feb 24, 2026")
   String get formattedDate {
     try {
       final dt = DateTime.parse(datetime).toLocal();

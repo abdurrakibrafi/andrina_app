@@ -25,7 +25,6 @@ class CaregiverInvitationController extends GetxController {
     loadSentInvitations();
   }
 
-  // ==================== LOAD CONNECTIONS ====================
   Future<void> loadConnections() async {
     try {
       isLoadingConnections.value = true;
@@ -33,16 +32,11 @@ class CaregiverInvitationController extends GetxController {
 
       if (response.isSuccess && response.data != null) {
         final responseData = response.data!;
-
-        // ✅ FIX: API returns {data: {connections: [...], subscription_info: {...}}}
-        // তাই data.connections থেকে list নিতে হবে
         List<dynamic> rawList = [];
 
         if (responseData['data'] is Map) {
-          // Structure: {data: {connections: [...]}}
           rawList = responseData['data']['connections'] ?? [];
         } else if (responseData['connections'] is List) {
-          // Structure: {connections: [...]}
           rawList = responseData['connections'];
         } else if (responseData['results'] is List) {
           rawList = responseData['results'];
@@ -54,19 +48,14 @@ class CaregiverInvitationController extends GetxController {
             .map((e) => ConnectionModel.fromJson(e as Map<String, dynamic>))
             .toList();
 
-        // Pre-selected communicator mark করা
         final selected = connections.firstWhereOrNull((c) => c.isSelected);
         if (selected != null) selectedConnectionId.value = selected.id;
-        debugPrint('✅ Loaded ${connections.length} connections');
 
-        // connections load শেষে এই ২ লাইন যোগ করো
         final saved = CommunicatorSessionService.to.communicatorId.value;
         if (saved != 0) {
           final c = connections.firstWhereOrNull((c) => c.communicatorId == saved);
           if (c != null) selectedConnectionId.value = c.id;
         }
-
-
       }
     } catch (e) {
       debugPrint('Load connections error: $e');
@@ -75,7 +64,6 @@ class CaregiverInvitationController extends GetxController {
     }
   }
 
-  // ==================== LOAD SENT INVITATIONS ====================
   Future<void> loadSentInvitations() async {
     try {
       isLoadingInvitations.value = true;
@@ -100,8 +88,6 @@ class CaregiverInvitationController extends GetxController {
         sentInvitations.value = rawList
             .map((e) => InvitationModel.fromJson(e as Map<String, dynamic>))
             .toList();
-
-        debugPrint('✅ Loaded ${sentInvitations.length} sent invitations');
       }
     } catch (e) {
       debugPrint('Load sent invitations error: $e');
@@ -110,16 +96,15 @@ class CaregiverInvitationController extends GetxController {
     }
   }
 
-  // ==================== SEND INVITATION ====================
   Future<void> sendInvitation() async {
     final email = emailController.text.trim();
     if (email.isEmpty) {
-      Get.snackbar('Error', 'Please enter communicator\'s email',
+      Get.snackbar('error'.tr, 'enter_email'.tr,  // ✅
           snackPosition: SnackPosition.BOTTOM);
       return;
     }
     if (!GetUtils.isEmail(email)) {
-      Get.snackbar('Error', 'Please enter a valid email address',
+      Get.snackbar('error'.tr, 'valid_email'.tr,  // ✅
           snackPosition: SnackPosition.BOTTOM);
       return;
     }
@@ -130,39 +115,35 @@ class CaregiverInvitationController extends GetxController {
 
       if (response.isSuccess) {
         emailController.clear();
-        Get.back(); // close bottom sheet
+        Get.back();
         Get.snackbar(
-          'Invitation Sent! 🎉',
-          'An invitation has been sent to $email',
+          'invitation_sent_title'.tr,  // ✅
+          '${'invitation_sent_msg'.tr} $email',  // ✅
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: const Color(0xFFE8F5E9),
           duration: const Duration(seconds: 3),
         );
         await loadSentInvitations();
       } else {
-        // ✅ FIX: 400 error এর actual message দেখাও
-        // errors field এ detail থাকতে পারে
         String errorMsg = response.message;
         if (response.errors != null && response.errors!.isNotEmpty) {
           final firstError = response.errors!.values.first;
-          if (firstError is List && firstError.isNotEmpty) {
-            errorMsg = firstError.first.toString();
-          } else {
-            errorMsg = firstError.toString();
-          }
+          errorMsg = firstError is List
+              ? firstError.first.toString()
+              : firstError.toString();
         }
-        Get.snackbar('Error', errorMsg, snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar('error'.tr, errorMsg,  // ✅
+            snackPosition: SnackPosition.BOTTOM);
       }
     } catch (e) {
       debugPrint('Send invitation error: $e');
-      Get.snackbar('Error', 'Something went wrong. Please try again.',
+      Get.snackbar('error'.tr, 'profile_update_failed'.tr,  // ✅
           snackPosition: SnackPosition.BOTTOM);
     } finally {
       isSendingInvitation.value = false;
     }
   }
 
-  // ==================== SELECT COMMUNICATOR ====================
   Future<void> selectCommunicator(ConnectionModel connection) async {
     if (selectedConnectionId.value == connection.id) return;
 
@@ -173,43 +154,45 @@ class CaregiverInvitationController extends GetxController {
       );
       if (response.isSuccess) {
         selectedConnectionId.value = connection.id;
-
-        // save in communicator session
         await CommunicatorSessionService.to.setSelected(
           connection.communicatorId,
           connection.communicatorName,
         );
-
         Get.snackbar(
-          'Switched!',
-          'Now viewing ${connection.communicatorName}\'s profile',
+          'switched'.tr,  // ✅
+          '${'now_viewing'.tr} ${connection.communicatorName}${'profile_suffix'.tr}',  // ✅
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: const Color(0xFFE8F5E9),
         );
       } else {
-        Get.snackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar('error'.tr, response.message,  // ✅
+            snackPosition: SnackPosition.BOTTOM);
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to switch profile. Try again.',
+      Get.snackbar('error'.tr, 'failed_switch'.tr,  // ✅
           snackPosition: SnackPosition.BOTTOM);
     } finally {
       isSwitchingTo.value = -1;
     }
   }
 
-  // ==================== DISCONNECT ====================
   Future<void> disconnectCommunicator(ConnectionModel connection) async {
     final confirmed = await Get.dialog<bool>(
       AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Disconnect?'),
-        content:
-        Text('Are you sure you want to disconnect from ${connection.communicatorName}?'),
+        title: Text('disconnect_confirm_title'.tr),  // ✅
+        content: Text(
+          '${'disconnect_confirm_msg'.tr} ${connection.communicatorName}?',  // ✅
+        ),
         actions: [
-          TextButton(onPressed: () => Get.back(result: false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: Text('cancel'.tr),  // ✅
+          ),
           TextButton(
             onPressed: () => Get.back(result: true),
-            child: const Text('Disconnect', style: TextStyle(color: Colors.red)),
+            child: Text('disconnect'.tr,  // ✅
+                style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -218,22 +201,28 @@ class CaregiverInvitationController extends GetxController {
     if (confirmed != true) return;
 
     try {
-      final response = await _repo.disconnectProfile(connectionId: connection.id);
+      final response =
+      await _repo.disconnectProfile(connectionId: connection.id);
       if (response.isSuccess) {
         connections.removeWhere((c) => c.id == connection.id);
-        if (selectedConnectionId.value == connection.id) selectedConnectionId.value = -1;
-        Get.snackbar('Disconnected', '${connection.communicatorName} has been disconnected.',
-            snackPosition: SnackPosition.BOTTOM);
+        if (selectedConnectionId.value == connection.id) {
+          selectedConnectionId.value = -1;
+        }
+        Get.snackbar(
+          'disconnected'.tr,  // ✅
+          '${connection.communicatorName} ${'has_been_disconnected'.tr}',  // ✅
+          snackPosition: SnackPosition.BOTTOM,
+        );
       } else {
-        Get.snackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar('error'.tr, response.message,  // ✅
+            snackPosition: SnackPosition.BOTTOM);
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to disconnect. Try again.',
+      Get.snackbar('error'.tr, 'failed_disconnect'.tr,  // ✅
           snackPosition: SnackPosition.BOTTOM);
     }
   }
 
-  // ==================== SHOW INVITE DIALOG ====================
   void showInviteDialog() {
     emailController.clear();
     Get.bottomSheet(
@@ -257,15 +246,17 @@ class CaregiverInvitationController extends GetxController {
               child: Container(
                 width: 40, height: 4,
                 decoration: BoxDecoration(
-                    color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2)),
               ),
             ),
             const SizedBox(height: 20),
-            const Text('Invite Communicator',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+            Text('invite_communicator'.tr,  // ✅
+                style: const TextStyle(
+                    fontSize: 18, fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
             Text(
-              'Enter the email address of the communicator you want to connect with.',
+              'invite_communicator_hint'.tr,  // ✅
               style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
             const SizedBox(height: 20),
@@ -286,7 +277,8 @@ class CaregiverInvitationController extends GetxController {
                     borderSide: BorderSide(color: Colors.grey[300]!)),
                 focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFFFC857), width: 1.5)),
+                    borderSide: const BorderSide(
+                        color: Color(0xFFFFC857), width: 1.5)),
               ),
             ),
             const SizedBox(height: 20),
@@ -294,19 +286,24 @@ class CaregiverInvitationController extends GetxController {
               width: double.infinity,
               height: 48,
               child: ElevatedButton(
-                onPressed: isSendingInvitation.value ? null : sendInvitation,
+                onPressed:
+                isSendingInvitation.value ? null : sendInvitation,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFFFC857),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                   elevation: 0,
                 ),
                 child: isSendingInvitation.value
                     ? const SizedBox(
                     width: 20, height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                    : const Text('Send Invitation',
-                    style: TextStyle(
-                        color: Colors.black, fontWeight: FontWeight.w700, fontSize: 16)),
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.black))
+                    : Text('send_invitation'.tr,  // ✅
+                    style: const TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16)),
               ),
             )),
           ],

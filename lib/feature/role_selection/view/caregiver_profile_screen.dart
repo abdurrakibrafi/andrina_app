@@ -27,7 +27,7 @@ class CaregiverProfileScreen extends GetView<CaregiverProfileController> {
         backgroundColor: AppColors.bgColor,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: Text('Profile Setup',
+        title: Text('profile_setup'.tr,
             style: GoogleFonts.nunito(color: Colors.black, fontSize: 18, fontWeight: FontWeight.w600)),
       ),
       body: Obx(() {
@@ -74,7 +74,7 @@ class CaregiverProfileScreen extends GetView<CaregiverProfileController> {
                 const SizedBox(height: 30),
 
                 // ── Full Name ──
-                Text('Full Name',
+                Text('full_name'.tr,
                     style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black)),
                 const SizedBox(height: 6),
                 SizedBox(
@@ -82,7 +82,7 @@ class CaregiverProfileScreen extends GetView<CaregiverProfileController> {
                   child: TextField(
                     controller: controller.fullNameController,
                     decoration: InputDecoration(
-                      hintText: 'Enter your full name',
+                      hintText: 'enter_full_name'.tr,
                       prefixIcon: Padding(
                         padding: const EdgeInsets.all(12.0),
                         child: SvgPicture.asset(ImagesLink.parsonIcon, width: 20, height: 20),
@@ -97,41 +97,20 @@ class CaregiverProfileScreen extends GetView<CaregiverProfileController> {
                 ),
                 const SizedBox(height: 20),
 
-                // ── Language ──
-                Text('Language',
-                    style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black)),
-                const SizedBox(height: 6),
-                Obx(() => Container(
-                  height: 48,
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[300]!)),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: controller.selectedLanguage.value,
-                      isExpanded: true,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      icon: const Icon(Icons.keyboard_arrow_down),
-                      items: controller.languages.map((lang) => DropdownMenuItem(
-                        value: lang,
-                        child: Row(children: [SvgPicture.asset(ImagesLink.language), const SizedBox(width: 12), Text(lang)]),
-                      )).toList(),
-                      onChanged: (v) { if (v != null) controller.selectLanguage(v); },
-                    ),
-                  ),
-                )),
-                const SizedBox(height: 20),
+
 
                 // ── Buddy Bee Mode ──
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Buddy Bee Mode', style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.w600)),
+                    Text('buddy_bee_mode'.tr, style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.w600)),
                     Obx(() => CustomSwitch(
                       value: controller.isBuddyBeeMode.value,
                       onChanged: (val) { controller.isBuddyBeeMode.value = val; controller.toggleBuddyBeeMode(val); },
                     )),
                   ],
                 ),
-                Text('Toggle ON for a child-friendly, colorful\nversion. Toggle OFF for a plain adult version.',
+                Text('buddy_bee_desc'.tr,
                     style: GoogleFonts.nunito(fontSize: 14, color: const Color(0xFF636F85))),
                 const SizedBox(height: 20),
 
@@ -140,7 +119,7 @@ class CaregiverProfileScreen extends GetView<CaregiverProfileController> {
                   onTap: () => Get.toNamed(AppRoutes.CAREGIVER_CONNECTIONS),
                   child: Row(
                     children: [
-                      Text('Linked Accounts', style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.w600)),
+                      Text('linked_accounts'.tr, style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.w600)),
                       const SizedBox(width: 8),
                       Text('( Communicator )', style: GoogleFonts.nunito(fontSize: 14, color: const Color(0xFF636F85))),
                       const Spacer(),
@@ -270,7 +249,7 @@ class CaregiverProfileScreen extends GetView<CaregiverProfileController> {
                 const SizedBox(height: 20),
 
                 // ── Voice Type Grid ──
-                Text('Voice Type', style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.w600)),
+                Text('voice_type'.tr, style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 12),
                 GridView.builder(
                   shrinkWrap: true,
@@ -299,7 +278,7 @@ class CaregiverProfileScreen extends GetView<CaregiverProfileController> {
                                       isSelected ? AppColors.primaryColor : Colors.black,
                                       BlendMode.srcIn)),
                               const SizedBox(width: 8),
-                              Flexible(child: Text(voiceType['type'],
+                              Flexible(child: Text(voiceType['type'].toString().tr,
                                   style: TextStyle(
                                       color: isSelected ? AppColors.primaryColor : Colors.black,
                                       fontWeight: FontWeight.w500),
@@ -316,9 +295,9 @@ class CaregiverProfileScreen extends GetView<CaregiverProfileController> {
                 Center(
                   child: TextButton.icon(
                     onPressed: () => Get.snackbar('Preview', 'Voice preview would play here',
-                        snackPosition: SnackPosition.BOTTOM),
+                        snackPosition: SnackPosition.TOP),
                     icon: SvgPicture.asset(ImagesLink.voiceIcon),
-                    label: Text('Preview Voice',
+                    label: Text('preview_voice'.tr,
                         style: GoogleFonts.nunito(
                             color: AppColors.primaryColor, fontWeight: FontWeight.w700, fontSize: 18)),
                   ),
@@ -328,7 +307,7 @@ class CaregiverProfileScreen extends GetView<CaregiverProfileController> {
                     onPressed: () => Get.snackbar('Upload', 'Voice upload functionality',
                         snackPosition: SnackPosition.BOTTOM),
                     icon: SvgPicture.asset(ImagesLink.voiceMic),
-                    label: Text('Upload a Voice',
+                    label: Text('upload_voice'.tr,
                         style: GoogleFonts.nunito(
                             color: const Color(0xFFb5cfd1), fontWeight: FontWeight.w700, fontSize: 18)),
                   ),
@@ -352,7 +331,7 @@ class CaregiverProfileScreen extends GetView<CaregiverProfileController> {
                         child: CircularProgressIndicator(
                             strokeWidth: 2,
                             valueColor: AlwaysStoppedAnimation(Colors.black)))
-                        : Text('Continue',
+                        : Text('continue_btn'.tr,
                         style: GoogleFonts.nunito(
                             color: Colors.black, fontSize: 16, fontWeight: FontWeight.w700)),
                   ),

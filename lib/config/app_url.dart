@@ -1,7 +1,7 @@
 // lib/config/app_url.dart
 
 class AppUrl {
-  static const String baseUrl = 'https://solve-lined-worker-guards.trycloudflare.com';
+  static const String baseUrl = 'https://wrist-reviews-boulevard-hamilton.trycloudflare.com';
 
   // ==================== AUTH ====================
   static const String login = '$baseUrl/api/auth/login/';
@@ -74,6 +74,8 @@ class AppUrl {
     static const String activities       = '/api/activity/activities/';
     static const String activitiesCreate = '/api/activity/activities/create/';
      static String activityDelete(int id) => '/api/activity/activities/$id/delete/';
+     static String activityUpdate(int id) => '/api/activity/activities/$id/update/';
+
 
   // ==================== MEDIA ====================
   // Converts relative path to full URL for image/audio from API

@@ -4,74 +4,39 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class SubscriptionController extends GetxController {
-  // Observable for selected plan
   var selectedPlan = 'free'.obs;
-
-  // Observable for selected payment method
   var selectedPaymentMethod = ''.obs;
 
-  // Plan prices
   final double freePlanPrice = 0.00;
   final double proPlanPrice = 2.99;
 
-  // Payment methods list
   final List<Map<String, String>> paymentMethods = [
-    {
-      'type': 'card',
-      'number': '**** **** **** 0561',
-      'icon': 'mastercard', // You can use your own icon
-    },
-    {
-      'type': 'card',
-      'number': '**** **** **** 1234',
-      'icon': 'visa',
-    },
+    {'type': 'card', 'number': '**** **** **** 0561', 'icon': 'mastercard'},
+    {'type': 'card', 'number': '**** **** **** 1234', 'icon': 'visa'},
   ];
 
-  // Method to select a plan
-  void selectPlan(String plan) {
-    selectedPlan.value = plan;
-  }
+  void selectPlan(String plan) => selectedPlan.value = plan;
+  bool isPlanSelected(String plan) => selectedPlan.value == plan;
+  double getCurrentPlanPrice() =>
+      selectedPlan.value == 'free' ? freePlanPrice : proPlanPrice;
+  void selectPaymentMethod(String method) =>
+      selectedPaymentMethod.value = method;
+  bool isPaymentMethodSelected(String method) =>
+      selectedPaymentMethod.value == method;
 
-  // Method to check if a plan is selected
-  bool isPlanSelected(String plan) {
-    return selectedPlan.value == plan;
-  }
-
-  // Method to get current plan price
-  double getCurrentPlanPrice() {
-    return selectedPlan.value == 'free' ? freePlanPrice : proPlanPrice;
-  }
-
-  // Method to select payment method
-  void selectPaymentMethod(String method) {
-    selectedPaymentMethod.value = method;
-  }
-
-  // Method to check if payment method is selected
-  bool isPaymentMethodSelected(String method) {
-    return selectedPaymentMethod.value == method;
-  }
-
-  // Method to handle continue button
   void onContinuePressed() {
     if (selectedPlan.value == 'pro') {
-      // Show payment method bottom sheet
       _showPaymentMethodBottomSheet();
     } else {
-      // Continue with free plan
       Get.snackbar(
-        'Free Plan',
-        'You are using the free plan',
+        'free_plan_title'.tr, 'free_plan_msg'.tr,  // ✅
         snackPosition: SnackPosition.BOTTOM,
       );
       Get.back();
     }
   }
 
-  // Show Payment Method Bottom Sheet
   void _showPaymentMethodBottomSheet() {
-    // Reset selected payment method
     selectedPaymentMethod.value = paymentMethods[0]['number']!;
 
     Get.bottomSheet(
@@ -89,33 +54,29 @@ class SubscriptionController extends GetxController {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Header
                 Text(
-                  'Payment Method',
+                  'payment_method'.tr,  // ✅
                   style: GoogleFonts.nunito(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black,
-                  ),
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black),
                 ),
                 const SizedBox(height: 24),
-
-                // Payment Methods List
-                ...paymentMethods.map((method) => Obx(() => _buildPaymentMethodCard(
-                  cardNumber: method['number']!,
-                  isSelected: isPaymentMethodSelected(method['number']!),
-                  onTap: () => selectPaymentMethod(method['number']!),
-                ))),
-
+                ...paymentMethods.map((method) => Obx(() =>
+                    _buildPaymentMethodCard(
+                      cardNumber: method['number']!,
+                      isSelected:
+                      isPaymentMethodSelected(method['number']!),
+                      onTap: () =>
+                          selectPaymentMethod(method['number']!),
+                    ))),
                 const SizedBox(height: 24),
-
-                // Confirm and Pay Button
                 SizedBox(
                   width: double.infinity,
                   height: 48,
                   child: ElevatedButton(
                     onPressed: () {
-                      Get.back(); // Close payment method sheet
+                      Get.back();
                       _showPaymentSuccessBottomSheet();
                     },
                     style: ElevatedButton.styleFrom(
@@ -123,15 +84,12 @@ class SubscriptionController extends GetxController {
                       foregroundColor: Colors.black,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                     child: Text(
-                      'Confirm and Pay',
+                      'confirm_and_pay'.tr,  // ✅
                       style: GoogleFonts.nunito(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
+                          fontSize: 16, fontWeight: FontWeight.w700),
                     ),
                   ),
                 ),
@@ -146,7 +104,6 @@ class SubscriptionController extends GetxController {
     );
   }
 
-  // Build Payment Method Card
   Widget _buildPaymentMethodCard({
     required String cardNumber,
     required bool isSelected,
@@ -162,82 +119,68 @@ class SubscriptionController extends GetxController {
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected ? const Color(0xFFFFC107) : Colors.grey.shade300,
-              width: 1,
+              color: isSelected
+                  ? const Color(0xFFFFC107)
+                  : Colors.grey.shade300,
             ),
           ),
           child: Row(
             children: [
-              // Mastercard Icon
               Container(
-                width: 40,
-                height: 26,
+                width: 40, height: 26,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(4),
-                ),
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(4)),
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
                     Positioned(
                       left: 10,
                       child: Container(
-                        width: 12,
-                        height: 12,
+                        width: 12, height: 12,
                         decoration: const BoxDecoration(
-                          color: Color(0xFFEB001B),
-                          shape: BoxShape.circle,
-                        ),
+                            color: Color(0xFFEB001B),
+                            shape: BoxShape.circle),
                       ),
                     ),
                     Positioned(
                       right: 10,
                       child: Container(
-                        width: 12,
-                        height: 12,
+                        width: 12, height: 12,
                         decoration: const BoxDecoration(
-                          color: Color(0xFFF79E1B),
-                          shape: BoxShape.circle,
-                        ),
+                            color: Color(0xFFF79E1B),
+                            shape: BoxShape.circle),
                       ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 12),
-
-              // Card Number
               Expanded(
-                child: Text(
-                  cardNumber,
-                  style: GoogleFonts.nunito(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                  ),
-                ),
+                child: Text(cardNumber,
+                    style: GoogleFonts.nunito(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black)),
               ),
-
-              // Radio Button
               Container(
-                width: 20,
-                height: 20,
+                width: 20, height: 20,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: isSelected ? const Color(0xFFFFC107) : Colors.grey[400]!,
+                    color: isSelected
+                        ? const Color(0xFFFFC107)
+                        : Colors.grey[400]!,
                     width: 2,
                   ),
                 ),
                 child: isSelected
                     ? Center(
                   child: Container(
-                    width: 10,
-                    height: 10,
+                    width: 10, height: 10,
                     decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Color(0xFFFFC107),
-                    ),
+                        shape: BoxShape.circle,
+                        color: Color(0xFFFFC107)),
                   ),
                 )
                     : null,
@@ -249,7 +192,6 @@ class SubscriptionController extends GetxController {
     );
   }
 
-  // Show Payment Success Bottom Sheet
   void _showPaymentSuccessBottomSheet() {
     Get.bottomSheet(
       Container(
@@ -266,69 +208,54 @@ class SubscriptionController extends GetxController {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Success Icon
                 Container(
-                  width: 80,
-                  height: 80,
+                  width: 80, height: 80,
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFC107).withOpacity(0.2),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.credit_card,
-                    color: Color(0xFFFFC107),
-                    size: 40,
-                  ),
+                  child: const Icon(Icons.credit_card,
+                      color: Color(0xFFFFC107), size: 40),
                 ),
                 const SizedBox(height: 24),
-
-                // Success Message
                 Text(
-                  'Payment\nSuccessfully',
+                  'payment_success'.tr,  // ✅
                   textAlign: TextAlign.center,
                   style: GoogleFonts.nunito(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black,
-                    height: 1.2,
-                  ),
+                      fontSize: 28,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black,
+                      height: 1.2),
                 ),
                 const SizedBox(height: 12),
-
                 Text(
-                  'Your payment has been done\nsuccessfully.',
+                  'payment_success_desc'.tr,  // ✅
                   textAlign: TextAlign.center,
                   style: GoogleFonts.nunito(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                    height: 1.5,
-                  ),
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                      height: 1.5),
                 ),
                 const SizedBox(height: 32),
-
-                // Done Button
                 SizedBox(
                   width: double.infinity,
                   height: 48,
                   child: ElevatedButton(
                     onPressed: () {
-                      Get.back(); // Close success sheet
-                      Get.back(); // Go back to previous screen
+                      Get.back();
+                      Get.back();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryColor,
                       foregroundColor: Colors.black,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                     child: Text(
-                      'Done',
+                      'done'.tr,  // ✅
                       style: GoogleFonts.nunito(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
+                          fontSize: 16, fontWeight: FontWeight.w700),
                     ),
                   ),
                 ),
@@ -346,7 +273,6 @@ class SubscriptionController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Initialize with free plan selected
     selectedPlan.value = 'free';
   }
 }

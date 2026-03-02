@@ -7,22 +7,23 @@ import '../../../config/app_url.dart';
 class ActivityRepository {
   final ApiClient _apiClient = ApiClient();
 
-  /// Fetch activities list.
-  /// Bug fix: date_from/date_to পাঠালে API-র days filter conflict করে।
-  /// শুধু [days] পাঠালে সব ঠিকঠাক কাজ করে।
+  // ─── List Activities ──────────────────────────────────────────────────────
   Future<ApiResponse<List<ActivityModel>>> getActivities({
     int days = 30,
     int limit = 100,
-    String? dateFrom,  // optional — শুধু দরকার হলে পাঠাও
-    String? dateTo,    // optional — শুধু দরকার হলে পাঠাও
+    String? status,   // 'done' | 'hold' | 'in_progress'
+    String? dateFrom,
+    String? dateTo,
+    String? ordering, // e.g. '-datetime'
   }) async {
     try {
       final queryParams = <String, dynamic>{
         'days': days,
         'limit': limit,
-        // শুধু null না হলেই যোগ করো
-        if (dateFrom != null) 'date_from': dateFrom,
-        if (dateTo != null) 'date_to': dateTo,
+        if (status != null) 'status': status,
+        if (dateFrom != null) 'from': dateFrom,
+        if (dateTo != null) 'to': dateTo,
+        if (ordering != null) 'ordering': ordering,
       };
 
       final response = await _apiClient.get<dynamic>(
@@ -33,12 +34,10 @@ class ActivityRepository {
       if (response.isSuccess && response.data != null) {
         final data = response.data as Map<String, dynamic>;
         final List<dynamic> rawList = data['data'] ?? [];
-        final activityList = rawList
-            .map((e) => ActivityModel.fromJson(e as Map<String, dynamic>))
-            .toList();
-
         return ApiResponse.success(
-          data: activityList,
+          data: rawList
+              .map((e) => ActivityModel.fromJson(e as Map<String, dynamic>))
+              .toList(),
           statusCode: response.statusCode,
           message: response.message,
         );
@@ -56,16 +55,18 @@ class ActivityRepository {
     }
   }
 
-  /// Create a new activity via multipart/form-data POST
+  // ─── Create Activity ──────────────────────────────────────────────────────
   Future<ApiResponse<ActivityModel>> createActivity({
     required String activityName,
     required String datetime,
     File? imageFile,
+    String status = 'in_progress',
   }) async {
     try {
       final formData = FormData.fromMap({
         'activity_name': activityName,
         'datetime': datetime,
+        'status': status,
         if (imageFile != null)
           'image_icon': await MultipartFile.fromFile(
             imageFile.path,
@@ -80,12 +81,9 @@ class ActivityRepository {
 
       if (response.isSuccess && response.data != null) {
         final data = response.data as Map<String, dynamic>;
-        final activity = ActivityModel.fromJson(
-          data['data'] as Map<String, dynamic>,
-        );
-
         return ApiResponse.success(
-          data: activity,
+          data: ActivityModel.fromJson(
+              data['data'] as Map<String, dynamic>),
           statusCode: response.statusCode,
           message: response.message,
         );
@@ -103,7 +101,56 @@ class ActivityRepository {
     }
   }
 
-  /// Delete an activity by ID (returns 204 No Content on success)
+  // ─── Update Activity (PATCH) ──────────────────────────────────────────────
+  Future<ApiResponse<ActivityModel>> updateActivity({
+    required int activityId,
+    String? activityName,
+    String? datetime,
+    String? status,
+    File? imageFile,
+  }) async {
+    try {
+      final map = <String, dynamic>{};
+      if (activityName != null) map['activity_name'] = activityName;
+      if (datetime != null) map['datetime'] = datetime;
+      if (status != null) map['status'] = status;
+      if (imageFile != null) {
+        map['image_icon'] = await MultipartFile.fromFile(
+          imageFile.path,
+          filename: imageFile.path.split('/').last,
+        );
+      }
+
+      final formData = FormData.fromMap(map);
+
+      final response = await _apiClient.multipartPut<dynamic>(
+        AppUrl.activityUpdate(activityId),
+        formData: formData,
+      );
+
+      if (response.isSuccess && response.data != null) {
+        final data = response.data as Map<String, dynamic>;
+        return ApiResponse.success(
+          data: ActivityModel.fromJson(
+              (data['data'] ?? data) as Map<String, dynamic>),
+          statusCode: response.statusCode,
+          message: response.message,
+        );
+      }
+
+      return ApiResponse.error(
+        statusCode: response.statusCode,
+        message: response.message,
+      );
+    } catch (e) {
+      return ApiResponse.error(
+        statusCode: 500,
+        message: 'Failed to update activity: $e',
+      );
+    }
+  }
+
+  // ─── Delete Activity ──────────────────────────────────────────────────────
   Future<ApiResponse<bool>> deleteActivity(int activityId) async {
     try {
       final response = await _apiClient.delete<dynamic>(

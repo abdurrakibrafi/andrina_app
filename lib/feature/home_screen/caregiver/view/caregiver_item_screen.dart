@@ -6,7 +6,6 @@ import 'package:chatter_bee/feature/home_screen/caregiver/controller/caregiver_i
 import 'package:chatter_bee/models/caregiver_models/caregiver_content_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class CaregiverItemScreen extends StatelessWidget {
   const CaregiverItemScreen({super.key});
@@ -48,7 +47,9 @@ class CaregiverItemScreen extends StatelessWidget {
                   border: Border.all(color: const Color(0xFFFFC857)),
                 ),
                 child: Text(
-                  controller.isEditMode.value ? 'Done' : 'Edit',
+                  controller.isEditMode.value
+                      ? 'done'.tr
+                      : 'edit'.tr,
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
@@ -82,8 +83,8 @@ class CaregiverItemScreen extends StatelessWidget {
       body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(
-              child:
-              CircularProgressIndicator(color: Color(0xFFFFC857)));
+              child: CircularProgressIndicator(
+                  color: Color(0xFFFFC857)));
         }
 
         if (controller.items.isEmpty) {
@@ -94,15 +95,17 @@ class CaregiverItemScreen extends StatelessWidget {
                 Icon(Icons.touch_app_outlined,
                     size: 64, color: Colors.grey[300]),
                 const SizedBox(height: 12),
-                Text('No items yet',
-                    style: TextStyle(
-                        color: Colors.grey[500], fontSize: 15)),
+                Text(
+                  'no_items_yet'.tr,
+                  style: TextStyle(
+                      color: Colors.grey[500], fontSize: 15),
+                ),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   onPressed: controller.showAddSheet,
                   icon: const Icon(Icons.add, color: Colors.black),
-                  label: const Text('Add Item',
-                      style: TextStyle(color: Colors.black)),
+                  label: Text('add_item'.tr,
+                      style: const TextStyle(color: Colors.black)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFFFC857),
                     shape: RoundedRectangleBorder(
@@ -210,7 +213,6 @@ void _showItemDialog(BuildContext context,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Image
                       Container(
                         width: 100,
                         height: 100,
@@ -242,14 +244,15 @@ void _showItemDialog(BuildContext context,
                             color: Color(0xFF1A1A1A)),
                       ),
                       const SizedBox(height: 20),
-                      // Play button
                       GestureDetector(
                         onTap: () async {
                           if (!hasAudio) {
                             Navigator.of(ctx).pop();
-                            Get.snackbar('No Audio',
-                                'This item has no audio',
-                                snackPosition: SnackPosition.BOTTOM);
+                            Get.snackbar(
+                              'no_audio_title'.tr,
+                              'item_has_no_audio'.tr,
+                              snackPosition: SnackPosition.BOTTOM,
+                            );
                             return;
                           }
                           await controller.playItemAudio(item);
@@ -259,12 +262,15 @@ void _showItemDialog(BuildContext context,
                           width: 64,
                           height: 64,
                           decoration: BoxDecoration(
-                            color: hasAudio ? bgColor : Colors.grey[300],
+                            color: hasAudio
+                                ? bgColor
+                                : Colors.grey[300],
                             shape: BoxShape.circle,
                             boxShadow: hasAudio
                                 ? [
                               BoxShadow(
-                                  color: bgColor.withOpacity(0.5),
+                                  color:
+                                  bgColor.withOpacity(0.5),
                                   blurRadius: 14,
                                   spreadRadius: 2)
                             ]
@@ -281,7 +287,9 @@ void _showItemDialog(BuildContext context,
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        hasAudio ? 'Tap to speak' : 'No audio',
+                        hasAudio
+                            ? 'tap_to_speak'.tr
+                            : 'no_audio'.tr,
                         style: TextStyle(
                             fontSize: 12, color: Colors.grey[500]),
                       ),
@@ -298,7 +306,7 @@ void _showItemDialog(BuildContext context,
 }
 
 // ════════════════════════════════════════════════════════════════
-//  ITEM CARD — Image-2 style (centered image + centered text)
+//  ITEM CARD
 // ════════════════════════════════════════════════════════════════
 
 class _ItemCard extends StatelessWidget {
@@ -338,7 +346,6 @@ class _ItemCard extends StatelessWidget {
             ? (Matrix4.identity()..scale(0.96))
             : Matrix4.identity(),
         decoration: BoxDecoration(
-          // ✅ Background color from API
           color: isSelected
               ? bgColor.withOpacity(0.3)
               : bgColor.withOpacity(0.15),
@@ -360,13 +367,11 @@ class _ItemCard extends StatelessWidget {
           ],
         ),
         child: Stack(children: [
-          // ── Main content (centered) ──────────────────────────
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 4),
-              // Image (centered)
               Center(
                 child: isPlaying && !isEditMode
                     ? Container(
@@ -382,7 +387,6 @@ class _ItemCard extends StatelessWidget {
                     : _buildImage(imageUrl, bgColor),
               ),
               const SizedBox(height: 8),
-              // Word (centered)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 6),
                 child: Text(
@@ -397,7 +401,6 @@ class _ItemCard extends StatelessWidget {
                   ),
                 ),
               ),
-              // Audio dot indicator
               if (item.speak != null && !isEditMode)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
@@ -414,8 +417,6 @@ class _ItemCard extends StatelessWidget {
                 ),
             ],
           ),
-
-          // ── Edit pencil ──────────────────────────────────────
           if (isEditMode)
             Positioned(
               top: 6,
@@ -425,14 +426,13 @@ class _ItemCard extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: const BoxDecoration(
-                      color: Color(0xFFFFC857), shape: BoxShape.circle),
+                      color: Color(0xFFFFC857),
+                      shape: BoxShape.circle),
                   child: const Icon(Icons.edit,
                       size: 12, color: Colors.black),
                 ),
               ),
             ),
-
-          // ── Selected checkmark ───────────────────────────────
           if (isSelected)
             const Positioned(
               top: 6,
@@ -457,13 +457,15 @@ class _ItemCard extends StatelessWidget {
           height: size,
           decoration: BoxDecoration(
               shape: BoxShape.circle,
-              image: DecorationImage(image: img, fit: BoxFit.cover)),
+              image:
+              DecorationImage(image: img, fit: BoxFit.cover)),
         ),
         placeholder: (_, __) => Container(
           width: size,
           height: size,
           decoration: BoxDecoration(
-              shape: BoxShape.circle, color: bgColor.withOpacity(0.2)),
+              shape: BoxShape.circle,
+              color: bgColor.withOpacity(0.2)),
         ),
         errorWidget: (_, __, ___) => _placeholder(size, bgColor),
       );

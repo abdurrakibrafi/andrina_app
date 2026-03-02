@@ -3,7 +3,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chatter_bee/config/app_url.dart';
 import 'package:chatter_bee/feature/home_screen/communicator/contoller/communicator_sub_category_controller.dart';
-//import 'package:chatter_bee/feature/home_screen/communicator/controller/communicator_sub_category_controller.dart';
 import 'package:chatter_bee/models/communicator_models/communicator_content_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -50,9 +49,11 @@ class CommunicatorSubCategoryScreen
                 Icon(Icons.folder_open_outlined,
                     size: 64, color: Colors.grey[300]),
                 const SizedBox(height: 12),
-                Text('No sub-categories available',
-                    style: TextStyle(
-                        color: Colors.grey[500], fontSize: 15)),
+                Text(
+                  'no_sub_categories_available'.tr,
+                  style:
+                  TextStyle(color: Colors.grey[500], fontSize: 15),
+                ),
               ],
             ),
           );
@@ -86,7 +87,7 @@ class CommunicatorSubCategoryScreen
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-//  SUB-CATEGORY CARD — same folder shape
+//  SUB-CATEGORY CARD
 // ════════════════════════════════════════════════════════════════════════════
 
 class _SubCategoryCard extends StatelessWidget {
@@ -125,8 +126,7 @@ class _SubCategoryCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  _CardImage(
-                      imageUrl: imageUrl, size: 56, bgColor: bgColor),
+                  _CardImage(imageUrl: imageUrl, size: 56, bgColor: bgColor),
                   const SizedBox(height: 6),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -143,13 +143,14 @@ class _SubCategoryCard extends StatelessWidget {
                     ),
                   ),
                   if (sub.itemsCount > 0)
-                    Text('${sub.itemsCount} items',
-                        style: TextStyle(
-                            fontSize: 9, color: Colors.grey[400])),
+                    Text(
+                      '${sub.itemsCount} ${'items_count_suffix'.tr}',
+                      style: TextStyle(
+                          fontSize: 9, color: Colors.grey[400]),
+                    ),
                 ],
               ),
             ),
-            // Audio dot
             if (sub.speak != null)
               Positioned(
                 top: tabH - 8,
@@ -177,8 +178,6 @@ class _SubCategoryCard extends StatelessWidget {
     );
   }
 }
-
-// ─── Shared widgets (copy from home screen or put in shared file) ─────────────
 
 class _CardImage extends StatelessWidget {
   final String? imageUrl;

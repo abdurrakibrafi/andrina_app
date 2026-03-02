@@ -3,6 +3,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chatter_bee/config/app_url.dart';
 import 'package:chatter_bee/config/imagesUrl.dart';
+import 'package:chatter_bee/feature/Profile/controller/profile_controller.dart';
 import 'package:chatter_bee/feature/home_screen/caregiver/controller/caregiver_home_controller.dart';
 import 'package:chatter_bee/models/caregiver_models/caregiver_content_model.dart';
 import 'package:chatter_bee/routes/app_routes.dart';
@@ -11,15 +12,14 @@ import 'package:get/get.dart';
 
 import '../../communicator/view/communicator_home_screen.dart';
 
-// ─── Explore More Item Model ───────────────────────────────────────────────────
 class _ExploreItem {
-  final String label;
+  final String labelKey; // translation key
   final IconData icon;
   final Color color;
   final String route;
 
   const _ExploreItem({
-    required this.label,
+    required this.labelKey,
     required this.icon,
     required this.color,
     required this.route,
@@ -29,29 +29,27 @@ class _ExploreItem {
 class CaregiverHomeScreen extends StatelessWidget {
   const CaregiverHomeScreen({super.key});
 
-  // ── Explore More items ──────────────────────────────────────────────────────
   static const List<_ExploreItem> _exploreItems = [
     _ExploreItem(
-      label: 'My Schedule',
+      labelKey: 'my_schedule',
       icon: Icons.calendar_month_outlined,
       color: Color(0xFFFDD268),
       route: AppRoutes.ACTIVITIES,
     ),
-    // যোগ করতে চাইলে এখানে নতুন item দাও:
-    // _ExploreItem(label: 'Goals', icon: Icons.flag_outlined, color: Color(0xFF7BC5D3), route: AppRoutes.GOALS),
   ];
 
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<CaregiverHomeController>();
-
+    final profileController = Get.put(ProfileController());
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       body: SafeArea(
         child: Obx(() {
           if (controller.isLoading.value) {
             return const Center(
-              child: CircularProgressIndicator(color: Color(0xFFFFC857)),
+              child:
+              CircularProgressIndicator(color: Color(0xFFFFC857)),
             );
           }
           return RefreshIndicator(
@@ -59,7 +57,7 @@ class CaregiverHomeScreen extends StatelessWidget {
             color: const Color(0xFFFFC857),
             child: CustomScrollView(
               slivers: [
-                // ── Header ──────────────────────────────────────────────────
+                // ── Header ────────────────────────────────────────
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
@@ -79,11 +77,17 @@ class CaregiverHomeScreen extends StatelessWidget {
                             ),
                             child: Padding(
                               padding: const EdgeInsets.all(3.0),
-                              child: CircleAvatar(
+                              child:
+                              Obx(() => CircleAvatar(
                                 radius: 22,
-                                backgroundImage:
-                                AssetImage(ImagesLink.profileImg),
-                              ),
+                                backgroundColor: Colors.grey.shade200,
+                                backgroundImage: profileController.avatarUrl.value.isNotEmpty
+                                    ? CachedNetworkImageProvider(profileController.avatarUrl.value)
+                                    : null,
+                                child: profileController.avatarUrl.value.isEmpty
+                                    ? const Icon(Icons.person, size: 26, color: Colors.grey)
+                                    : null,
+                              )),
                             ),
                           ),
                         ),
@@ -92,14 +96,14 @@ class CaregiverHomeScreen extends StatelessWidget {
                   ),
                 ),
 
-                // ── Quick Speak Header ───────────────────────────────────────
+                // ── Quick Speak Header ─────────────────────────────
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const _SectionHeader(title: 'Quick Speak'),
+                        _SectionHeader(title: 'quick_speak'.tr),
                         Obx(() => Row(
                           children: [
                             GestureDetector(
@@ -114,16 +118,18 @@ class CaregiverHomeScreen extends StatelessWidget {
                                   borderRadius:
                                   BorderRadius.circular(20),
                                   border: Border.all(
-                                      color: const Color(0xFFFFC857)),
+                                      color:
+                                      const Color(0xFFFFC857)),
                                 ),
                                 child: Text(
                                   controller.isQsEditMode.value
-                                      ? 'Done'
-                                      : 'Edit',
+                                      ? 'done'.tr
+                                      : 'edit'.tr,
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
-                                    color: controller.isQsEditMode.value
+                                    color:
+                                    controller.isQsEditMode.value
                                         ? Colors.black
                                         : const Color(0xFFFFC857),
                                   ),
@@ -133,26 +139,29 @@ class CaregiverHomeScreen extends StatelessWidget {
                             if (!controller.isQsEditMode.value) ...[
                               const SizedBox(width: 8),
                               GestureDetector(
-                                onTap:
-                                controller.showAddQuickSpeakSheet,
+                                onTap: controller
+                                    .showAddQuickSpeakSheet,
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(
+                                  padding:
+                                  const EdgeInsets.symmetric(
                                       horizontal: 12, vertical: 6),
                                   decoration: BoxDecoration(
                                     color: const Color(0xFFFFC857),
                                     borderRadius:
                                     BorderRadius.circular(20),
                                   ),
-                                  child: const Row(
+                                  child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(Icons.add,
-                                          size: 14, color: Colors.black),
-                                      SizedBox(width: 4),
-                                      Text('Add',
-                                          style: TextStyle(
+                                      const Icon(Icons.add,
+                                          size: 14,
+                                          color: Colors.black),
+                                      const SizedBox(width: 4),
+                                      Text('add'.tr,
+                                          style: const TextStyle(
                                               fontSize: 12,
-                                              fontWeight: FontWeight.w600,
+                                              fontWeight:
+                                              FontWeight.w600,
                                               color: Colors.black)),
                                     ],
                                   ),
@@ -166,14 +175,14 @@ class CaregiverHomeScreen extends StatelessWidget {
                   ),
                 ),
 
-                // ── Quick Speak Cards ────────────────────────────────────────
+                // ── Quick Speak Cards ──────────────────────────────
                 if (controller.quickSpeaks.isNotEmpty)
                   SliverToBoxAdapter(
                     child: SizedBox(
                       height: 130,
                       child: ListView.builder(
-                        padding:
-                        const EdgeInsets.symmetric(horizontal: 12),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12),
                         scrollDirection: Axis.horizontal,
                         itemCount: controller.quickSpeaks.length,
                         itemBuilder: (_, i) {
@@ -181,11 +190,12 @@ class CaregiverHomeScreen extends StatelessWidget {
                           return Obx(
                                 () => _QuickSpeakCard(
                               qs: qs,
-                              isEditMode: controller.isQsEditMode.value,
+                              isEditMode:
+                              controller.isQsEditMode.value,
                               onTap: () =>
                                   _onQsTap(context, controller, qs),
-                              onEditTap: () =>
-                                  controller.showEditQuickSpeakSheet(qs),
+                              onEditTap: () => controller
+                                  .showEditQuickSpeakSheet(qs),
                             ),
                           );
                         },
@@ -198,28 +208,30 @@ class CaregiverHomeScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 20, vertical: 8),
                       child: Text(
-                        'No quick speaks yet. Tap Add to create one.',
+                        'no_quick_speaks_hint'.tr,
                         style: TextStyle(
                             color: Colors.grey[500], fontSize: 13),
                       ),
                     ),
                   ),
 
-                // ── Tap to Talk Header ───────────────────────────────────────
+                // ── Tap to Talk Header ─────────────────────────────
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+                    padding:
+                    const EdgeInsets.fromLTRB(20, 20, 20, 10),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const _SectionHeader(title: 'Tap to Talk'),
+                        _SectionHeader(title: 'tap_to_talk'.tr),
                         Obx(
                               () => Row(
                             children: [
                               _EditToggleBtn(controller: controller),
                               const SizedBox(width: 8),
                               if (!controller.isEditMode.value)
-                                _AddCategoryBtn(controller: controller),
+                                _AddCategoryBtn(
+                                    controller: controller),
                             ],
                           ),
                         ),
@@ -228,7 +240,7 @@ class CaregiverHomeScreen extends StatelessWidget {
                   ),
                 ),
 
-                // ── Categories Grid ──────────────────────────────────────────
+                // ── Categories Grid ────────────────────────────────
                 controller.categories.isEmpty
                     ? SliverToBoxAdapter(
                   child: Center(
@@ -237,9 +249,10 @@ class CaregiverHomeScreen extends StatelessWidget {
                       child: Column(
                         children: [
                           Icon(Icons.category_outlined,
-                              size: 60, color: Colors.grey[300]),
+                              size: 60,
+                              color: Colors.grey[300]),
                           const SizedBox(height: 12),
-                          Text('No categories yet',
+                          Text('no_categories_yet'.tr,
                               style: TextStyle(
                                   color: Colors.grey[500])),
                           const SizedBox(height: 8),
@@ -249,9 +262,9 @@ class CaregiverHomeScreen extends StatelessWidget {
                             style: ElevatedButton.styleFrom(
                                 backgroundColor:
                                 const Color(0xFFFFC857)),
-                            child: const Text('Add Category',
-                                style:
-                                TextStyle(color: Colors.black)),
+                            child: Text('add_category'.tr,
+                                style: const TextStyle(
+                                    color: Colors.black)),
                           ),
                         ],
                       ),
@@ -271,13 +284,13 @@ class CaregiverHomeScreen extends StatelessWidget {
                               .contains(cat.id);
                           return _CategoryCard(
                             category: cat,
-                            isEditMode: controller.isEditMode.value,
+                            isEditMode:
+                            controller.isEditMode.value,
                             isSelected: isSelected,
                             onTap: () =>
                                 controller.onCategoryTap(cat),
-                            onEditTap: () =>
-                                controller
-                                    .showEditCategorySheet(cat),
+                            onEditTap: () => controller
+                                .showEditCategorySheet(cat),
                           );
                         });
                       },
@@ -293,20 +306,23 @@ class CaregiverHomeScreen extends StatelessWidget {
                   ),
                 ),
 
-                // ── Explore More Header ──────────────────────────────────────
-                const SliverToBoxAdapter(
+                // ── Explore More Header ────────────────────────────
+                SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.fromLTRB(20, 24, 20, 12),
-                    child: _SectionHeader(title: 'Explore More'),
+                    padding:
+                    const EdgeInsets.fromLTRB(20, 24, 20, 12),
+                    child: _SectionHeader(title: 'explore_more'.tr),
                   ),
                 ),
 
-                // ── Explore More Grid (same folder style) ────────────────────
+                // ── Explore More Grid ──────────────────────────────
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                  padding:
+                  const EdgeInsets.fromLTRB(16, 0, 16, 4),
                   sliver: SliverGrid(
                     delegate: SliverChildBuilderDelegate(
-                          (_, i) => _ExploreCard(item: _exploreItems[i]),
+                          (_, i) =>
+                          _ExploreCard(item: _exploreItems[i]),
                       childCount: _exploreItems.length,
                     ),
                     gridDelegate:
@@ -319,7 +335,8 @@ class CaregiverHomeScreen extends StatelessWidget {
                   ),
                 ),
 
-                const SliverToBoxAdapter(child: SizedBox(height: 80)),
+                const SliverToBoxAdapter(
+                    child: SizedBox(height: 80)),
               ],
             ),
           );
@@ -345,9 +362,9 @@ class CaregiverHomeScreen extends StatelessWidget {
   }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-//  EXPLORE MORE CARD — same folder shape as category cards
-// ════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+//  EXPLORE MORE CARD
+// ════════════════════════════════════════════════════════════════
 
 class _ExploreCard extends StatelessWidget {
   final _ExploreItem item;
@@ -389,9 +406,10 @@ class _ExploreCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      padding:
+                      const EdgeInsets.symmetric(horizontal: 4),
                       child: Text(
-                        item.label,
+                        item.labelKey.tr,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
@@ -423,9 +441,9 @@ class _ExploreCard extends StatelessWidget {
   }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-//  SECTION HEADER — reusable yellow-bar title
-// ════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+//  SECTION HEADER
+// ════════════════════════════════════════════════════════════════
 
 class _SectionHeader extends StatelessWidget {
   final String title;
@@ -445,19 +463,15 @@ class _SectionHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
+        Text(title,
+            style: const TextStyle(
+                fontSize: 16, fontWeight: FontWeight.w700)),
       ],
     );
   }
 }
 
-// ── Card-lift dialog ──────────────────────────────────────────────────────────
+// ── Card-lift dialog ──────────────────────────────────────────────────────
 void _showCardLiftDialog({
   required BuildContext context,
   required String? imageUrl,
@@ -521,8 +535,10 @@ void _showCardLiftDialog({
                                 size: 48),
                           ),
                         )
-                            : Icon(Icons.record_voice_over_outlined,
-                            color: color, size: 48),
+                            : Icon(
+                            Icons.record_voice_over_outlined,
+                            color: color,
+                            size: 48),
                       ),
                       const SizedBox(height: 16),
                       Text(label,
@@ -555,9 +571,10 @@ void _showCardLiftDialog({
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Text('Tap to speak',
+                        Text('tap_to_speak'.tr,
                             style: TextStyle(
-                                fontSize: 12, color: Colors.grey[500])),
+                                fontSize: 12,
+                                color: Colors.grey[500])),
                       ],
                     ],
                   ),
@@ -573,7 +590,8 @@ void _showCardLiftDialog({
 
 Color _parseColor(String hex, Color fallback) {
   try {
-    return Color(int.parse('FF${hex.replaceAll('#', '')}', radix: 16));
+    return Color(
+        int.parse('FF${hex.replaceAll('#', '')}', radix: 16));
   } catch (_) {
     return fallback;
   }
@@ -681,7 +699,7 @@ class _EditToggleBtn extends StatelessWidget {
           border: Border.all(color: const Color(0xFFFFC857)),
         ),
         child: Text(
-          controller.isEditMode.value ? 'Done' : 'Edit',
+          controller.isEditMode.value ? 'done'.tr : 'edit'.tr,
           style: TextStyle(
             fontWeight: FontWeight.w600,
             color: controller.isEditMode.value
@@ -739,7 +757,8 @@ class _QuickSpeakCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+        padding:
+        const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
         child: SizedBox(
           width: 90,
           child: LayoutBuilder(
@@ -765,21 +784,27 @@ class _QuickSpeakCard extends StatelessWidget {
                             height: 50,
                             decoration: BoxDecoration(
                               color: bgColor,
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius:
+                              BorderRadius.circular(10),
                             ),
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: imageUrl != null && imageUrl.isNotEmpty
+                              borderRadius:
+                              BorderRadius.circular(10),
+                              child: imageUrl != null &&
+                                  imageUrl.isNotEmpty
                                   ? CachedNetworkImage(
                                 imageUrl: imageUrl,
                                 fit: BoxFit.cover,
-                                errorWidget: (_, __, ___) => Icon(
-                                    Icons.record_voice_over_outlined,
+                                errorWidget: (_, __, ___) =>
+                                const Icon(
+                                    Icons
+                                        .record_voice_over_outlined,
                                     color: Colors.white,
                                     size: 26),
                               )
                                   : const Icon(
-                                Icons.record_voice_over_outlined,
+                                Icons
+                                    .record_voice_over_outlined,
                                 color: Colors.white,
                                 size: 26,
                               ),
@@ -787,8 +812,8 @@ class _QuickSpeakCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 6),
                           Padding(
-                            padding:
-                            const EdgeInsets.symmetric(horizontal: 6),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6),
                             child: Text(
                               qs.word ?? '',
                               maxLines: 2,
@@ -830,7 +855,8 @@ class _QuickSpeakCard extends StatelessWidget {
                           width: 14,
                           height: 14,
                           decoration: BoxDecoration(
-                              color: bgColor, shape: BoxShape.circle),
+                              color: bgColor,
+                              shape: BoxShape.circle),
                           child: const Icon(Icons.volume_up,
                               color: Colors.white, size: 9),
                         ),
@@ -880,8 +906,9 @@ class _CategoryCard extends StatelessWidget {
 
           return CustomPaint(
             painter: FolderShapePainter(
-              cardColor:
-              isSelected ? bgColor.withOpacity(0.12) : Colors.white,
+              cardColor: isSelected
+                  ? bgColor.withOpacity(0.12)
+                  : Colors.white,
               tabColor: bgColor,
               isSelected: isSelected,
               selectedBorderColor: bgColor,
@@ -901,8 +928,8 @@ class _CategoryCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       Padding(
-                        padding:
-                        const EdgeInsets.symmetric(horizontal: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 4),
                         child: Text(
                           category.name,
                           maxLines: 2,
@@ -917,9 +944,10 @@ class _CategoryCard extends StatelessWidget {
                       ),
                       if (category.subCategories.isNotEmpty)
                         Text(
-                          '${category.subCategories.length} sub',
+                          '${category.subCategories.length} ${'sub_count_suffix'.tr}',
                           style: TextStyle(
-                              fontSize: 9, color: Colors.grey[400]),
+                              fontSize: 9,
+                              color: Colors.grey[400]),
                         ),
                     ],
                   ),

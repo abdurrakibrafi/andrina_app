@@ -21,20 +21,16 @@ class SubscriptionScreen extends GetView<SubscriptionController> {
           onPressed: () => Get.back(),
         ),
         title: Text(
-          'Subscription',
+          'subscription'.tr,  // ✅
           style: GoogleFonts.nunito(
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
+              color: Colors.black,
+              fontSize: 18,
+              fontWeight: FontWeight.w600),
         ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 20),
-            child: Image.asset(
-              ImagesLink.logo,
-              height: 50,
-            ),
+            child: Image.asset(ImagesLink.logo, height: 50),
           ),
         ],
       ),
@@ -47,57 +43,51 @@ class SubscriptionScreen extends GetView<SubscriptionController> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
-                    'Unlock ChatterBee Pro',
+                    'unlock_pro'.tr,  // ✅
                     textAlign: TextAlign.center,
                     style: GoogleFonts.nunito(
-
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                    ),
+                        fontSize: 24,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Give your communicator more ways to connect with ChatterBee Pro.',
+                    'unlock_pro_desc'.tr,  // ✅
                     textAlign: TextAlign.center,
                     style: GoogleFonts.nunito(
-                      fontSize: 14,
-                      color: Colors.black,
-                      height: 1.5,
-                    ),
+                        fontSize: 14, color: Colors.black, height: 1.5),
                   ),
                   const SizedBox(height: 24),
 
-                  // Free Plan Card
+                  // ── Free Plan ──
                   Obx(() => _buildPlanCard(
                     context: context,
                     planType: 'free',
-                    title: 'Free Plan',
+                    title: 'free_plan'.tr,  // ✅
                     price: '\$${controller.freePlanPrice.toStringAsFixed(2)}',
                     features: [
-                      'Limited features',
-                      '1 Caregiver seat',
-                      'No customizationc',
-                      'No notifications',
+                      'free_feature_1'.tr,  // ✅
+                      'free_feature_2'.tr,
+                      'free_feature_3'.tr,
+                      'free_feature_4'.tr,
                     ],
                     isSelected: controller.isPlanSelected('free'),
                     onTap: () => controller.selectPlan('free'),
                   )),
-
                   const SizedBox(height: 22),
 
-                  // Pro Plan Card
+                  // ── Pro Plan ──
                   Obx(() => _buildPlanCard(
                     context: context,
                     planType: 'pro',
-                    title: 'Unlock ChatterBee Pro',
+                    title: 'unlock_pro'.tr,  // ✅
                     price: '\$${controller.proPlanPrice.toStringAsFixed(2)}/month',
                     features: [
-                      'Full features',
-                      '2 Caregiver seats',
-                      'Push notifications',
-                      'Customization options',
-                      'Add-ons: Extra caregiver seats\n& Multiple profiles',
+                      'pro_feature_1'.tr,  // ✅
+                      'pro_feature_2'.tr,
+                      'pro_feature_3'.tr,
+                      'pro_feature_4'.tr,
+                      'pro_feature_5'.tr,
                     ],
                     isSelected: controller.isPlanSelected('pro'),
                     onTap: () => controller.selectPlan('pro'),
@@ -108,7 +98,7 @@ class SubscriptionScreen extends GetView<SubscriptionController> {
             ),
           ),
 
-          // Continue Button
+          // ── Continue Button ──
           Padding(
             padding: const EdgeInsets.all(20),
             child: SizedBox(
@@ -121,15 +111,12 @@ class SubscriptionScreen extends GetView<SubscriptionController> {
                   foregroundColor: Colors.black,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                      borderRadius: BorderRadius.circular(12)),
                 ),
                 child: Text(
-                  'Continue',
+                  'continue_btn'.tr,  // ✅
                   style: GoogleFonts.nunito(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
+                      fontSize: 16, fontWeight: FontWeight.w700),
                 ),
               ),
             ),
@@ -159,7 +146,6 @@ class SubscriptionScreen extends GetView<SubscriptionController> {
             color: isSelected
                 ? const Color(0xFFFFC107)
                 : Colors.grey.shade300,
-            width: isSelected ? 1 : 1,
           ),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
@@ -168,22 +154,21 @@ class SubscriptionScreen extends GetView<SubscriptionController> {
           children: [
             Row(
               children: [
-                // Radio Button - same as _buildRoleCard
                 Container(
-                  width: 18,
-                  height: 18,
+                  width: 18, height: 18,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: isSelected ? Color(0xFFFFC107) : Colors.grey[400]!,
+                      color: isSelected
+                          ? const Color(0xFFFFC107)
+                          : Colors.grey[400]!,
                       width: 2,
                     ),
                   ),
                   child: isSelected
                       ? Center(
                     child: Container(
-                      width: 10,
-                      height: 10,
+                      width: 10, height: 10,
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
                         color: Color(0xFFFFC107),
@@ -194,23 +179,17 @@ class SubscriptionScreen extends GetView<SubscriptionController> {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    title,
+                  child: Text(title,
+                      style: GoogleFonts.nunito(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black)),
+                ),
+                Text(price,
                     style: GoogleFonts.nunito(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black,
-                    ),
-                  ),
-                ),
-                Text(
-                  price,
-                  style: GoogleFonts.nunito(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black,
-                  ),
-                ),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black)),
               ],
             ),
             const SizedBox(height: 16),
@@ -219,19 +198,14 @@ class SubscriptionScreen extends GetView<SubscriptionController> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SvgPicture.asset(
-                    ImagesLink.check,
-                  ),
+                  SvgPicture.asset(ImagesLink.check),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(
-                      feature,
-                      style: GoogleFonts.nunito(
-                        fontSize: 14,
-                        color: Colors.black87,
-                        height: 1.3,
-                      ),
-                    ),
+                    child: Text(feature,
+                        style: GoogleFonts.nunito(
+                            fontSize: 14,
+                            color: Colors.black87,
+                            height: 1.3)),
                   ),
                 ],
               ),

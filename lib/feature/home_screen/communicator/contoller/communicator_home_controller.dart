@@ -1,5 +1,4 @@
 // lib/feature/home_screen/communicator_home_controller.dart
-// ── REPLACES the old dummy-data controller ────────────────────────────────────
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:chatter_bee/Repository/communicator_repository/communicator_repository.dart';
@@ -21,8 +20,8 @@ class CommunicatorHomeController extends GetxController {
   final RxList<CommQuickSpeakModel> quickSpeaks = <CommQuickSpeakModel>[].obs;
 
   // ── Quick Speak bar ───────────────────────────────────────────────────────
-  final RxString quickSpeakText = ''.obs;          // text shown in the bar
-  final RxInt selectedQsId = (-1).obs;             // selected QS id
+  final RxString quickSpeakText = ''.obs;
+  final RxInt selectedQsId = (-1).obs;
 
   // ── Audio player state ────────────────────────────────────────────────────
   final RxInt playingId = (-1).obs;
@@ -44,7 +43,7 @@ class CommunicatorHomeController extends GetxController {
       quickSpeaks.value = res.data!.quickSpeaks;
     } else {
       Get.snackbar(
-        'Error',
+        'error'.tr,
         res.message,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red.shade100,
@@ -58,7 +57,6 @@ class CommunicatorHomeController extends GetxController {
   // ─── Quick speak tap ───────────────────────────────────────────────────────
   void onQuickSpeakTap(CommQuickSpeakModel qs) {
     if (selectedQsId.value == qs.id) {
-      // Deselect
       selectedQsId.value = -1;
       quickSpeakText.value = '';
     } else {
@@ -70,8 +68,11 @@ class CommunicatorHomeController extends GetxController {
   // ─── Speak button ──────────────────────────────────────────────────────────
   void speakQuickSpeak() {
     if (quickSpeakText.value.isEmpty) {
-      Get.snackbar('Select first', 'Please tap a Quick Speak card first',
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(
+        'select_first'.tr,
+        'tap_quick_speak_first'.tr,
+        snackPosition: SnackPosition.BOTTOM,
+      );
       return;
     }
     final selected =
@@ -79,10 +80,12 @@ class CommunicatorHomeController extends GetxController {
     if (selected?.speak != null) {
       playAudio(selected!.id, selected.speak);
     } else {
-      // TTS fallback — word only
-      Get.snackbar('Speak', quickSpeakText.value,
-          snackPosition: SnackPosition.BOTTOM,
-          duration: const Duration(seconds: 2));
+      Get.snackbar(
+        'speak'.tr,
+        quickSpeakText.value,
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 2),
+      );
     }
   }
 
@@ -129,8 +132,6 @@ class CommunicatorHomeController extends GetxController {
   }
 }
 
-// ── Keep old model class so existing routes/widgets that import it don't break ─
-// (can be removed once fully migrated)
 class CategoryItemModel {
   final String imagePath;
   final String label;

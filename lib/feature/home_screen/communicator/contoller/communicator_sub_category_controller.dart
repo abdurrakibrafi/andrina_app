@@ -19,13 +19,11 @@ class CommunicatorSubCategoryController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Passed via Get.toNamed arguments
     parentCategory = Get.arguments as CommCategoryModel;
     subCategories.value = parentCategory.subCategories;
   }
 
   void onSubCategoryTap(CommSubCategoryModel sub) {
-    // Navigate to item screen
     Get.toNamed(AppRoutes.COMMUNICATOR_ITEM, arguments: sub);
   }
 

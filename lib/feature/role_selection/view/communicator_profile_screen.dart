@@ -18,7 +18,7 @@ class CommunicatorProfileScreen extends GetView<CommunicatorProfileController> {
         backgroundColor: AppColors.bgColor,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: Text('Profile Setup',
+        title: Text('profile_setup'.tr,
             style: GoogleFonts.nunito(color: Colors.black, fontSize: 18, fontWeight: FontWeight.w600)),
       ),
       body: Obx(() {
@@ -65,7 +65,7 @@ class CommunicatorProfileScreen extends GetView<CommunicatorProfileController> {
                 const SizedBox(height: 30),
 
                 // ── Full Name ──
-                Text('Full Name',
+                Text('full_name'.tr,
                     style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black)),
                 const SizedBox(height: 6),
                 SizedBox(
@@ -73,7 +73,7 @@ class CommunicatorProfileScreen extends GetView<CommunicatorProfileController> {
                   child: TextField(
                     controller: controller.fullNameController,
                     decoration: InputDecoration(
-                      hintText: 'Enter your full name',
+                      hintText: 'enter_full_name'.tr,
                       prefixIcon: Padding(
                         padding: const EdgeInsets.all(12.0),
                         child: SvgPicture.asset(ImagesLink.parsonIcon, width: 20, height: 20),
@@ -88,46 +88,25 @@ class CommunicatorProfileScreen extends GetView<CommunicatorProfileController> {
                 ),
                 const SizedBox(height: 20),
 
-                // ── Language ──
-                Text('Language',
-                    style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black)),
-                const SizedBox(height: 6),
-                Obx(() => Container(
-                  height: 48,
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[300]!)),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: controller.selectedLanguage.value,
-                      isExpanded: true,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      icon: const Icon(Icons.keyboard_arrow_down),
-                      items: controller.languages.map((lang) => DropdownMenuItem(
-                        value: lang,
-                        child: Row(children: [SvgPicture.asset(ImagesLink.language), const SizedBox(width: 12), Text(lang)]),
-                      )).toList(),
-                      onChanged: (v) { if (v != null) controller.selectLanguage(v); },
-                    ),
-                  ),
-                )),
-                const SizedBox(height: 20),
+
 
                 // ── Buddy Bee Mode ──
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Buddy Bee Mode', style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.w600)),
+                    Text('buddy_bee_mode'.tr, style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.w600)),
                     Obx(() => CustomSwitch(
                       value: controller.isBuddyBeeMode.value,
                       onChanged: (val) { controller.isBuddyBeeMode.value = val; controller.toggleBuddyBeeMode(val); },
                     )),
                   ],
                 ),
-                Text('Toggle ON for a child-friendly, colorful\nversion. Toggle OFF for a plain adult version.',
+                Text('buddy_bee_desc'.tr,
                     style: GoogleFonts.nunito(fontSize: 14, color: const Color(0xFF636F85))),
                 const SizedBox(height: 20),
 
                 // ── Profile Type ──
-                Text('Profile Type', style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.w600)),
+                Text('profile_type'.tr, style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 12),
                 Obx(() {
                   final isChildSelected = controller.selectedProfileType.value == 'Child';
@@ -135,7 +114,7 @@ class CommunicatorProfileScreen extends GetView<CommunicatorProfileController> {
                   return Row(
                     children: [
                       Expanded(child: GestureDetector(
-                        onTap: () => controller.selectProfileType('Child'),
+                        onTap: () => controller.selectProfileType('child'.tr),
                         child: Container(
                           height: 120,
                           decoration: BoxDecoration(
@@ -149,7 +128,7 @@ class CommunicatorProfileScreen extends GetView<CommunicatorProfileController> {
                               SvgPicture.asset(ImagesLink.child, width: 28, height: 28,
                                   colorFilter: ColorFilter.mode(isChildSelected ? AppColors.primaryColor : Colors.black, BlendMode.srcIn)),
                               const SizedBox(height: 8),
-                              Text('Child', style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w600,
+                              Text('child'.tr, style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w600,
                                   color: isChildSelected ? AppColors.primaryColor : Colors.black)),
                             ],
                           ),
@@ -157,7 +136,7 @@ class CommunicatorProfileScreen extends GetView<CommunicatorProfileController> {
                       )),
                       const SizedBox(width: 12),
                       Expanded(child: GestureDetector(
-                        onTap: () => controller.selectProfileType('Adult'),
+                        onTap: () => controller.selectProfileType('adult'.tr),
                         child: Container(
                           height: 120,
                           decoration: BoxDecoration(
@@ -171,7 +150,7 @@ class CommunicatorProfileScreen extends GetView<CommunicatorProfileController> {
                               SvgPicture.asset(ImagesLink.adult, width: 28, height: 28,
                                   colorFilter: ColorFilter.mode(isAdultSelected ? AppColors.primaryColor : Colors.black, BlendMode.srcIn)),
                               const SizedBox(height: 8),
-                              Text('Adult', style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w600,
+                              Text('adult'.tr, style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w600,
                                   color: isAdultSelected ? AppColors.primaryColor : Colors.black)),
                             ],
                           ),
@@ -183,7 +162,7 @@ class CommunicatorProfileScreen extends GetView<CommunicatorProfileController> {
                 const SizedBox(height: 20),
 
                 // ── Voice Type Grid ──
-                Text('Voice Type', style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.w600)),
+                Text('voice_type'.tr, style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 12),
                 GridView.builder(
                   shrinkWrap: true,
@@ -212,7 +191,7 @@ class CommunicatorProfileScreen extends GetView<CommunicatorProfileController> {
                               SvgPicture.asset(voiceType['icon'], width: 20, height: 20,
                                   colorFilter: ColorFilter.mode(isSelected ? AppColors.primaryColor : Colors.black, BlendMode.srcIn)),
                               const SizedBox(width: 8),
-                              Flexible(child: Text(voiceType['type'],
+                              Flexible(child: Text(voiceType['type'].toString().tr,
                                   style: TextStyle(color: isSelected ? AppColors.primaryColor : Colors.black, fontWeight: FontWeight.w500),
                                   overflow: TextOverflow.ellipsis)),
                             ],
@@ -244,7 +223,7 @@ class CommunicatorProfileScreen extends GetView<CommunicatorProfileController> {
                     child: controller.isSaving.value
                         ? const SizedBox(width: 20, height: 20,
                         child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.black)))
-                        : Text('Continue',
+                        : Text('continue_btn'.tr,
                         style: GoogleFonts.nunito(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w700)),
                   ),
                 )),

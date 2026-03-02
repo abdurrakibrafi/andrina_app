@@ -20,7 +20,7 @@ class PrivacyPolicyScreen extends GetView<PrivacyPolicyController> {
           onPressed: () => Get.back(),
         ),
         title: Text(
-          'Privacy policy',
+          'privacy_policy_title'.tr,  // ✅
           style: GoogleFonts.nunito(
             color: Colors.black,
             fontSize: 18,
@@ -30,29 +30,24 @@ class PrivacyPolicyScreen extends GetView<PrivacyPolicyController> {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 20),
-            child: Image.asset(
-              ImagesLink.logo,
-              height: 50,
-            ),
+            child: Image.asset(ImagesLink.logo, height: 50),
           ),
         ],
       ),
       body: Obx(() {
-        // ── Loading State ──
+        // ── Loading ──
         if (controller.isLoading.value) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+          return const Center(child: CircularProgressIndicator());
         }
 
-        // ── Empty / Error State ──
+        // ── Empty / Error ──
         if (controller.policyContent.value.isEmpty) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'No content available',
+                  'no_content_available'.tr,  // ✅
                   style: GoogleFonts.nunito(
                     fontSize: 16,
                     color: const Color(0xFF636F85),
@@ -63,7 +58,7 @@ class PrivacyPolicyScreen extends GetView<PrivacyPolicyController> {
                   onPressed: controller.fetchPrivacyPolicy,
                   icon: const Icon(Icons.refresh),
                   label: Text(
-                    'Retry',
+                    'retry'.tr,  // ✅
                     style: GoogleFonts.nunito(color: AppColors.primaryColor),
                   ),
                 ),
@@ -72,22 +67,18 @@ class PrivacyPolicyScreen extends GetView<PrivacyPolicyController> {
           );
         }
 
-        // ── Content State ──
+        // ── Content ──  (backend data — translate হবে না)
         return SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(20.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Title from API
                 if (controller.policyTitle.value.isNotEmpty) ...[
                   _buildSectionTitle(controller.policyTitle.value),
                   const SizedBox(height: 12),
                 ],
-
-                // Content from API — split into paragraphs by double newline
                 ..._buildContentParagraphs(controller.policyContent.value),
-
                 const SizedBox(height: 16),
               ],
             ),
@@ -97,8 +88,6 @@ class PrivacyPolicyScreen extends GetView<PrivacyPolicyController> {
     );
   }
 
-  /// Splits the API content string into multiple paragraph widgets,
-  /// preserving the same visual style as the original design.
   List<Widget> _buildContentParagraphs(String content) {
     final paragraphs = content
         .split('\n\n')
@@ -106,16 +95,12 @@ class PrivacyPolicyScreen extends GetView<PrivacyPolicyController> {
         .where((p) => p.isNotEmpty)
         .toList();
 
-    if (paragraphs.isEmpty) {
-      return [_buildSectionContent(content)];
-    }
+    if (paragraphs.isEmpty) return [_buildSectionContent(content)];
 
     final List<Widget> widgets = [];
     for (int i = 0; i < paragraphs.length; i++) {
       widgets.add(_buildSectionContent(paragraphs[i]));
-      if (i < paragraphs.length - 1) {
-        widgets.add(const SizedBox(height: 16));
-      }
+      if (i < paragraphs.length - 1) widgets.add(const SizedBox(height: 16));
     }
     return widgets;
   }

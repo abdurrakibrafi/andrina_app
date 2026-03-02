@@ -10,7 +10,6 @@ import 'package:google_fonts/google_fonts.dart';
 class ProfileController extends GetxController {
   final AuthRepository _authRepository = AuthRepository();
 
-  // Observable variables
   final Rx<File?> profileImage = Rx<File?>(null);
   final RxString selectedRole = 'Communicator'.obs;
   final RxString userName = ''.obs;
@@ -35,22 +34,21 @@ class ProfileController extends GetxController {
       final response = await _authRepository.getProfile();
 
       if (response.isSuccess && response.data != null) {
-        // API returns: { "success": true, "data": { ... } }
         final profileData = response.data!['data'] ?? response.data!;
-
         userName.value = profileData['full_name'] ?? '';
         userEmail.value = profileData['email'] ?? '';
         userType.value = profileData['profile_type'] ?? '';
         voiceType.value = profileData['voice_type'] ?? '';
         avatarUrl.value = profileData['avatar'] ?? '';
-
         final role = profileData['role'] ?? '';
         selectedRole.value = _capitalizeRole(role);
       } else {
-        Get.snackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar('error'.tr, response.message,   // ✅
+            snackPosition: SnackPosition.BOTTOM);
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to load profile', snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('error'.tr, 'failed_load_profile'.tr,   // ✅
+          snackPosition: SnackPosition.BOTTOM);
     } finally {
       isLoading.value = false;
     }
@@ -77,12 +75,12 @@ class ProfileController extends GetxController {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Choose Profile Picture',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+              Text('choose_profile_picture'.tr,   // ✅
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
               const SizedBox(height: 20),
               ListTile(
                 leading: const Icon(Icons.camera_alt),
-                title: const Text('Camera'),
+                title: Text('camera'.tr),   // ✅
                 onTap: () async {
                   Get.back();
                   await _pickImageFromSource(ImageSource.camera);
@@ -90,7 +88,7 @@ class ProfileController extends GetxController {
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library),
-                title: const Text('Gallery'),
+                title: Text('gallery'.tr),   // ✅
                 onTap: () async {
                   Get.back();
                   await _pickImageFromSource(ImageSource.gallery);
@@ -99,7 +97,8 @@ class ProfileController extends GetxController {
               if (profileImage.value != null)
                 ListTile(
                   leading: const Icon(Icons.delete, color: Colors.red),
-                  title: const Text('Remove Photo', style: TextStyle(color: Colors.red)),
+                  title: Text('remove_photo'.tr,   // ✅
+                      style: const TextStyle(color: Colors.red)),
                   onTap: () {
                     Get.back();
                     removeProfileImage();
@@ -110,7 +109,8 @@ class ProfileController extends GetxController {
         ),
       );
     } catch (e) {
-      Get.snackbar('Error', 'Failed to open image picker', snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('error'.tr, 'failed_open_picker'.tr,   // ✅
+          snackPosition: SnackPosition.BOTTOM);
     }
   }
 
@@ -124,11 +124,11 @@ class ProfileController extends GetxController {
       );
       if (image != null) {
         profileImage.value = File(image.path);
-        // Upload avatar immediately
         await _uploadAvatar(File(image.path));
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to pick image', snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('error'.tr, 'failed_pick_image'.tr,   // ✅
+          snackPosition: SnackPosition.BOTTOM);
     }
   }
 
@@ -136,26 +136,27 @@ class ProfileController extends GetxController {
     try {
       final response = await _authRepository.updateProfile(avatar: file);
       if (response.isSuccess) {
-        Get.snackbar('Success', 'Profile picture updated', snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar('success'.tr, 'profile_picture_updated'.tr,   // ✅
+            snackPosition: SnackPosition.BOTTOM);
       } else {
-        Get.snackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar('error'.tr, response.message,   // ✅
+            snackPosition: SnackPosition.BOTTOM);
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to upload picture', snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('error'.tr, 'failed_upload_picture'.tr,   // ✅
+          snackPosition: SnackPosition.BOTTOM);
     }
   }
 
   void removeProfileImage() {
     profileImage.value = null;
-    Get.snackbar('Success', 'Profile picture removed', snackPosition: SnackPosition.BOTTOM);
+    Get.snackbar('success'.tr, 'profile_picture_removed'.tr,   // ✅
+        snackPosition: SnackPosition.BOTTOM);
   }
-
-
 
   // ==================== NAVIGATION ====================
   void onSubscriptionTap() => Get.toNamed(AppRoutes.SUBSCRIPTION);
 
-  /// Navigate to the correct profile edit screen based on current user role
   void onEditPersonalInfo() {
     final role = selectedRole.value.toLowerCase();
     if (role == 'caregiver') {
@@ -165,7 +166,6 @@ class ProfileController extends GetxController {
     }
   }
 
-  void onLanguageTap() => Get.toNamed(AppRoutes.LANGUAGESCREEN);
   void onChangePasswordTap() => Get.toNamed(AppRoutes.CHANGEPASSWORD);
   void onPrivacyPolicyTap() => Get.toNamed(AppRoutes.PRIVACYPOLICY);
   void onSupportTap() => Get.toNamed(AppRoutes.SUPPORT);
@@ -185,13 +185,13 @@ class ProfileController extends GetxController {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Delete',
+            Text('delete'.tr,   // ✅
                 style: GoogleFonts.nunito(
                     fontSize: 30,
                     fontWeight: FontWeight.w600,
                     color: AppColors.primaryColor)),
             const SizedBox(height: 24),
-            Text('Are you sure you want\nto Delete ?',
+            Text('delete_confirm'.tr,   // ✅
                 textAlign: TextAlign.center,
                 style: GoogleFonts.nunito(
                     fontSize: 18,
@@ -209,7 +209,7 @@ class ProfileController extends GetxController {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       side: BorderSide(color: AppColors.primaryColor, width: 1.5),
                     ),
-                    child: Text('Cancel',
+                    child: Text('cancel'.tr,   // ✅
                         style: GoogleFonts.nunito(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
@@ -229,7 +229,7 @@ class ProfileController extends GetxController {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       elevation: 0,
                     ),
-                    child: Text('Yes, Delete',
+                    child: Text('yes_delete'.tr,   // ✅
                         style: GoogleFonts.nunito(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
@@ -262,13 +262,13 @@ class ProfileController extends GetxController {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Logout',
+            Text('logout'.tr,   // ✅
                 style: GoogleFonts.nunito(
                     fontSize: 30,
                     fontWeight: FontWeight.w600,
                     color: AppColors.primaryColor)),
             const SizedBox(height: 24),
-            Text('Are you sure you want\nto log out?',
+            Text('logout_confirm'.tr,   // ✅
                 textAlign: TextAlign.center,
                 style: GoogleFonts.nunito(
                     fontSize: 18,
@@ -286,7 +286,7 @@ class ProfileController extends GetxController {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       side: BorderSide(color: AppColors.primaryColor, width: 1.5),
                     ),
-                    child: Text('Cancel',
+                    child: Text('cancel'.tr,   // ✅
                         style: GoogleFonts.nunito(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
@@ -306,7 +306,7 @@ class ProfileController extends GetxController {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       elevation: 0,
                     ),
-                    child: Text('Yes, Logout',
+                    child: Text('yes_logout'.tr,   // ✅
                         style: GoogleFonts.nunito(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
@@ -331,20 +331,20 @@ class ProfileController extends GetxController {
           barrierDismissible: false);
 
       final response = await _authRepository.deleteAccount();
-
       if (Get.isDialogOpen ?? false) Get.back();
 
       if (response.isSuccess) {
-        Get.snackbar('Success', 'Account deleted successfully',
+        Get.snackbar('success'.tr, 'account_deleted'.tr,   // ✅
             snackPosition: SnackPosition.BOTTOM);
         await Future.delayed(const Duration(milliseconds: 500));
         Get.offAllNamed(AppRoutes.SIGNINSCREEN);
       } else {
-        Get.snackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar('error'.tr, response.message,   // ✅
+            snackPosition: SnackPosition.BOTTOM);
       }
     } catch (e) {
       if (Get.isDialogOpen ?? false) Get.back();
-      Get.snackbar('Error', 'Failed to delete account. Please try again.',
+      Get.snackbar('error'.tr, 'failed_delete_account'.tr,   // ✅
           snackPosition: SnackPosition.BOTTOM);
     }
   }
@@ -356,16 +356,14 @@ class ProfileController extends GetxController {
           barrierDismissible: false);
 
       final response = await _authRepository.logout();
-
       if (Get.isDialogOpen ?? false) Get.back();
 
       if (response.isSuccess) {
-        Get.snackbar('Success', 'Logged out successfully',
+        Get.snackbar('success'.tr, 'logged_out'.tr,   // ✅
             snackPosition: SnackPosition.BOTTOM);
         await Future.delayed(const Duration(milliseconds: 500));
         Get.offAllNamed(AppRoutes.SIGNINSCREEN);
       } else {
-        // Even on API error, storage is cleared — go to login
         Get.offAllNamed(AppRoutes.SIGNINSCREEN);
       }
     } catch (e) {
@@ -375,7 +373,5 @@ class ProfileController extends GetxController {
   }
 
   @override
-  void onClose() {
-    super.onClose();
-  }
+  void onClose() => super.onClose();
 }

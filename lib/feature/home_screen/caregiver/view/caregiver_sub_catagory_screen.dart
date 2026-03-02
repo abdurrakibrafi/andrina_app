@@ -49,7 +49,7 @@ class CaregiverSubCategoryScreen extends StatelessWidget {
                   border: Border.all(color: const Color(0xFFFFC857)),
                 ),
                 child: Text(
-                  controller.isEditMode.value ? 'Done' : 'Edit',
+                  controller.isEditMode.value ? 'done'.tr : 'edit'.tr,
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
@@ -83,8 +83,7 @@ class CaregiverSubCategoryScreen extends StatelessWidget {
       body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(
-              child:
-              CircularProgressIndicator(color: Color(0xFFFFC857)));
+              child: CircularProgressIndicator(color: Color(0xFFFFC857)));
         }
 
         if (controller.subCategories.isEmpty) {
@@ -95,15 +94,17 @@ class CaregiverSubCategoryScreen extends StatelessWidget {
                 Icon(Icons.folder_open_outlined,
                     size: 64, color: Colors.grey[300]),
                 const SizedBox(height: 12),
-                Text('No sub-categories yet',
-                    style: TextStyle(
-                        color: Colors.grey[500], fontSize: 15)),
+                Text(
+                  'no_sub_categories_yet'.tr,
+                  style:
+                  TextStyle(color: Colors.grey[500], fontSize: 15),
+                ),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   onPressed: controller.showAddSheet,
                   icon: const Icon(Icons.add, color: Colors.black),
-                  label: const Text('Add Sub Category',
-                      style: TextStyle(color: Colors.black)),
+                  label: Text('add_sub_category'.tr,
+                      style: const TextStyle(color: Colors.black)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFFFC857),
                     shape: RoundedRectangleBorder(
@@ -203,7 +204,6 @@ class _SubCategoryCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Image with card color background ✅
                       _buildImage(imageUrl, bgColor),
                       const SizedBox(height: 6),
                       Padding(
@@ -223,7 +223,7 @@ class _SubCategoryCard extends StatelessWidget {
                       ),
                       if (sub.items.isNotEmpty)
                         Text(
-                          '${sub.items.length} items',
+                          '${sub.items.length} ${'items_count_suffix'.tr}',
                           style: TextStyle(
                               fontSize: 9, color: Colors.grey[400]),
                         ),
@@ -278,7 +278,7 @@ class _SubCategoryCard extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: bgColor, // ✅ full card color as image background
+        color: bgColor,
         borderRadius: BorderRadius.circular(10),
       ),
       child: ClipRRect(

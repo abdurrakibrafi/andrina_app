@@ -21,21 +21,27 @@ class PrivacyPolicyController extends GetxController {
       isLoading.value = true;
       LoggerUtils.logInfo('=== GET PRIVACY POLICY ===');
 
-      final response = await _apiClient.get<Map<String, dynamic>>(AppUrl.privacyPolicy);
+      final response =
+      await _apiClient.get<Map<String, dynamic>>(AppUrl.privacyPolicy);
 
       if (response.isSuccess && response.data != null) {
-        policyTitle.value = response.data!['title'] ?? '';
-        policyContent.value = response.data!['content'] ?? '';
+        final data = response.data!['data'];
+        policyTitle.value = data?['title'] ?? '';
+        policyContent.value = data?['content'] ?? '';
         LoggerUtils.logSuccess('Privacy policy fetched successfully');
       } else {
         LoggerUtils.logError('Privacy policy fetch failed: ${response.message}');
-        Get.snackbar('Error', 'Failed to load privacy policy',
-            snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar(
+          'error'.tr, 'failed_load_privacy'.tr,  // ✅
+          snackPosition: SnackPosition.BOTTOM,
+        );
       }
     } catch (e) {
       LoggerUtils.logError('Privacy policy error: $e');
-      Get.snackbar('Error', 'Something went wrong. Please try again.',
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(
+        'error'.tr, 'profile_update_failed'.tr,  // ✅
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isLoading.value = false;
     }

@@ -44,9 +44,12 @@ class CommunicatorItemController extends GetxController {
     if (item?.speak != null) {
       playAudio(item!.id, item.speak);
     } else {
-      Get.snackbar('Speak', selectedWord.value,
-          snackPosition: SnackPosition.BOTTOM,
-          duration: const Duration(seconds: 2));
+      Get.snackbar(
+        'speak'.tr,
+        selectedWord.value,
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 2),
+      );
     }
   }
 

@@ -1,23 +1,20 @@
-import 'package:chatter_bee/feature/Activity/activities_binding.dart';
-import 'package:chatter_bee/feature/Activity/activities_screen.dart';
-import 'package:chatter_bee/feature/Activity/add_activity_binding.dart';
-import 'package:chatter_bee/feature/Activity/add_activity_screen.dart';
+import 'package:chatter_bee/feature/Activity/buinding/activities_binding.dart';
+import 'package:chatter_bee/feature/Activity/buinding/edit_activity_buinding.dart';
+import 'package:chatter_bee/feature/Activity/controller/edit_activity_controller.dart';
+import 'package:chatter_bee/feature/Activity/view/activities_screen.dart';
+import 'package:chatter_bee/feature/Activity/buinding/add_activity_binding.dart';
+import 'package:chatter_bee/feature/Activity/view/add_activity_screen.dart';
+import 'package:chatter_bee/feature/Activity/view/edit_activity.dart';
 import 'package:chatter_bee/feature/Profile/binding/Profile_binding.dart';
 import 'package:chatter_bee/feature/Profile/binding/change_password_binding.dart';
-import 'package:chatter_bee/feature/Profile/binding/edit_profile_binding.dart';
-import 'package:chatter_bee/feature/Profile/binding/language_binding.dart';
 import 'package:chatter_bee/feature/Profile/binding/privacy_policy_binding.dart';
 import 'package:chatter_bee/feature/Profile/binding/subscription_binding.dart';
 import 'package:chatter_bee/feature/Profile/binding/support_bonding.dart';
 import 'package:chatter_bee/feature/Profile/view/change_password_screen.dart';
-import 'package:chatter_bee/feature/Profile/view/edit_profile_screen.dart';
-import 'package:chatter_bee/feature/Profile/view/language_screen.dart';
 import 'package:chatter_bee/feature/Profile/view/privacy_policy_screen.dart';
 import 'package:chatter_bee/feature/Profile/view/profile_screen.dart';
 import 'package:chatter_bee/feature/Profile/view/subscription_screen.dart';
 import 'package:chatter_bee/feature/Profile/view/support_screen.dart';
-import 'package:chatter_bee/feature/add_button_screen/add_button_binding.dart';
-import 'package:chatter_bee/feature/add_button_screen/add_button_screen.dart';
 import 'package:chatter_bee/feature/authentication/binding/create_new_password_binding.dart';
 import 'package:chatter_bee/feature/authentication/binding/forgot_password_binding.dart';
 import 'package:chatter_bee/feature/authentication/binding/forgot_verification_binding.dart';
@@ -87,6 +84,8 @@ import 'package:chatter_bee/feature/role_selection/view/caregiver_profile_screen
 import 'package:chatter_bee/feature/role_selection/view/communicator_profile_screen.dart';
 import 'package:chatter_bee/feature/role_selection/view/role_selection_screen.dart';
 import 'package:chatter_bee/feature/splash_screen/splash_screen.dart';
+import 'package:get/get.dart';
+import 'package:get/get_instance/src/bindings_interface.dart';
 import 'package:get/get_navigation/src/routes/get_route.dart';
 
 import '../feature/home_screen/caregiver/buinding/caregiver_sub_catagory_buinding.dart'
@@ -159,11 +158,7 @@ final List<GetPage> routes = [
     page: () => SubscriptionScreen(),
     binding: SubscriptionBinding(),
   ),
-  GetPage(
-    name: AppRoutes.EDITPROFILE,
-    page: () => EditProfileScreen(),
-    binding: EditProfileBinding(),
-  ),
+
   GetPage(
     name: AppRoutes.CHANGEPASSWORD,
     page: () => ChangePasswordScreen(),
@@ -179,11 +174,11 @@ final List<GetPage> routes = [
     page: () => SupportScreen(),
     binding: SupportBonding(),
   ),
-  GetPage(
-    name: AppRoutes.LANGUAGESCREEN,
-    page: () => LanguageScreen(),
-    binding: LanguageBinding(),
-  ),
+  // GetPage(
+  //   name: AppRoutes.LANGUAGESCREEN,
+  //   page: () => LanguageScreen(),
+  //   binding: LanguageBinding(),
+  // ),
   GetPage(
     name: AppRoutes.TEXT_TO_SPEAK,
     page: () => TextToSpeakScreen(),
@@ -281,8 +276,6 @@ final List<GetPage> routes = [
     page: () => const CoreWordsScreen(),
     binding: CoreWordsBinding(),
   ),
-  // GetPage(name: AppRoutes.ADD_BUTTON, page: () => const AddButtonScreen(), binding: AddButtonBinding(),),
-  // GetPage(name: AppRoutes.EDIT_BUTTON, page: () => const EditButtonScreen(), binding: EditButtonBinding(),),
   GetPage(
     name: AppRoutes.CAREGIVER_CONNECTIONS,
     page: () => const CaregiverConnectionsScreen(),
@@ -313,6 +306,12 @@ final List<GetPage> routes = [
     name: AppRoutes.COMMUNICATOR_ITEM,
     page: () => const CommunicatorItemScreen(),
     binding: CommunicatorItemBinding(),
+  ),
+
+  GetPage(
+    name: AppRoutes.EDITACTIVITY,
+    page: () => const EditActivityScreen(),
+    binding: EditActivityBuinding(),
   ),
 ];
 
@@ -360,6 +359,7 @@ class AppRoutes {
   static const String CORE_WORDS = '/core_words';
   static const String ADD_BUTTON = '/add-button';
   static const String EDIT_BUTTON = '/edit-button';
+  static const String EDITACTIVITY = '/edit-activity';
 
   //===============Invitations Routes===============
   static const String CAREGIVER_CONNECTIONS = '/caregiver-connections';

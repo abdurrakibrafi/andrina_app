@@ -18,8 +18,7 @@ Color _parseColor(String hex, Color fallback) {
   }
 }
 
-class CommunicatorItemScreen
-    extends GetView<CommunicatorItemController> {
+class CommunicatorItemScreen extends GetView<CommunicatorItemController> {
   const CommunicatorItemScreen({super.key});
 
   @override
@@ -44,7 +43,7 @@ class CommunicatorItemScreen
       ),
       body: Obx(() => Column(
         children: [
-          // ── Quick Speak Bar ─────────────────────────────────
+          // ── Quick Speak Bar ──────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
             child: Row(
@@ -52,11 +51,13 @@ class CommunicatorItemScreen
                 Expanded(
                   child: Container(
                     height: 52,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE3E3E9)),
+                      border: Border.all(
+                          color: const Color(0xFFE3E3E9)),
                       boxShadow: [
                         BoxShadow(
                             color: Colors.black.withOpacity(0.08),
@@ -68,7 +69,7 @@ class CommunicatorItemScreen
                       alignment: Alignment.centerLeft,
                       child: Text(
                         controller.selectedWord.value.isEmpty
-                            ? 'Tap an item...'
+                            ? 'tap_an_item'.tr
                             : controller.selectedWord.value,
                         style: GoogleFonts.nunito(
                           fontSize: 16,
@@ -81,7 +82,6 @@ class CommunicatorItemScreen
                   ),
                 ),
                 const SizedBox(width: 10),
-                // Speak
                 GestureDetector(
                   onTap: controller.speakSelected,
                   child: Container(
@@ -109,7 +109,6 @@ class CommunicatorItemScreen
                   ),
                 ),
                 const SizedBox(width: 10),
-                // Clear
                 GestureDetector(
                   onTap: controller.clearSelection,
                   child: Container(
@@ -150,14 +149,17 @@ class CommunicatorItemScreen
                   Icon(Icons.grid_off_outlined,
                       size: 60, color: Colors.grey[300]),
                   const SizedBox(height: 12),
-                  Text('No items available',
-                      style: TextStyle(
-                          color: Colors.grey[500], fontSize: 15)),
+                  Text(
+                    'no_items_available'.tr,
+                    style: TextStyle(
+                        color: Colors.grey[500], fontSize: 15),
+                  ),
                 ],
               ),
             )
                 : GridView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              padding:
+              const EdgeInsets.fromLTRB(16, 0, 16, 16),
               gridDelegate:
               const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3,
@@ -170,7 +172,8 @@ class CommunicatorItemScreen
                 final item = controller.items[i];
                 return Obx(() => _ItemCard(
                   item: item,
-                  isSelected: controller.selectedItemId.value ==
+                  isSelected:
+                  controller.selectedItemId.value ==
                       item.id,
                   isPlaying:
                   controller.playingId.value == item.id,
@@ -234,8 +237,7 @@ class _ItemCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  _CardImage(
-                      imageUrl: imageUrl, size: 56, bgColor: bgColor),
+                  _CardImage(imageUrl: imageUrl, size: 56, bgColor: bgColor),
                   const SizedBox(height: 6),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -254,7 +256,6 @@ class _ItemCard extends StatelessWidget {
                 ],
               ),
             ),
-            // Audio play dot
             if (item.speak != null)
               Positioned(
                 bottom: 5,
@@ -276,7 +277,6 @@ class _ItemCard extends StatelessWidget {
                   ),
                 ),
               ),
-            // Selected checkmark
             if (isSelected)
               Positioned(
                 top: tabH - 8,
@@ -284,8 +284,8 @@ class _ItemCard extends StatelessWidget {
                 child: Container(
                   width: 18,
                   height: 18,
-                  decoration:
-                  BoxDecoration(color: bgColor, shape: BoxShape.circle),
+                  decoration: BoxDecoration(
+                      color: bgColor, shape: BoxShape.circle),
                   child: const Icon(Icons.check,
                       color: Colors.white, size: 12),
                 ),
@@ -296,8 +296,6 @@ class _ItemCard extends StatelessWidget {
     );
   }
 }
-
-// ─── Shared widgets ───────────────────────────────────────────────────────────
 
 class _CardImage extends StatelessWidget {
   final String? imageUrl;

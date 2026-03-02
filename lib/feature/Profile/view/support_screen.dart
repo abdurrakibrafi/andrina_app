@@ -20,7 +20,7 @@ class SupportScreen extends GetView<SupportController> {
           onPressed: () => Get.back(),
         ),
         title: Text(
-          'Support',
+          'support_title'.tr,  // ✅
           style: GoogleFonts.nunito(
             color: Colors.black,
             fontSize: 18,
@@ -30,80 +30,74 @@ class SupportScreen extends GetView<SupportController> {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 20),
-            child: Image.asset(
-              ImagesLink.logo,
-              height: 50,
-            ),
+            child: Image.asset(ImagesLink.logo, height: 50),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // What is ChatterBee Section
-              _buildExpandableSection(
-                title: 'What is ChatterBee?',
-                content:
-                'At ChatterBee, your privacy is very important to us. This Privacy Policy explains how we collect, use, store, and protect your personal information while you use our mobile application. By using the app, you agree to the practices described below.',
-                isExpanded: true,
-              ),
-              const SizedBox(height: 12),
+      body: Obx(() {
+        // ── Loading ──
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-              // Other Sections
-              _buildExpandableSection(
-                title: 'Information We Collect?',
-                content: 'At ChatterBee, your privacy is very important to us. This Privacy Policy explains how we collect, use, store, and protect your personal information while you use our mobile application. By using our app, you agree to the practices described below.',
-                isExpanded: false,
-              ),
-              const SizedBox(height: 12),
+        // ── Error ──
+        if (controller.errorMessage.value.isNotEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(controller.errorMessage.value,
+                    style: GoogleFonts.nunito(
+                        fontSize: 14, color: Colors.grey[600])),
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  onPressed: controller.fetchFaqs,
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryColor),
+                  child: Text('retry'.tr),  // ✅
+                ),
+              ],
+            ),
+          );
+        }
 
-              _buildExpandableSection(
-                title: 'How We Use Your Information?',
-                content: 'At ChatterBee, your privacy is very important to us. This Privacy Policy explains how we collect, use, store, and protect your personal information while you use our mobile application. By using our app, you agree to the practices described below.',
-                isExpanded: false,
-              ),
-              const SizedBox(height: 12),
+        // ── Empty ──
+        if (controller.faqList.isEmpty) {
+          return Center(
+            child: Text(
+              'no_faq_available'.tr,  // ✅
+              style: GoogleFonts.nunito(
+                  fontSize: 14, color: Colors.grey[600]),
+            ),
+          );
+        }
 
-              _buildExpandableSection(
-                title: 'Sharing of Information?',
-                content: '',
-                isExpanded: false,
-              ),
-              const SizedBox(height: 12),
-
-              _buildExpandableSection(
-                title: 'Data Storage and Security?',
-                content: '',
-                isExpanded: false,
-              ),
-              const SizedBox(height: 12),
-
-              _buildExpandableSection(
-                title: 'User Control?',
-                content: '',
-                isExpanded: false,
-              ),
-              const SizedBox(height: 12),
-
-              _buildExpandableSection(
-                title: 'Children\'s Privacy?',
-                content: '',
-                isExpanded: false,
-              ),
-              const SizedBox(height: 12),
-
-              _buildExpandableSection(
-                title: 'Contact Us?',
-                content: '',
-                isExpanded: false,
-              ),
-            ],
+        // ── FAQ List ──
+        return SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ...controller.faqList.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final faq = entry.value;
+                  return Column(
+                    children: [
+                      _buildExpandableSection(
+                        title: faq.title,      // ← backend data, no .tr
+                        content: faq.content,  // ← backend data, no .tr
+                        isExpanded: index == 0, // প্রথমটা open থাকবে
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                  );
+                }),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      }),
     );
   }
 
@@ -135,11 +129,11 @@ class SupportScreen extends GetView<SupportController> {
         child: Obx(
               () => ExpansionTile(
             initiallyExpanded: isExpanded,
-            onExpansionChanged: (value) {
-              expanded.value = value;
-            },
-            tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            onExpansionChanged: (value) => expanded.value = value,
+            tilePadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            childrenPadding:
+            const EdgeInsets.fromLTRB(16, 0, 16, 16),
             title: Text(
               title,
               style: GoogleFonts.roboto(
@@ -156,7 +150,7 @@ class SupportScreen extends GetView<SupportController> {
                 border: Border.all(
                   color: expanded.value
                       ? AppColors.primaryColor
-                      : Color(0xFFE3E3E9),
+                      : const Color(0xFFE3E3E9),
                   width: 1.5,
                 ),
               ),
@@ -165,7 +159,7 @@ class SupportScreen extends GetView<SupportController> {
                 size: 16,
                 color: expanded.value
                     ? AppColors.primaryColor
-                    : Color(0xFFE3E3E9),
+                    : const Color(0xFFE3E3E9),
               ),
             ),
             children: [

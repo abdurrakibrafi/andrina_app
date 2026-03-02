@@ -1,11 +1,13 @@
 import 'package:chatter_bee/config/app_colors.dart';
 import 'package:chatter_bee/config/imagesUrl.dart';
+import 'package:chatter_bee/config/translations/widgets/language_selector.dart';
 import 'package:chatter_bee/feature/Profile/controller/profile_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+
 class ProfileScreen extends GetView<ProfileController> {
   const ProfileScreen({super.key});
 
@@ -21,7 +23,7 @@ class ProfileScreen extends GetView<ProfileController> {
           onPressed: () => Get.back(),
         ),
         title: Text(
-          'Profile Setup',
+          'profile_setup'.tr,  // ✅
           style: GoogleFonts.nunito(color: Colors.black, fontSize: 18, fontWeight: FontWeight.w600),
         ),
         actions: [
@@ -41,27 +43,30 @@ class ProfileScreen extends GetView<ProfileController> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Profile Avatar (read-only, upload only in edit screen) ──
+                // ── Profile Avatar ──
                 Center(
                   child: Stack(
                     children: [
-                      Obx(() => Container(
-                        width: 100,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          shape: BoxShape.circle,
-                          image: controller.avatarUrl.value != null
-                              ? DecorationImage(
-                            image: CachedNetworkImageProvider(controller.avatarUrl.value),
-                            fit: BoxFit.cover,
-                          )
+                      Obx(() {
+                        final hasAvatar = controller.avatarUrl.value.isNotEmpty;
+                        return Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            shape: BoxShape.circle,
+                            image: hasAvatar
+                                ? DecorationImage(
+                              image: CachedNetworkImageProvider(controller.avatarUrl.value),
+                              fit: BoxFit.cover,
+                            )
+                                : null,
+                          ),
+                          child: !hasAvatar
+                              ? Icon(Icons.person, size: 50, color: Colors.grey[400])
                               : null,
-                        ),
-                        child: controller.avatarUrl.value == null
-                            ? Icon(Icons.person, size: 50, color: Colors.grey[400])
-                            : null,
-                      )),
+                        );
+                      }),
                     ],
                   ),
                 ),
@@ -78,14 +83,14 @@ class ProfileScreen extends GetView<ProfileController> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Switch User',
+                      Text('switch_user'.tr,  // ✅
                           style: GoogleFonts.nunito(fontSize: 20, fontWeight: FontWeight.w500, color: Colors.black)),
                       const SizedBox(height: 12),
                       Obx(() => Column(
                         children: [
                           _buildRoleCard(
                             icon: SvgPicture.asset(ImagesLink.simplificationCare),
-                            title: 'Communicator',
+                            title: 'communicator'.tr,  // ✅
                             role: 'communicator',
                             isSelected: controller.selectedRole.value == 'Communicator',
                             onTap: () => Get.offAllNamed("/SignInScreen"),
@@ -93,7 +98,7 @@ class ProfileScreen extends GetView<ProfileController> {
                           const SizedBox(height: 12),
                           _buildRoleCard(
                             icon: SvgPicture.asset(ImagesLink.simplification),
-                            title: 'Caregiver',
+                            title: 'caregiver'.tr,  // ✅
                             role: 'caregiver',
                             isSelected: controller.selectedRole.value == 'Caregiver',
                             onTap: () => Get.offAllNamed("/SignInScreen"),
@@ -106,7 +111,6 @@ class ProfileScreen extends GetView<ProfileController> {
                 const SizedBox(height: 16),
 
                 // ── Personal Information ──
-                // FIX: Wrapped entire section in Obx so data shows after API loads
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
@@ -116,7 +120,7 @@ class ProfileScreen extends GetView<ProfileController> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Personal Information',
+                          Text('personal_information'.tr,  // ✅
                               style: GoogleFonts.nunito(fontSize: 20, fontWeight: FontWeight.w500, color: Colors.black)),
                           IconButton(
                             icon: SvgPicture.asset(ImagesLink.edit),
@@ -160,47 +164,47 @@ class ProfileScreen extends GetView<ProfileController> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Settings',
+                      Text('settings'.tr,  // ✅
                           style: GoogleFonts.nunito(fontSize: 20, fontWeight: FontWeight.w500, color: Colors.black)),
                       const SizedBox(height: 12),
                       _buildMenuTile(
                         icon: SvgPicture.asset(ImagesLink.clarityLanguage),
-                        title: 'Language',
-                        onTap: controller.onLanguageTap,
+                        title: 'language'.tr,  // ✅
+                        onTap: () => Get.to(() => const LanguageSelector()),
                         trailing: const Icon(Icons.chevron_right),
                       ),
                       const SizedBox(height: 8),
                       _buildMenuTile(
                         icon: SvgPicture.asset(ImagesLink.lockIcon),
-                        title: 'Change Password',
+                        title: 'change_password'.tr,  // ✅
                         onTap: controller.onChangePasswordTap,
                         trailing: const Icon(Icons.chevron_right),
                       ),
                       const SizedBox(height: 8),
                       _buildMenuTile(
                         icon: SvgPicture.asset(ImagesLink.privacy),
-                        title: 'Privacy policy',
+                        title: 'privacy_policy'.tr,  // ✅
                         onTap: controller.onPrivacyPolicyTap,
                         trailing: const Icon(Icons.chevron_right),
                       ),
                       const SizedBox(height: 8),
                       _buildMenuTile(
                         icon: SvgPicture.asset(ImagesLink.support),
-                        title: 'Support',
+                        title: 'support'.tr,  // ✅
                         onTap: controller.onSupportTap,
                         trailing: const Icon(Icons.chevron_right),
                       ),
                       const SizedBox(height: 8),
                       _buildMenuTile(
                         icon: SvgPicture.asset(ImagesLink.delete),
-                        title: 'Delete Account',
+                        title: 'delete_account'.tr,  // ✅
                         onTap: controller.onDeleteAccountTap,
                         textColor: Colors.red,
                       ),
                       const SizedBox(height: 8),
                       _buildMenuTile(
                         icon: SvgPicture.asset(ImagesLink.logout),
-                        title: 'Logout',
+                        title: 'logout'.tr,  // ✅
                         onTap: controller.onLogoutTap,
                         textColor: Colors.red,
                       ),
@@ -222,7 +226,6 @@ class ProfileScreen extends GetView<ProfileController> {
     required VoidCallback onTap,
     Widget? trailing,
     Color? textColor,
-    Color? iconColor,
   }) {
     return InkWell(
       onTap: onTap,
@@ -248,7 +251,7 @@ class ProfileScreen extends GetView<ProfileController> {
         onTap: controller.onSubscriptionTap,
         child: Row(
           children: [
-            Expanded(child: Text('Subscription',
+            Expanded(child: Text('subscription'.tr,  // ✅
                 style: GoogleFonts.nunito(fontSize: 20, fontWeight: FontWeight.w500, color: Colors.black))),
             const Icon(Icons.chevron_right),
           ],

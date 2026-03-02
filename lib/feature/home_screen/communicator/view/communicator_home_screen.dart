@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chatter_bee/config/app_colors.dart';
 import 'package:chatter_bee/config/app_url.dart';
 import 'package:chatter_bee/config/imagesUrl.dart';
+import 'package:chatter_bee/feature/Profile/controller/profile_controller.dart';
 import 'package:chatter_bee/feature/home_screen/communicator/contoller/communicator_home_controller.dart';
 import 'package:chatter_bee/models/communicator_models/communicator_content_model.dart';
 import 'package:chatter_bee/routes/app_routes.dart';
@@ -12,7 +13,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-// ─── Color helper ─────────────────────────────────────────────────────────────
 Color _parseColor(String hex, Color fallback) {
   try {
     return Color(int.parse('FF${hex.replaceAll('#', '')}', radix: 16));
@@ -21,15 +21,14 @@ Color _parseColor(String hex, Color fallback) {
   }
 }
 
-// ─── Explore More Item Model ──────────────────────────────────────────────────
 class _ExploreItem {
-  final String label;
+  final String labelKey;
   final IconData icon;
   final Color color;
   final String route;
 
   const _ExploreItem({
-    required this.label,
+    required this.labelKey,
     required this.icon,
     required this.color,
     required this.route,
@@ -43,20 +42,19 @@ class _ExploreItem {
 class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
   const CommunicatorHomeScreen({super.key});
 
-  // ── Explore More items list ─────────────────────────────────────────────────
   static const List<_ExploreItem> _exploreItems = [
     _ExploreItem(
-      label: 'My Schedule',
+      labelKey: 'my_schedule',
       icon: Icons.calendar_month_outlined,
       color: Color(0xFFFDD268),
       route: AppRoutes.ACTIVITIES,
     ),
-    // Add more explore items here as needed
-    // _ExploreItem(label: 'Goals', icon: Icons.flag_outlined, color: Color(0xFF7BC5D3), route: AppRoutes.GOALS),
   ];
 
   @override
   Widget build(BuildContext context) {
+    
+    final profileController = Get.put(ProfileController());
     return Scaffold(
       backgroundColor: AppColors.bgColor,
       body: SafeArea(
@@ -92,11 +90,17 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
                             ),
                             child: Padding(
                               padding: const EdgeInsets.all(3.0),
-                              child: CircleAvatar(
+                              child:
+                              Obx(() => CircleAvatar(
                                 radius: 22,
-                                backgroundImage:
-                                AssetImage(ImagesLink.profileImg),
-                              ),
+                                backgroundColor: Colors.grey.shade200,
+                                backgroundImage: profileController.avatarUrl.value.isNotEmpty
+                                    ? CachedNetworkImageProvider(profileController.avatarUrl.value)
+                                    : null,
+                                child: profileController.avatarUrl.value.isEmpty
+                                    ? const Icon(Icons.person, size: 26, color: Colors.grey)
+                                    : null,
+                              )),
                             ),
                           ),
                         ),
@@ -105,13 +109,12 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
                   ),
                 ),
 
-                // ── Quick Speak Action Bar ────────────────────────────────────
+                // ── Quick Speak Action Bar ───────────────────────────────────
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
                     child: Obx(() => Row(
                       children: [
-                        // Text display bar
                         Expanded(
                           child: Container(
                             height: 52,
@@ -136,12 +139,12 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
                               alignment: Alignment.centerLeft,
                               child: Text(
                                 controller.quickSpeakText.value.isEmpty
-                                    ? 'Select a Quick Speak...'
+                                    ? 'select_quick_speak_hint'.tr
                                     : controller.quickSpeakText.value,
                                 style: GoogleFonts.nunito(
                                   fontSize: 16,
-                                  color: controller.quickSpeakText.value
-                                      .isEmpty
+                                  color: controller
+                                      .quickSpeakText.value.isEmpty
                                       ? Colors.grey[400]
                                       : Colors.black87,
                                 ),
@@ -150,7 +153,6 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        // Speak button
                         GestureDetector(
                           onTap: controller.speakQuickSpeak,
                           child: Container(
@@ -178,7 +180,6 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        // Clear button
                         GestureDetector(
                           onTap: controller.clearQuickSpeak,
                           child: Container(
@@ -212,7 +213,7 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
-                    child: _SectionHeader(title: 'Quick Speak'),
+                    child: _SectionHeader(title: 'quick_speak'.tr),
                   ),
                 ),
 
@@ -222,15 +223,18 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 4),
-                    child: Text('No quick speaks yet.',
-                        style: TextStyle(color: Colors.grey[500])),
+                    child: Text(
+                      'no_quick_speaks_yet'.tr,
+                      style: TextStyle(color: Colors.grey[500]),
+                    ),
                   ),
                 )
                     : SliverToBoxAdapter(
                   child: SizedBox(
                     height: 130,
                     child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      padding:
+                      const EdgeInsets.symmetric(horizontal: 12),
                       scrollDirection: Axis.horizontal,
                       itemCount: controller.quickSpeaks.length,
                       itemBuilder: (_, i) {
@@ -257,7 +261,7 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
-                    child: _SectionHeader(title: 'Tap to Talk'),
+                    child: _SectionHeader(title: 'tap_to_talk'.tr),
                   ),
                 ),
 
@@ -272,24 +276,27 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
                           Icon(Icons.category_outlined,
                               size: 60, color: Colors.grey[300]),
                           const SizedBox(height: 12),
-                          Text('No categories available',
-                              style:
-                              TextStyle(color: Colors.grey[500])),
+                          Text(
+                            'no_categories_available'.tr,
+                            style:
+                            TextStyle(color: Colors.grey[500]),
+                          ),
                         ],
                       ),
                     ),
                   ),
                 )
                     : SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                  padding:
+                  const EdgeInsets.fromLTRB(16, 0, 16, 4),
                   sliver: SliverGrid(
                     delegate: SliverChildBuilderDelegate(
                           (_, i) {
                         final cat = controller.categories[i];
                         return Obx(() => _CategoryCard(
                           category: cat,
-                          isPlaying:
-                          controller.playingId.value == cat.id,
+                          isPlaying: controller.playingId.value ==
+                              cat.id,
                           onTap: () =>
                               controller.onCategoryTap(cat),
                           onPlayAudio: cat.speak != null
@@ -314,19 +321,16 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
-                    child: _SectionHeader(title: 'Explore More'),
+                    child: _SectionHeader(title: 'explore_more'.tr),
                   ),
                 ),
 
-                // ── Explore More Cards (folder style, same as category) ───────
+                // ── Explore More Cards ───────────────────────────────────────
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
                   sliver: SliverGrid(
                     delegate: SliverChildBuilderDelegate(
-                          (_, i) {
-                        final item = _exploreItems[i];
-                        return _ExploreCard(item: item);
-                      },
+                          (_, i) => _ExploreCard(item: _exploreItems[i]),
                       childCount: _exploreItems.length,
                     ),
                     gridDelegate:
@@ -350,12 +354,11 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-//  EXPLORE MORE CARD — same folder shape as category
+//  EXPLORE MORE CARD
 // ════════════════════════════════════════════════════════════════════════════
 
 class _ExploreCard extends StatelessWidget {
   final _ExploreItem item;
-
   const _ExploreCard({required this.item});
 
   @override
@@ -367,11 +370,7 @@ class _ExploreCard extends StatelessWidget {
         final topPad = tabH + 6;
 
         return CustomPaint(
-          painter: _FolderPainter(
-            cardColor: Colors.white,
-            tabColor: item.color,
-          ),
-          // ✅ Fix: Positioned must be inside a Stack, not directly in CustomPaint
+          painter: _FolderPainter(cardColor: Colors.white, tabColor: item.color),
           child: Stack(
             children: [
               Positioned.fill(
@@ -387,17 +386,13 @@ class _ExploreCard extends StatelessWidget {
                         color: item.color.withOpacity(0.25),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Icon(
-                        item.icon,
-                        color: item.color.darken(30),
-                        size: 30,
-                      ),
+                      child: Icon(item.icon, color: item.color.darken(30), size: 30),
                     ),
                     const SizedBox(height: 6),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: Text(
-                        item.label,
+                        item.labelKey.tr,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
@@ -420,7 +415,7 @@ class _ExploreCard extends StatelessWidget {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-//  SECTION HEADER — reusable yellow-bar title
+//  SECTION HEADER
 // ════════════════════════════════════════════════════════════════════════════
 
 class _SectionHeader extends StatelessWidget {
@@ -489,8 +484,7 @@ class _QsCard extends StatelessWidget {
 
             return CustomPaint(
               painter: _FolderPainter(
-                cardColor:
-                isSelected ? bgColor.withOpacity(0.15) : Colors.white,
+                cardColor: isSelected ? bgColor.withOpacity(0.15) : Colors.white,
                 tabColor: bgColor,
                 isSelected: isSelected,
                 selectedBorderColor: bgColor,
@@ -502,8 +496,7 @@ class _QsCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      _CardImage(
-                          imageUrl: imageUrl, size: 50, bgColor: bgColor),
+                      _CardImage(imageUrl: imageUrl, size: 50, bgColor: bgColor),
                       const SizedBox(height: 5),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -581,10 +574,7 @@ class _CategoryCard extends StatelessWidget {
         final topPad = tabH + 6;
 
         return CustomPaint(
-          painter: _FolderPainter(
-            cardColor: Colors.white,
-            tabColor: bgColor,
-          ),
+          painter: _FolderPainter(cardColor: Colors.white, tabColor: bgColor),
           child: Stack(children: [
             Positioned.fill(
               top: topPad,
@@ -592,8 +582,7 @@ class _CategoryCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  _CardImage(
-                      imageUrl: imageUrl, size: 56, bgColor: bgColor),
+                  _CardImage(imageUrl: imageUrl, size: 56, bgColor: bgColor),
                   const SizedBox(height: 6),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -611,8 +600,9 @@ class _CategoryCard extends StatelessWidget {
                   ),
                   if (category.subCategoriesCount > 0)
                     Text(
-                      '${category.subCategoriesCount} sub',
-                      style: TextStyle(fontSize: 9, color: Colors.grey[400]),
+                      '${category.subCategoriesCount} ${'sub_count_suffix'.tr}',
+                      style:
+                      TextStyle(fontSize: 9, color: Colors.grey[400]),
                     ),
                 ],
               ),
@@ -654,8 +644,7 @@ class _CardImage extends StatelessWidget {
   final double size;
   final Color bgColor;
 
-  const _CardImage(
-      {this.imageUrl, required this.size, required this.bgColor});
+  const _CardImage({this.imageUrl, required this.size, required this.bgColor});
 
   @override
   Widget build(BuildContext context) {
@@ -745,7 +734,6 @@ class _FolderPainter extends CustomPainter {
       ..color = cardColor
       ..style = PaintingStyle.fill);
 
-    // Tab colour area
     final tabPath = Path();
     tabPath.moveTo(0, 0);
     tabPath.lineTo(tabWidth + tabSlantWidth + radius, 0);
@@ -804,8 +792,7 @@ class DashedCirclePainter extends CustomPainter {
     final radius = size.width / 2;
     final center = Offset(size.width / 2, size.height / 2);
     final circumference = 2 * 3.14159 * radius;
-    final dashCount =
-    (circumference / (dashWidth + dashSpace)).floor();
+    final dashCount = (circumference / (dashWidth + dashSpace)).floor();
 
     for (int i = 0; i < dashCount; i++) {
       final startAngle = (i * (dashWidth + dashSpace) / radius);

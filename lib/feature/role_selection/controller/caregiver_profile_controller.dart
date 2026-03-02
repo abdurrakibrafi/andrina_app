@@ -13,26 +13,17 @@ class CaregiverProfileController extends GetxController {
   final fullNameController = TextEditingController();
   final selectedLanguage = Rx<String>('English (United States)');
   final isBuddyBeeMode = RxBool(false);
-  // FIX: Store API key ('male_adult' etc.) for comparison in grid
   final selectedVoiceType = Rx<String>('male_child');
   final Rx<File?> profileImage = Rx<File?>(null);
   final RxBool isLoading = false.obs;
   final RxBool isSaving = false.obs;
 
-  final List<String> languages = [
-    'English (United States)',
-    'English (United Kingdom)',
-    'Spanish',
-    'French',
-    'German',
-  ];
-
-  // 'key' = API value, 'type' = display label
+  // ✅ key গুলো translation এর সাথে match করবে
   final List<Map<String, dynamic>> voiceTypes = [
-    {'type': 'Male Adult',   'key': 'male_adult',   'icon': ImagesLink.adultMale},
-    {'type': 'Female Adult', 'key': 'female_adult', 'icon': ImagesLink.adultFemale},
-    {'type': 'Male Child',   'key': 'male_child',   'icon': ImagesLink.maleBoy},
-    {'type': 'Female Child', 'key': 'female_child', 'icon': ImagesLink.femaleChild},
+    {'type': 'male_adult',   'key': 'male_adult',   'icon': ImagesLink.adultMale},
+    {'type': 'female_adult', 'key': 'female_adult', 'icon': ImagesLink.adultFemale},
+    {'type': 'male_child',   'key': 'male_child',   'icon': ImagesLink.maleBoy},
+    {'type': 'female_child', 'key': 'female_child', 'icon': ImagesLink.femaleChild},
   ];
 
   @override
@@ -41,7 +32,6 @@ class CaregiverProfileController extends GetxController {
     loadProfile();
   }
 
-  // ==================== LOAD PROFILE ====================
   Future<void> loadProfile() async {
     try {
       isLoading.value = true;
@@ -50,7 +40,6 @@ class CaregiverProfileController extends GetxController {
         final data = response.data!['data'] ?? response.data!;
         fullNameController.text = data['full_name'] ?? '';
         isBuddyBeeMode.value = data['buddy_mode'] ?? false;
-        // API returns 'male_adult' etc. → store as-is
         selectedVoiceType.value = data['voice_type'] ?? 'male_child';
       }
     } catch (e) {
@@ -61,11 +50,9 @@ class CaregiverProfileController extends GetxController {
   }
 
   void toggleBuddyBeeMode(bool value) => isBuddyBeeMode.value = value;
-  // FIX: receives API key
   void selectVoiceType(String key) => selectedVoiceType.value = key;
   void selectLanguage(String language) => selectedLanguage.value = language;
 
-  // ==================== PICK IMAGE ====================
   Future<void> pickImage() async {
     try {
       await Get.bottomSheet(
@@ -73,28 +60,30 @@ class CaregiverProfileController extends GetxController {
           padding: const EdgeInsets.all(20),
           decoration: const BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
+            borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20), topRight: Radius.circular(20)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Choose Profile Picture',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+              Text('choose_profile_picture'.tr,   // ✅
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
               const SizedBox(height: 20),
               ListTile(
                 leading: const Icon(Icons.camera_alt),
-                title: const Text('Camera'),
+                title: Text('camera'.tr),   // ✅
                 onTap: () async { Get.back(); await _pickFrom(ImageSource.camera); },
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library),
-                title: const Text('Gallery'),
+                title: Text('gallery'.tr),   // ✅
                 onTap: () async { Get.back(); await _pickFrom(ImageSource.gallery); },
               ),
               if (profileImage.value != null)
                 ListTile(
                   leading: const Icon(Icons.delete, color: Colors.red),
-                  title: const Text('Remove Photo', style: TextStyle(color: Colors.red)),
+                  title: Text('remove_photo'.tr,   // ✅
+                      style: const TextStyle(color: Colors.red)),
                   onTap: () { Get.back(); profileImage.value = null; },
                 ),
             ],
@@ -102,23 +91,26 @@ class CaregiverProfileController extends GetxController {
         ),
       );
     } catch (e) {
-      Get.snackbar('Error', 'Failed to open image picker', snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('error'.tr, 'failed_open_picker'.tr,   // ✅
+          snackPosition: SnackPosition.BOTTOM);
     }
   }
 
   Future<void> _pickFrom(ImageSource source) async {
     try {
-      final XFile? image = await _picker.pickImage(source: source, maxWidth: 512, maxHeight: 512, imageQuality: 75);
+      final XFile? image = await _picker.pickImage(
+          source: source, maxWidth: 512, maxHeight: 512, imageQuality: 75);
       if (image != null) profileImage.value = File(image.path);
     } catch (e) {
-      Get.snackbar('Error', 'Failed to pick image', snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('error'.tr, 'failed_pick_image'.tr,   // ✅
+          snackPosition: SnackPosition.BOTTOM);
     }
   }
 
-  // ==================== SAVE PROFILE ====================
   Future<void> onContinue() async {
     if (fullNameController.text.trim().isEmpty) {
-      Get.snackbar('Error', 'Please enter your full name', snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('error'.tr, 'enter_full_name_error'.tr,   // ✅
+          snackPosition: SnackPosition.BOTTOM);
       return;
     }
     try {
@@ -130,14 +122,17 @@ class CaregiverProfileController extends GetxController {
         avatar: profileImage.value,
       );
       if (response.isSuccess) {
-        Get.snackbar('Success', 'Profile updated successfully!',
-            snackPosition: SnackPosition.BOTTOM, backgroundColor: const Color(0xFFE8F5E9));
+        Get.snackbar('success'.tr, 'profile_updated'.tr,   // ✅
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: const Color(0xFFE8F5E9));
         Get.offAllNamed(AppRoutes.NAVIGATIONBAR);
       } else {
-        Get.snackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar('error'.tr, response.message,   // ✅
+            snackPosition: SnackPosition.BOTTOM);
       }
     } catch (e) {
-      Get.snackbar('Error', 'Something went wrong. Please try again.', snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('error'.tr, 'profile_update_failed'.tr,   // ✅
+          snackPosition: SnackPosition.BOTTOM);
     } finally {
       isSaving.value = false;
     }

@@ -83,7 +83,7 @@ class CaregiverSubCategoryController extends GetxController {
     nameController.clear();
     formColorHex.value = '#B5CFD1';
     formImageFile.value = null;
-    _openSheet('Add Sub Category');
+    _openSheet('add_sub_category'.tr);
   }
 
   // ─── Edit ────────────────────────────────────────────────────
@@ -92,7 +92,7 @@ class CaregiverSubCategoryController extends GetxController {
     nameController.text = sub.name;
     formColorHex.value = sub.color.isNotEmpty ? sub.color : '#B5CFD1';
     formImageFile.value = null;
-    _openSheet('Edit Sub Category');
+    _openSheet('edit'.tr);
   }
 
   void _openSheet(String title) {
@@ -118,16 +118,15 @@ class CaregiverSubCategoryController extends GetxController {
   // ─── Save ────────────────────────────────────────────────────
   Future<void> save() async {
     if (nameController.text.trim().isEmpty) {
-      Get.snackbar('Error', 'Please enter a name',
+      Get.snackbar('error'.tr, 'please_enter_name'.tr,
           snackPosition: SnackPosition.BOTTOM);
       return;
     }
     formLoading.value = true;
 
     if (_editingSub != null) {
-      // UPDATE — uses subcategory's own "id"
       final res = await _repo.updateSubCategory(
-        subCategoryId: _editingSub!.id, // ✅ subcategory's own id
+        subCategoryId: _editingSub!.id,
         name: nameController.text.trim(),
         color: formColorHex.value,
         imageFile: formImageFile.value,
@@ -136,30 +135,31 @@ class CaregiverSubCategoryController extends GetxController {
       if (res.isSuccess) {
         Get.back();
         await refresh();
-        Get.snackbar('✅ Updated', 'Sub-category updated',
+        Get.snackbar('updated'.tr, 'sub_category_updated'.tr,
             snackPosition: SnackPosition.BOTTOM);
       } else {
-        Get.snackbar('Error', res.message, snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar('error'.tr, res.message,
+            snackPosition: SnackPosition.BOTTOM);
       }
     } else {
-      // CREATE — uses parent category's "id" as main_category_id
       final communicatorId = CommunicatorSessionService.to.communicatorId.value;
       final res = await _repo.createSubCategory(
         name: nameController.text.trim(),
         color: formColorHex.value,
         order: subCategories.length,
         communicatorId: communicatorId,
-        mainCategoryId: parentCategory.id, // ✅ parent category's id
+        mainCategoryId: parentCategory.id,
         imageFile: formImageFile.value,
       );
       formLoading.value = false;
       if (res.isSuccess) {
         Get.back();
         await refresh();
-        Get.snackbar('✅ Created', 'Sub-category created',
+        Get.snackbar('created'.tr, 'sub_category_created'.tr,
             snackPosition: SnackPosition.BOTTOM);
       } else {
-        Get.snackbar('Error', res.message, snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar('error'.tr, res.message,
+            snackPosition: SnackPosition.BOTTOM);
       }
     }
   }
@@ -220,7 +220,7 @@ class _SubCategorySheet extends StatelessWidget {
               controller: controller.nameController,
               autofocus: true,
               decoration: InputDecoration(
-                labelText: 'Sub-Category Name',
+                labelText: 'sub_category_name_label'.tr,
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12)),
                 focusedBorder: OutlineInputBorder(
@@ -233,8 +233,8 @@ class _SubCategorySheet extends StatelessWidget {
             const SizedBox(height: 16),
 
             // ── Color ─────────────────────────────────────────
-            const Text('Color',
-                style: TextStyle(fontWeight: FontWeight.w600)),
+            Text('color'.tr,
+                style: const TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Obx(() => Wrap(
               spacing: 10,
@@ -285,8 +285,8 @@ class _SubCategorySheet extends StatelessWidget {
             const SizedBox(height: 16),
 
             // ── Image ─────────────────────────────────────────
-            const Text('Image (optional)',
-                style: TextStyle(fontWeight: FontWeight.w600)),
+            Text('image_optional'.tr,
+                style: const TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Obx(() => controller.formImageFile.value != null
                 ? Row(children: [
@@ -300,14 +300,14 @@ class _SubCategorySheet extends StatelessWidget {
                 onPressed: controller.removeImage,
                 icon: const Icon(Icons.delete,
                     color: Colors.red, size: 18),
-                label: const Text('Remove',
-                    style: TextStyle(color: Colors.red)),
+                label: Text('remove'.tr,
+                    style: const TextStyle(color: Colors.red)),
               ),
             ])
                 : OutlinedButton.icon(
               onPressed: controller.pickImage,
               icon: const Icon(Icons.image_outlined),
-              label: const Text('Choose Image'),
+              label: Text('choose_image'.tr),
               style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10))),
@@ -319,8 +319,9 @@ class _SubCategorySheet extends StatelessWidget {
               width: double.infinity,
               height: 48,
               child: ElevatedButton(
-                onPressed:
-                controller.formLoading.value ? null : controller.save,
+                onPressed: controller.formLoading.value
+                    ? null
+                    : controller.save,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFFFC857),
                   shape: RoundedRectangleBorder(
@@ -333,8 +334,8 @@ class _SubCategorySheet extends StatelessWidget {
                     height: 20,
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Colors.black))
-                    : const Text('Save',
-                    style: TextStyle(
+                    : Text('save'.tr,
+                    style: const TextStyle(
                         color: Colors.black,
                         fontWeight: FontWeight.w700,
                         fontSize: 16)),
