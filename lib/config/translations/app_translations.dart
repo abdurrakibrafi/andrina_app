@@ -82,6 +82,7 @@ class AppTranslations extends Translations {
       'upload': 'Upload',
       'voice_preview': 'Voice preview would play here',
       'voice_upload': 'Voice upload functionality',
+      'invitations': 'Invitations',
 
       // ── Change Password Screen ──
       'old_password': 'Old Password',
@@ -352,6 +353,7 @@ class AppTranslations extends Translations {
       'upload': 'رفع',
       'voice_preview': 'سيتم تشغيل معاينة الصوت هنا',
       'voice_upload': 'وظيفة رفع الصوت',
+      'invitations': 'الدعوات',
 
       // ── Change Password Screen ──
       'old_password': 'كلمة المرور القديمة',
@@ -622,6 +624,7 @@ class AppTranslations extends Translations {
       'upload': 'Subir',
       'voice_preview': 'La vista previa de voz se reproduciría aquí',
       'voice_upload': 'Funcionalidad de carga de voz',
+      'invitations': 'Invitaciones',
 
       // ── Change Password Screen ──
       'old_password': 'Contraseña Antigua',

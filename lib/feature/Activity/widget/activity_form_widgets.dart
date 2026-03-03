@@ -1,5 +1,6 @@
 // lib/feature/activity/view/widgets/activity_form.dart
 import 'dart:io';
+import 'package:chatter_bee/config/app_url.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -168,7 +169,7 @@ class ActivityForm extends StatelessWidget {
                               : hasExisting
                               ? _imagePreview(
                             NetworkImage(
-                                existingImageUrl.value),
+                                "${AppUrl.baseUrl}${existingImageUrl.value}"),
                             'tap_to_change'.tr,  // ✅
                           )
                               : _uploadPlaceholder(),

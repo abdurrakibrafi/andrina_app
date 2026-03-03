@@ -105,6 +105,35 @@ class CommunicatorProfileScreen extends GetView<CommunicatorProfileController> {
                     style: GoogleFonts.nunito(fontSize: 14, color: const Color(0xFF636F85))),
                 const SizedBox(height: 20),
 
+
+                // ── Invitations Type ──
+                GestureDetector(
+                  onTap: (){
+                    Get.toNamed(AppRoutes.COMMUNICATOR_INVITATIONS);
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      // border: Border.all(),
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                      color: AppColors.navColor,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('invitations'.tr,style: TextStyle(color: Colors.black,fontSize: 18),),
+                            Icon(Icons.arrow_forward_ios),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
                 // ── Profile Type ──
                 Text('profile_type'.tr, style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 12),
@@ -203,11 +232,6 @@ class CommunicatorProfileScreen extends GetView<CommunicatorProfileController> {
                 ),
                 const SizedBox(height: 20),
 
-                IconButton(onPressed: (){
-                  Get.toNamed(AppRoutes.COMMUNICATOR_INVITATIONS);
-                }, icon: Icon(Icons.insert_invitation)
-
-                ),
 
                 // ── Continue Button ──
                 Obx(() => SizedBox(

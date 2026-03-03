@@ -10,19 +10,48 @@ class CaregiverCustomizationRepository {
   final ApiClient _apiClient = ApiClient();
 
   // ============================================================
-  // GET USER CONTENT
+  // GET USER CONTENT — Normal mode
+  // GET /api/caregiver/customization/user/{id}/?lang={lang}
   // ============================================================
-  Future<ApiResponse<UserContentModel>> getUserContent(int communicatorId) async {
+  Future<ApiResponse<UserContentModel>> getUserContent(
+      int communicatorId, {
+        String lang = 'en',
+      }) async {
+    return _fetchUserContent(
+      AppUrl.getUserContent(communicatorId, lang: lang),
+      lang: lang,
+    );
+  }
+
+  // ============================================================
+  // GET USER CONTENT — Buddy mode
+  // GET /api/caregiver/customization/buddy-mode/user/{id}/?lang={lang}
+  // ============================================================
+  Future<ApiResponse<UserContentModel>> getUserBuddyModeContent(
+      int communicatorId, {
+        String lang = 'en',
+      }) async {
+    return _fetchUserContent(
+      AppUrl.getUserBuddyModeContent(communicatorId, lang: lang),
+      lang: lang,
+    );
+  }
+
+  // ── Shared fetch ──────────────────────────────────────────────────────────
+  Future<ApiResponse<UserContentModel>> _fetchUserContent(String url, {String lang = 'en'}) async {
     try {
-      final response = await _apiClient.get(AppUrl.getUserContent(communicatorId));
+      final response = await _apiClient.get(url);
       if (response.isSuccess && response.data != null) {
         return ApiResponse.success(
-            data: UserContentModel.fromJson(response.data!),
-            statusCode: 200,
-            message: 'Success');
+          data: UserContentModel.fromJson(response.data!, lang: lang),
+          statusCode: 200,
+          message: 'Success',
+        );
       }
       return ApiResponse.error(
-          statusCode: response.statusCode ?? 500, message: response.message);
+        statusCode: response.statusCode ?? 500,
+        message: response.message,
+      );
     } catch (e) {
       return ApiResponse.error(statusCode: 500, message: e.toString());
     }
@@ -30,8 +59,6 @@ class CaregiverCustomizationRepository {
 
   // ============================================================
   // CREATE MAIN CATEGORY
-  // POST form-data: name, color, communicator_id, image_icon?
-  // NO speak/audio for category
   // ============================================================
   Future<ApiResponse<dynamic>> createCategory({
     required String name,
@@ -59,8 +86,6 @@ class CaregiverCustomizationRepository {
 
   // ============================================================
   // UPDATE MAIN CATEGORY
-  // PUT form-data: name, color, image_icon?
-  // NO speak/audio for category
   // ============================================================
   Future<ApiResponse<dynamic>> updateCategory({
     required int categoryId,
@@ -76,7 +101,6 @@ class CaregiverCustomizationRepository {
           'image_icon': await MultipartFile.fromFile(imageFile.path,
               filename: imageFile.path.split('/').last),
       });
-      // ✅ CORRECT endpoint: updateUserCategory (not updateUserItem!)
       return await _apiClient.multipartPut(
           AppUrl.updateUserCategory(categoryId),
           formData: formData);
@@ -87,8 +111,6 @@ class CaregiverCustomizationRepository {
 
   // ============================================================
   // CREATE SUB CATEGORY
-  // POST form-data: name, color, communicator_id, main_category_id, image_icon?
-  // NO speak/audio for subcategory
   // ============================================================
   Future<ApiResponse<dynamic>> createSubCategory({
     required String name,
@@ -118,8 +140,6 @@ class CaregiverCustomizationRepository {
 
   // ============================================================
   // UPDATE SUB CATEGORY
-  // PUT form-data: name, color, image_icon?
-  // NO speak/audio for subcategory
   // ============================================================
   Future<ApiResponse<dynamic>> updateSubCategory({
     required int subCategoryId,
@@ -135,7 +155,6 @@ class CaregiverCustomizationRepository {
           'image_icon': await MultipartFile.fromFile(imageFile.path,
               filename: imageFile.path.split('/').last),
       });
-      // Uses same /category/{id}/ endpoint but with subcategory's own id
       return await _apiClient.multipartPut(
           AppUrl.updateUserSubCategory(subCategoryId),
           formData: formData);
@@ -146,8 +165,6 @@ class CaregiverCustomizationRepository {
 
   // ============================================================
   // CREATE ITEM
-  // POST form-data: category_id, word, color, communicator_id, image_icon?, speak?
-  // ✅ HAS audio (speak)
   // ============================================================
   Future<ApiResponse<dynamic>> createItem({
     required int categoryId,
@@ -180,8 +197,6 @@ class CaregiverCustomizationRepository {
 
   // ============================================================
   // UPDATE ITEM
-  // PUT form-data: word, color, image_icon?, speak?
-  // ✅ HAS audio (speak)
   // ============================================================
   Future<ApiResponse<dynamic>> updateItem({
     required int itemId,
@@ -211,8 +226,6 @@ class CaregiverCustomizationRepository {
 
   // ============================================================
   // CREATE QUICK SPEAK
-  // POST form-data: word, color, communicator_id, image_icon?, speak?
-  // ✅ HAS audio (speak)
   // ============================================================
   Future<ApiResponse<dynamic>> createQuickSpeak({
     required String word,
@@ -243,8 +256,6 @@ class CaregiverCustomizationRepository {
 
   // ============================================================
   // UPDATE QUICK SPEAK
-  // PUT form-data: word, color, image_icon?, speak?
-  // ✅ HAS audio (speak)
   // ============================================================
   Future<ApiResponse<dynamic>> updateQuickSpeak({
     required int quickSpeakId,

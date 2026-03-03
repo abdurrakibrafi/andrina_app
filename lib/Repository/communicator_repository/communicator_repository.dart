@@ -8,23 +8,31 @@ import 'package:flutter/material.dart';
 class CommunicatorRepository {
   final ApiClient _client = ApiClient();
 
-  /// GET /api/communicator/content/
-  /// Bearer Token — ApiClient interceptor automatically adds it
-  Future<ApiResponse<CommunicatorContentModel>> getContent() async {
+  // ── Normal mode content ───────────────────────────────────────────────────
+  /// GET /api/communicator/content/?lang={lang}
+  Future<ApiResponse<CommunicatorContentModel>> getContent({String lang = 'en'}) async {
+    return _fetchContent(AppUrl.getCommunicatorContent(lang: lang), lang: lang);
+  }
+
+  // ── Buddy mode content ────────────────────────────────────────────────────
+  /// GET /api/communicator/content/buddy-mode/?lang={lang}
+  Future<ApiResponse<CommunicatorContentModel>> getBuddyModeContent({String lang = 'en'}) async {
+    return _fetchContent(AppUrl.getCommunicatorBuddyModeContent(lang: lang), lang: lang);
+  }
+
+  // ── Shared fetch logic ────────────────────────────────────────────────────
+  Future<ApiResponse<CommunicatorContentModel>> _fetchContent(String url, {String lang = 'en'}) async {
     try {
-      // response.data = full JSON body: { success, message, data: {...} }
-      final response = await _client.get<Map<String, dynamic>>(
-        AppUrl.getCommunicatorContent,
-      );
+      final response = await _client.get<Map<String, dynamic>>(url);
 
       if (response.isSuccess && response.data != null) {
         final body = response.data as Map<String, dynamic>;
 
-        // API response এর ভেতরে 'data' key তে actual content থাকে
         if (body['success'] == true && body['data'] != null) {
           final model = CommunicatorContentModel.fromJson(
-              body['data'] as Map<String, dynamic>);
-
+            body['data'] as Map<String, dynamic>,
+            lang: lang,
+          );
           return ApiResponse.success(
             data: model,
             statusCode: response.statusCode,
@@ -38,7 +46,6 @@ class CommunicatorRepository {
         );
       }
 
-      // HTTP level error (4xx/5xx) — ApiClient already handled
       return ApiResponse.error(
         statusCode: response.statusCode,
         message: response.message,

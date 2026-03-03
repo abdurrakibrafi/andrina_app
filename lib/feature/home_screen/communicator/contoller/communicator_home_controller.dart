@@ -1,8 +1,10 @@
-// lib/feature/home_screen/communicator_home_controller.dart
+// lib/feature/home_screen/communicator/contoller/communicator_home_controller.dart
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:chatter_bee/Repository/communicator_repository/communicator_repository.dart';
 import 'package:chatter_bee/config/app_url.dart';
+import 'package:chatter_bee/config/translations/language_controller.dart';
+import 'package:chatter_bee/feature/authentication/repo/auth_repository.dart';
 import 'package:chatter_bee/models/communicator_models/communicator_content_model.dart';
 import 'package:chatter_bee/routes/app_routes.dart';
 import 'package:flutter/material.dart';
@@ -10,12 +12,14 @@ import 'package:get/get.dart';
 
 class CommunicatorHomeController extends GetxController {
   final CommunicatorRepository _repo = CommunicatorRepository();
+  final AuthRepository _authRepository = AuthRepository();
   final AudioPlayer _audioPlayer = AudioPlayer();
 
-  // ── Loading ───────────────────────────────────────────────────────────────
+  // ── State ─────────────────────────────────────────────────────────────────
   final RxBool isLoading = true.obs;
+  final RxBool isBuddyMode = false.obs;
 
-  // ── Data from API ─────────────────────────────────────────────────────────
+  // ── Data ──────────────────────────────────────────────────────────────────
   final RxList<CommCategoryModel> categories = <CommCategoryModel>[].obs;
   final RxList<CommQuickSpeakModel> quickSpeaks = <CommQuickSpeakModel>[].obs;
 
@@ -23,7 +27,7 @@ class CommunicatorHomeController extends GetxController {
   final RxString quickSpeakText = ''.obs;
   final RxInt selectedQsId = (-1).obs;
 
-  // ── Audio player state ────────────────────────────────────────────────────
+  // ── Audio ─────────────────────────────────────────────────────────────────
   final RxInt playingId = (-1).obs;
 
   @override
@@ -32,10 +36,38 @@ class CommunicatorHomeController extends GetxController {
     loadContent();
   }
 
-  // ─── API call ──────────────────────────────────────────────────────────────
+  // ── Current language code (en / es / ar) ──────────────────────────────────
+  String get _currentLang {
+    try {
+      return LanguageController.to.currentLocale.value.languageCode;
+    } catch (_) {
+      return 'en';
+    }
+  }
+
+  // ── API call with buddy mode + lang routing ────────────────────────────────
   Future<void> loadContent() async {
     isLoading.value = true;
-    final res = await _repo.getContent();
+
+    // 1️⃣ Profile থেকে buddy_mode check করো
+    try {
+      final profileRes = await _authRepository.getProfile();
+      if (profileRes.isSuccess && profileRes.data != null) {
+        final data = profileRes.data!['data'] ?? profileRes.data!;
+        isBuddyMode.value = data['buddy_mode'] ?? false;
+      }
+    } catch (e) {
+      debugPrint('CommunicatorHomeController: profile fetch error: $e');
+    }
+
+    // 2️⃣ Current language নাও
+    final lang = _currentLang;
+
+    // 3️⃣ Buddy mode অনুযায়ী সঠিক endpoint hit করো
+    final res = isBuddyMode.value
+        ? await _repo.getBuddyModeContent(lang: lang)
+        : await _repo.getContent(lang: lang);
+
     isLoading.value = false;
 
     if (res.isSuccess && res.data != null) {
@@ -54,7 +86,7 @@ class CommunicatorHomeController extends GetxController {
 
   Future<void> refresh() => loadContent();
 
-  // ─── Quick speak tap ───────────────────────────────────────────────────────
+  // ── Quick speak tap ────────────────────────────────────────────────────────
   void onQuickSpeakTap(CommQuickSpeakModel qs) {
     if (selectedQsId.value == qs.id) {
       selectedQsId.value = -1;
@@ -65,14 +97,11 @@ class CommunicatorHomeController extends GetxController {
     }
   }
 
-  // ─── Speak button ──────────────────────────────────────────────────────────
+  // ── Speak button ───────────────────────────────────────────────────────────
   void speakQuickSpeak() {
     if (quickSpeakText.value.isEmpty) {
-      Get.snackbar(
-        'select_first'.tr,
-        'tap_quick_speak_first'.tr,
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      Get.snackbar('select_first'.tr, 'tap_quick_speak_first'.tr,
+          snackPosition: SnackPosition.BOTTOM);
       return;
     }
     final selected =
@@ -80,22 +109,18 @@ class CommunicatorHomeController extends GetxController {
     if (selected?.speak != null) {
       playAudio(selected!.id, selected.speak);
     } else {
-      Get.snackbar(
-        'speak'.tr,
-        quickSpeakText.value,
-        snackPosition: SnackPosition.BOTTOM,
-        duration: const Duration(seconds: 2),
-      );
+      Get.snackbar('speak'.tr, quickSpeakText.value,
+          snackPosition: SnackPosition.BOTTOM,
+          duration: const Duration(seconds: 2));
     }
   }
 
-  // ─── Clear bar ─────────────────────────────────────────────────────────────
   void clearQuickSpeak() {
     selectedQsId.value = -1;
     quickSpeakText.value = '';
   }
 
-  // ─── Play audio ────────────────────────────────────────────────────────────
+  // ── Audio ──────────────────────────────────────────────────────────────────
   Future<void> playAudio(int id, String? audioPath) async {
     final url = AppUrl.mediaUrl(audioPath);
     if (url == null) return;
@@ -117,12 +142,9 @@ class CommunicatorHomeController extends GetxController {
     }
   }
 
-  // ─── Navigation ────────────────────────────────────────────────────────────
+  // ── Navigation ─────────────────────────────────────────────────────────────
   void onCategoryTap(CommCategoryModel category) {
-    Get.toNamed(
-      AppRoutes.COMMUNICATOR_SUB_CATEGORY,
-      arguments: category,
-    );
+    Get.toNamed(AppRoutes.COMMUNICATOR_SUB_CATEGORY, arguments: category);
   }
 
   @override

@@ -1,12 +1,16 @@
-// lib/feature/home_screen/communicator/controller/communicator_item_controller.dart
+// lib/feature/home_screen/communicator/contoller/communicator_item_controller.dart
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:chatter_bee/Repository/communicator_repository/communicator_repository.dart';
 import 'package:chatter_bee/config/app_url.dart';
+import 'package:chatter_bee/config/translations/language_controller.dart';
+import 'package:chatter_bee/feature/home_screen/communicator/contoller/communicator_home_controller.dart';
 import 'package:chatter_bee/models/communicator_models/communicator_content_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class CommunicatorItemController extends GetxController {
+  final CommunicatorRepository _repo = CommunicatorRepository();
   final AudioPlayer _audioPlayer = AudioPlayer();
 
   late final CommSubCategoryModel parentSubCategory;
@@ -14,7 +18,7 @@ class CommunicatorItemController extends GetxController {
   final RxList<CommItemModel> items = <CommItemModel>[].obs;
   final RxInt playingId = (-1).obs;
 
-  // ── Quick speak bar (top of item screen) ──────────────────────────────────
+  // ── Quick speak bar ───────────────────────────────────────────
   final RxString selectedWord = ''.obs;
   final RxInt selectedItemId = (-1).obs;
 
@@ -25,7 +29,50 @@ class CommunicatorItemController extends GetxController {
     items.value = parentSubCategory.items;
   }
 
-  // ─── Tap item → show word in bar ──────────────────────────────────────────
+  // ── Current language ──────────────────────────────────────────
+  String get _currentLang {
+    try {
+      return LanguageController.to.currentLocale.value.languageCode;
+    } catch (_) {
+      return 'en';
+    }
+  }
+
+  // ── Buddy mode — CommunicatorHomeController থেকে নাও ─────────
+  bool get _isBuddyMode {
+    try {
+      return Get.find<CommunicatorHomeController>().isBuddyMode.value;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // ── Refresh — buddy mode + lang দিয়ে সঠিক endpoint ──────────
+  Future<void> refresh() async {
+    final lang = _currentLang;
+
+    final res = _isBuddyMode
+        ? await _repo.getBuddyModeContent(lang: lang)
+        : await _repo.getContent(lang: lang);
+
+    if (res.isSuccess && res.data != null) {
+      for (final cat in res.data!.categories) {
+        final sub = cat.subCategories
+            .firstWhereOrNull((s) => s.id == parentSubCategory.id);
+        if (sub != null) {
+          items.value = sub.items;
+          break;
+        }
+      }
+
+      // Home controller ও update করো
+      if (Get.isRegistered<CommunicatorHomeController>()) {
+        Get.find<CommunicatorHomeController>().loadContent();
+      }
+    }
+  }
+
+  // ── Item tap → word bar ────────────────────────────────────────
   void onItemTap(CommItemModel item) {
     if (selectedItemId.value == item.id) {
       selectedItemId.value = -1;
@@ -36,11 +83,10 @@ class CommunicatorItemController extends GetxController {
     }
   }
 
-  // ─── Speak button ─────────────────────────────────────────────────────────
+  // ── Speak button ───────────────────────────────────────────────
   void speakSelected() {
     if (selectedWord.value.isEmpty) return;
-    final item =
-    items.firstWhereOrNull((i) => i.id == selectedItemId.value);
+    final item = items.firstWhereOrNull((i) => i.id == selectedItemId.value);
     if (item?.speak != null) {
       playAudio(item!.id, item.speak);
     } else {
@@ -58,7 +104,7 @@ class CommunicatorItemController extends GetxController {
     selectedWord.value = '';
   }
 
-  // ─── Audio ────────────────────────────────────────────────────────────────
+  // ── Audio ──────────────────────────────────────────────────────
   Future<void> playAudio(int id, String? audioPath) async {
     final url = AppUrl.mediaUrl(audioPath);
     if (url == null) return;

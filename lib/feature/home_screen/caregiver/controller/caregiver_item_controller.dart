@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:chatter_bee/Repository/caregiver_repository/caregiver_customization_repository.dart';
 import 'package:chatter_bee/config/app_url.dart';
+import 'package:chatter_bee/config/translations/language_controller.dart';
 import 'package:chatter_bee/feature/home_screen/caregiver/controller/caregiver_home_controller.dart';
 import 'package:chatter_bee/models/caregiver_models/caregiver_content_model.dart';
 import 'package:chatter_bee/services/communicator_session_service.dart';
@@ -28,7 +29,7 @@ class CaregiverItemController extends GetxController {
   final RxSet<int> selectedIds = <int>{}.obs;
   final RxInt playingItemId = (-1).obs;
 
-  final wordController = TextEditingController();
+  // ─── Form state ───────────────────────────────────────────────
   final RxString formColorHex = '#FFD700'.obs;
   final Rx<File?> formImageFile = Rx<File?>(null);
   final Rx<File?> formAudioFile = Rx<File?>(null);
@@ -38,6 +39,8 @@ class CaregiverItemController extends GetxController {
   final RxBool formLoading = false.obs;
 
   ItemModel? _editingItem;
+
+  String get itemInitialWord => _editingItem?.word ?? '';
 
   FlutterSoundRecorder? _recorder;
   FlutterSoundPlayer? _soundPlayer;
@@ -69,6 +72,24 @@ class CaregiverItemController extends GetxController {
     await _soundPlayer!.openPlayer();
   }
 
+  // ── Current language ──────────────────────────────────────────
+  String get _currentLang {
+    try {
+      return LanguageController.to.currentLocale.value.languageCode;
+    } catch (_) {
+      return 'en';
+    }
+  }
+
+  // ── Buddy mode flag — CaregiverHomeController থেকে নাও ───────
+  bool get _isBuddyMode {
+    try {
+      return Get.find<CaregiverHomeController>().isBuddyMode.value;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Color get formColor {
     try {
       final hex = formColorHex.value.replaceAll('#', '');
@@ -78,13 +99,21 @@ class CaregiverItemController extends GetxController {
     }
   }
 
+  // ── Refresh with buddy mode + lang ────────────────────────────
   Future<void> refresh() async {
-    final communicatorId =
-        CommunicatorSessionService.to.communicatorId.value;
+    final communicatorId = CommunicatorSessionService.to.communicatorId.value;
     if (communicatorId == 0) return;
+
     isLoading.value = true;
-    final response = await _repo.getUserContent(communicatorId);
+
+    final lang = _currentLang;
+
+    final response = _isBuddyMode
+        ? await _repo.getUserBuddyModeContent(communicatorId, lang: lang)
+        : await _repo.getUserContent(communicatorId, lang: lang);
+
     isLoading.value = false;
+
     if (response.isSuccess && response.data != null) {
       for (final cat in response.data!.categories) {
         final sub = cat.subCategories
@@ -132,15 +161,13 @@ class CaregiverItemController extends GetxController {
 
   void showAddSheet() {
     _editingItem = null;
-    _resetForm();
+    _resetFormState();
     _showItemSheet('add_item'.tr);
   }
 
   void showEditSheet(ItemModel item) {
     _editingItem = item;
-    wordController.text = item.word ?? '';
-    formColorHex.value =
-    item.color.isNotEmpty ? item.color : '#FFD700';
+    formColorHex.value = item.color.isNotEmpty ? item.color : '#FFD700';
     formImageFile.value = null;
     formAudioFile.value = null;
     audioFileName.value = '';
@@ -149,8 +176,7 @@ class CaregiverItemController extends GetxController {
     _showItemSheet('edit'.tr);
   }
 
-  void _resetForm() {
-    wordController.clear();
+  void _resetFormState() {
     formColorHex.value = '#FFD700';
     formImageFile.value = null;
     formAudioFile.value = null;
@@ -167,8 +193,8 @@ class CaregiverItemController extends GetxController {
     );
   }
 
-  Future<void> save() async {
-    if (wordController.text.trim().isEmpty) {
+  Future<void> save(String word) async {
+    if (word.trim().isEmpty) {
       Get.snackbar('error'.tr, 'please_enter_word'.tr,
           snackPosition: SnackPosition.BOTTOM);
       return;
@@ -178,7 +204,7 @@ class CaregiverItemController extends GetxController {
     if (_editingItem != null) {
       final response = await _repo.updateItem(
         itemId: _editingItem!.id,
-        word: wordController.text.trim(),
+        word: word.trim(),
         color: formColorHex.value,
         imageFile: formImageFile.value,
         audioFile: formAudioFile.value,
@@ -194,11 +220,10 @@ class CaregiverItemController extends GetxController {
             snackPosition: SnackPosition.BOTTOM);
       }
     } else {
-      final communicatorId =
-          CommunicatorSessionService.to.communicatorId.value;
+      final communicatorId = CommunicatorSessionService.to.communicatorId.value;
       final response = await _repo.createItem(
         categoryId: parentSubCategory.id,
-        word: wordController.text.trim(),
+        word: word.trim(),
         color: formColorHex.value,
         communicatorId: communicatorId,
         imageFile: formImageFile.value,
@@ -262,8 +287,7 @@ class CaregiverItemController extends GetxController {
       final dir = await getTemporaryDirectory();
       final recordPath =
           '${dir.path}/item_audio_${DateTime.now().millisecondsSinceEpoch}.aac';
-      await _recorder!.startRecorder(
-          toFile: recordPath, codec: Codec.aacADTS);
+      await _recorder!.startRecorder(toFile: recordPath, codec: Codec.aacADTS);
       isRecording.value = true;
     }
   }
@@ -282,7 +306,7 @@ class CaregiverItemController extends GetxController {
     }
   }
 
-  void removeAudio() async {
+  Future<void> removeAudio() async {
     formAudioFile.value = null;
     audioFileName.value = '';
     if (isPlayingFormAudio.value) {
@@ -297,7 +321,6 @@ class CaregiverItemController extends GetxController {
 
   @override
   void onClose() {
-    wordController.dispose();
     _recorder?.closeRecorder();
     _soundPlayer?.closePlayer();
     _audioPlayer.dispose();
@@ -310,7 +333,7 @@ class CaregiverItemController extends GetxController {
 //  ITEM FORM BOTTOM SHEET
 // ════════════════════════════════════════════════════════════════
 
-class ItemFormSheet extends StatelessWidget {
+class ItemFormSheet extends StatefulWidget {
   final CaregiverItemController controller;
   final String title;
 
@@ -318,7 +341,27 @@ class ItemFormSheet extends StatelessWidget {
       {super.key, required this.controller, required this.title});
 
   @override
+  State<ItemFormSheet> createState() => _ItemFormSheetState();
+}
+
+class _ItemFormSheetState extends State<ItemFormSheet> {
+  late final TextEditingController _wordCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _wordCtrl = TextEditingController(text: widget.controller.itemInitialWord);
+  }
+
+  @override
+  void dispose() {
+    _wordCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final c = widget.controller;
     return Container(
       padding: EdgeInsets.only(
         left: 20,
@@ -345,14 +388,12 @@ class ItemFormSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            Text(title,
+            Text(widget.title,
                 style: const TextStyle(
                     fontSize: 18, fontWeight: FontWeight.w700)),
             const SizedBox(height: 20),
-
-            // ── Word ─────────────────────────────────────────
             TextField(
-              controller: controller.wordController,
+              controller: _wordCtrl,
               autofocus: true,
               decoration: InputDecoration(
                 labelText: 'word_label'.tr,
@@ -361,87 +402,73 @@ class ItemFormSheet extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12)),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                      color: Color(0xFFFFC857), width: 1.5),
+                  borderSide:
+                  const BorderSide(color: Color(0xFFFFC857), width: 1.5),
                 ),
               ),
             ),
             const SizedBox(height: 16),
-
-            // ── Color ────────────────────────────────────────
             Text('color'.tr,
                 style: const TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Obx(() => Wrap(
               spacing: 10,
               runSpacing: 10,
-              children: controller.colorOptions.map((opt) {
-                Color c;
+              children: c.colorOptions.map((opt) {
+                Color col;
                 try {
-                  c = Color(int.parse(
+                  col = Color(int.parse(
                       'FF${opt['hex']!.replaceAll('#', '')}',
                       radix: 16));
                 } catch (_) {
-                  c = const Color(0xFFFFD700);
+                  col = const Color(0xFFFFD700);
                 }
-                final isSelected =
-                    controller.formColorHex.value == opt['hex'];
+                final isSelected = c.formColorHex.value == opt['hex'];
                 return GestureDetector(
-                  onTap: () =>
-                  controller.formColorHex.value = opt['hex']!,
+                  onTap: () => c.formColorHex.value = opt['hex']!,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: c,
+                      color: col,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: isSelected
-                            ? Colors.black87
-                            : Colors.transparent,
+                        color: isSelected ? Colors.black87 : Colors.transparent,
                         width: 2.5,
                       ),
                       boxShadow: isSelected
-                          ? [
-                        BoxShadow(
-                            color: c.withOpacity(0.5),
-                            blurRadius: 6)
-                      ]
+                          ? [BoxShadow(color: col.withOpacity(0.5), blurRadius: 6)]
                           : [],
                     ),
                     child: isSelected
-                        ? const Icon(Icons.check,
-                        color: Colors.white, size: 18)
+                        ? const Icon(Icons.check, color: Colors.white, size: 18)
                         : null,
                   ),
                 );
               }).toList(),
             )),
             const SizedBox(height: 16),
-
-            // ── Image ────────────────────────────────────────
             Text('image_optional'.tr,
                 style: const TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
-            Obx(() => controller.formImageFile.value != null
+            Obx(() => c.formImageFile.value != null
                 ? Row(children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.file(controller.formImageFile.value!,
+                child: Image.file(c.formImageFile.value!,
                     width: 60, height: 60, fit: BoxFit.cover),
               ),
               const SizedBox(width: 12),
               TextButton.icon(
-                onPressed: controller.removeImage,
-                icon: const Icon(Icons.delete,
-                    color: Colors.red, size: 18),
+                onPressed: c.removeImage,
+                icon: const Icon(Icons.delete, color: Colors.red, size: 18),
                 label: Text('remove'.tr,
                     style: const TextStyle(color: Colors.red)),
               ),
             ])
                 : OutlinedButton.icon(
-              onPressed: controller.pickImage,
+              onPressed: c.pickImage,
               icon: const Icon(Icons.image_outlined),
               label: Text('choose_image'.tr),
               style: OutlinedButton.styleFrom(
@@ -449,66 +476,57 @@ class ItemFormSheet extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10))),
             )),
             const SizedBox(height: 16),
-
-            // ── Audio ────────────────────────────────────────
             Text('voice_audio_speak'.tr,
                 style: const TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Obx(() {
-              final hasAudio = controller.formAudioFile.value != null;
+              final hasAudio = c.formAudioFile.value != null;
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(children: [
                     _AudioBtn(
-                      icon: controller.isRecording.value
-                          ? Icons.stop
-                          : Icons.mic,
-                      color: controller.isRecording.value
+                      icon: c.isRecording.value ? Icons.stop : Icons.mic,
+                      color: c.isRecording.value
                           ? Colors.red
                           : const Color(0xFFFFC857),
-                      label: controller.isRecording.value
-                          ? 'stop'.tr
-                          : 'record'.tr,
-                      onTap: controller.toggleRecording,
+                      label: c.isRecording.value ? 'stop'.tr : 'record'.tr,
+                      onTap: c.toggleRecording,
                     ),
                     if (hasAudio) ...[
                       const SizedBox(width: 10),
                       _AudioBtn(
-                        icon: controller.isPlayingFormAudio.value
+                        icon: c.isPlayingFormAudio.value
                             ? Icons.stop
                             : Icons.play_arrow,
                         color: const Color(0xFF4CAF50),
-                        label: controller.isPlayingFormAudio.value
-                            ? 'stop'.tr
-                            : 'play'.tr,
-                        onTap: controller.toggleFormAudioPlayback,
+                        label: c.isPlayingFormAudio.value ? 'stop'.tr : 'play'.tr,
+                        onTap: c.toggleFormAudioPlayback,
                       ),
                       const SizedBox(width: 10),
                       _AudioBtn(
                         icon: Icons.delete_outline,
                         color: Colors.red,
                         label: 'delete'.tr,
-                        onTap: controller.removeAudio,
+                        onTap: c.removeAudio,
                       ),
                     ],
                   ]),
-                  if (controller.isRecording.value) ...[
+                  if (c.isRecording.value) ...[
                     const SizedBox(height: 8),
                     Row(children: [
                       Container(
                           width: 8,
                           height: 8,
                           decoration: const BoxDecoration(
-                              color: Colors.red,
-                              shape: BoxShape.circle)),
+                              color: Colors.red, shape: BoxShape.circle)),
                       const SizedBox(width: 6),
                       Text('recording_indicator'.tr,
                           style: const TextStyle(
                               color: Colors.red, fontSize: 12)),
                     ]),
                   ],
-                  if (hasAudio && !controller.isRecording.value) ...[
+                  if (hasAudio && !c.isRecording.value) ...[
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -524,9 +542,9 @@ class ItemFormSheet extends StatelessWidget {
                               color: Color(0xFF4CAF50), size: 16),
                           const SizedBox(width: 6),
                           Text(
-                            controller.audioFileName.value.isEmpty
+                            c.audioFileName.value.isEmpty
                                 ? 'audio_ready'.tr
-                                : controller.audioFileName.value,
+                                : c.audioFileName.value,
                             style: const TextStyle(
                                 color: Color(0xFF4CAF50), fontSize: 12),
                           ),
@@ -536,28 +554,25 @@ class ItemFormSheet extends StatelessWidget {
                   ],
                   const SizedBox(height: 4),
                   Text('record_voice_hint2'.tr,
-                      style: TextStyle(
-                          fontSize: 11, color: Colors.grey[500])),
+                      style: TextStyle(fontSize: 11, color: Colors.grey[500])),
                 ],
               );
             }),
             const SizedBox(height: 24),
-
-            // ── Save ─────────────────────────────────────────
             Obx(() => SizedBox(
               width: double.infinity,
               height: 48,
               child: ElevatedButton(
-                onPressed: controller.formLoading.value
+                onPressed: c.formLoading.value
                     ? null
-                    : controller.save,
+                    : () => c.save(_wordCtrl.text),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFFFC857),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                   elevation: 0,
                 ),
-                child: controller.formLoading.value
+                child: c.formLoading.value
                     ? const SizedBox(
                     width: 20,
                     height: 20,
@@ -607,9 +622,7 @@ class _AudioBtn extends StatelessWidget {
         const SizedBox(height: 4),
         Text(label,
             style: TextStyle(
-                fontSize: 10,
-                color: color,
-                fontWeight: FontWeight.w600)),
+                fontSize: 10, color: color, fontWeight: FontWeight.w600)),
       ]),
     );
   }

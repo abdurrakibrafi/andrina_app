@@ -3,6 +3,8 @@
 import 'dart:io';
 import 'package:chatter_bee/Repository/caregiver_repository/caregiver_customization_repository.dart';
 import 'package:chatter_bee/config/app_url.dart';
+import 'package:chatter_bee/config/translations/language_controller.dart';
+import 'package:chatter_bee/feature/authentication/repo/auth_repository.dart';
 import 'package:chatter_bee/models/caregiver_models/caregiver_content_model.dart';
 import 'package:chatter_bee/services/communicator_session_service.dart';
 import 'package:flutter/material.dart';
@@ -27,10 +29,13 @@ const List<Map<String, String>> kColorOptions = [
 class CaregiverHomeController extends GetxController {
   final CaregiverCustomizationRepository _repo =
   CaregiverCustomizationRepository();
+  final AuthRepository _authRepository = AuthRepository();
   final ImagePicker _picker = ImagePicker();
   final AudioPlayer _audioPlayer = AudioPlayer();
 
+  // ── State ─────────────────────────────────────────────────────────────────
   final RxBool isLoading = false.obs;
+  final RxBool isBuddyMode = false.obs;
   final RxBool isEditMode = false.obs;
   final RxBool isQsEditMode = false.obs;
   final RxSet<int> selectedCategoryIds = <int>{}.obs;
@@ -40,15 +45,13 @@ class CaregiverHomeController extends GetxController {
 
   List<CategoryModel> get apiCategories => categories;
 
-  // ─── Category Form ────────────────────────────────────────────
-  final catNameController = TextEditingController();
+  // ─── Category Form state ──────────────────────────────────────────────────
   final RxString catColorHex = '#B5CFD1'.obs;
   final Rx<File?> catImageFile = Rx<File?>(null);
   final RxBool catFormLoading = false.obs;
   CategoryModel? _editingCategory;
 
-  // ─── QuickSpeak Form ──────────────────────────────────────────
-  final qsWordController = TextEditingController();
+  // ─── QuickSpeak Form state ────────────────────────────────────────────────
   final RxString qsColorHex = '#FFD700'.obs;
   final Rx<File?> qsImageFile = Rx<File?>(null);
   final Rx<File?> qsAudioFile = Rx<File?>(null);
@@ -57,6 +60,9 @@ class CaregiverHomeController extends GetxController {
   final RxBool qsIsPlayingAudio = false.obs;
   final RxBool qsFormLoading = false.obs;
   QuickSpeakModel? _editingQuickSpeak;
+
+  String get catInitialName => _editingCategory?.name ?? '';
+  String get qsInitialWord => _editingQuickSpeak?.word ?? '';
 
   FlutterSoundRecorder? _recorder;
   FlutterSoundPlayer? _soundPlayer;
@@ -75,12 +81,43 @@ class CaregiverHomeController extends GetxController {
     await _soundPlayer!.openPlayer();
   }
 
+  // ── Current language code (en / es / ar) ──────────────────────────────────
+  String get _currentLang {
+    try {
+      return LanguageController.to.currentLocale.value.languageCode;
+    } catch (_) {
+      return 'en';
+    }
+  }
+
+  // ── Load content with buddy mode + lang routing ────────────────────────────
   Future<void> loadContent() async {
     final communicatorId = CommunicatorSessionService.to.communicatorId.value;
     if (communicatorId == 0) return;
+
     isLoading.value = true;
-    final response = await _repo.getUserContent(communicatorId);
+
+    // 1️⃣ Profile থেকে buddy_mode check করো
+    try {
+      final profileRes = await _authRepository.getProfile();
+      if (profileRes.isSuccess && profileRes.data != null) {
+        final data = profileRes.data!['data'] ?? profileRes.data!;
+        isBuddyMode.value = data['buddy_mode'] ?? false;
+      }
+    } catch (e) {
+      debugPrint('CaregiverHomeController: profile fetch error: $e');
+    }
+
+    // 2️⃣ Current language নাও
+    final lang = _currentLang;
+
+    // 3️⃣ Buddy mode অনুযায়ী সঠিক endpoint hit করো
+    final response = isBuddyMode.value
+        ? await _repo.getUserBuddyModeContent(communicatorId, lang: lang)
+        : await _repo.getUserContent(communicatorId, lang: lang);
+
     isLoading.value = false;
+
     if (response.isSuccess && response.data != null) {
       categories.value = response.data!.categories;
       quickSpeaks.value = response.data!.quickSpeaks;
@@ -94,9 +131,7 @@ class CaregiverHomeController extends GetxController {
     if (!isEditMode.value) selectedCategoryIds.clear();
   }
 
-  void toggleQsEditMode() {
-    isQsEditMode.value = !isQsEditMode.value;
-  }
+  void toggleQsEditMode() => isQsEditMode.value = !isQsEditMode.value;
 
   void toggleCategorySelection(int id) {
     if (selectedCategoryIds.contains(id)) {
@@ -117,11 +152,8 @@ class CaregiverHomeController extends GetxController {
   Future<void> playQuickSpeak(QuickSpeakModel qs) async {
     final url = AppUrl.mediaUrl(qs.speak);
     if (url == null) {
-      Get.snackbar(
-        'no_audio_title'.tr,
-        'qs_has_no_audio'.tr,
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      Get.snackbar('no_audio_title'.tr, 'qs_has_no_audio'.tr,
+          snackPosition: SnackPosition.BOTTOM);
       return;
     }
     try {
@@ -137,35 +169,28 @@ class CaregiverHomeController extends GetxController {
 
   void showAddCategorySheet() {
     _editingCategory = null;
-    catNameController.clear();
     catColorHex.value = '#B5CFD1';
     catImageFile.value = null;
-    _openSheet(_CategorySheet(
-        controller: this, title: 'add_category'.tr));
+    _openSheet(_CategorySheet(controller: this, title: 'add_category'.tr));
   }
 
   void showEditCategorySheet(CategoryModel cat) {
     _editingCategory = cat;
-    catNameController.text = cat.name;
     catColorHex.value = cat.color.isNotEmpty ? cat.color : '#B5CFD1';
     catImageFile.value = null;
-    _openSheet(_CategorySheet(
-        controller: this, title: 'edit'.tr));
+    _openSheet(_CategorySheet(controller: this, title: 'edit'.tr));
   }
 
   Future<void> pickCatImage() async {
     final picked = await _picker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 80,
-        maxWidth: 512,
-        maxHeight: 512);
+        source: ImageSource.gallery, imageQuality: 80, maxWidth: 512, maxHeight: 512);
     if (picked != null) catImageFile.value = File(picked.path);
   }
 
   void removeCatImage() => catImageFile.value = null;
 
-  Future<void> saveCategory() async {
-    if (catNameController.text.trim().isEmpty) {
+  Future<void> saveCategory(String name) async {
+    if (name.trim().isEmpty) {
       Get.snackbar('error'.tr, 'please_enter_name'.tr,
           snackPosition: SnackPosition.BOTTOM);
       return;
@@ -176,7 +201,7 @@ class CaregiverHomeController extends GetxController {
     if (_editingCategory != null) {
       final res = await _repo.updateCategory(
         categoryId: _editingCategory!.id,
-        name: catNameController.text.trim(),
+        name: name.trim(),
         color: catColorHex.value,
         imageFile: catImageFile.value,
       );
@@ -187,12 +212,11 @@ class CaregiverHomeController extends GetxController {
         Get.snackbar('updated'.tr, 'category_updated'.tr,
             snackPosition: SnackPosition.BOTTOM);
       } else {
-        Get.snackbar('error'.tr, res.message,
-            snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar('error'.tr, res.message, snackPosition: SnackPosition.BOTTOM);
       }
     } else {
       final res = await _repo.createCategory(
-        name: catNameController.text.trim(),
+        name: name.trim(),
         color: catColorHex.value,
         communicatorId: communicatorId,
         order: categories.length,
@@ -205,8 +229,7 @@ class CaregiverHomeController extends GetxController {
         Get.snackbar('created'.tr, 'category_created'.tr,
             snackPosition: SnackPosition.BOTTOM);
       } else {
-        Get.snackbar('error'.tr, res.message,
-            snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar('error'.tr, res.message, snackPosition: SnackPosition.BOTTOM);
       }
     }
   }
@@ -217,36 +240,29 @@ class CaregiverHomeController extends GetxController {
 
   void showAddQuickSpeakSheet() {
     _editingQuickSpeak = null;
-    qsWordController.clear();
     qsColorHex.value = '#FFD700';
     qsImageFile.value = null;
     qsAudioFile.value = null;
     qsAudioFileName.value = '';
     qsIsRecording.value = false;
     qsIsPlayingAudio.value = false;
-    _openSheet(_QuickSpeakSheet(
-        controller: this, title: 'quick_speak'.tr));
+    _openSheet(_QuickSpeakSheet(controller: this, title: 'quick_speak'.tr));
   }
 
   void showEditQuickSpeakSheet(QuickSpeakModel qs) {
     _editingQuickSpeak = qs;
-    qsWordController.text = qs.word ?? '';
     qsColorHex.value = qs.color.isNotEmpty ? qs.color : '#FFD700';
     qsImageFile.value = null;
     qsAudioFile.value = null;
     qsAudioFileName.value = '';
     qsIsRecording.value = false;
     qsIsPlayingAudio.value = false;
-    _openSheet(_QuickSpeakSheet(
-        controller: this, title: 'edit'.tr));
+    _openSheet(_QuickSpeakSheet(controller: this, title: 'edit'.tr));
   }
 
   Future<void> pickQsImage() async {
     final picked = await _picker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 80,
-        maxWidth: 512,
-        maxHeight: 512);
+        source: ImageSource.gallery, imageQuality: 80, maxWidth: 512, maxHeight: 512);
     if (picked != null) qsImageFile.value = File(picked.path);
   }
 
@@ -306,8 +322,8 @@ class CaregiverHomeController extends GetxController {
     }
   }
 
-  Future<void> saveQuickSpeak() async {
-    if (qsWordController.text.trim().isEmpty) {
+  Future<void> saveQuickSpeak(String word) async {
+    if (word.trim().isEmpty) {
       Get.snackbar('error'.tr, 'please_enter_word'.tr,
           snackPosition: SnackPosition.BOTTOM);
       return;
@@ -318,7 +334,7 @@ class CaregiverHomeController extends GetxController {
     if (_editingQuickSpeak != null) {
       final res = await _repo.updateQuickSpeak(
         quickSpeakId: _editingQuickSpeak!.id,
-        word: qsWordController.text.trim(),
+        word: word.trim(),
         color: qsColorHex.value,
         imageFile: qsImageFile.value,
         audioFile: qsAudioFile.value,
@@ -330,12 +346,11 @@ class CaregiverHomeController extends GetxController {
         Get.snackbar('updated'.tr, 'quick_speak_updated'.tr,
             snackPosition: SnackPosition.BOTTOM);
       } else {
-        Get.snackbar('error'.tr, res.message,
-            snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar('error'.tr, res.message, snackPosition: SnackPosition.BOTTOM);
       }
     } else {
       final res = await _repo.createQuickSpeak(
-        word: qsWordController.text.trim(),
+        word: word.trim(),
         color: qsColorHex.value,
         communicatorId: communicatorId,
         imageFile: qsImageFile.value,
@@ -348,8 +363,7 @@ class CaregiverHomeController extends GetxController {
         Get.snackbar('created'.tr, 'quick_speak_created'.tr,
             snackPosition: SnackPosition.BOTTOM);
       } else {
-        Get.snackbar('error'.tr, res.message,
-            snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar('error'.tr, res.message, snackPosition: SnackPosition.BOTTOM);
       }
     }
   }
@@ -361,8 +375,6 @@ class CaregiverHomeController extends GetxController {
 
   @override
   void onClose() {
-    catNameController.dispose();
-    qsWordController.dispose();
     _recorder?.closeRecorder();
     _soundPlayer?.closePlayer();
     _audioPlayer.dispose();
@@ -373,14 +385,34 @@ class CaregiverHomeController extends GetxController {
 // ════════════════════════════════════════════════════════════════
 //  CATEGORY BOTTOM SHEET
 // ════════════════════════════════════════════════════════════════
-class _CategorySheet extends StatelessWidget {
+
+class _CategorySheet extends StatefulWidget {
   final CaregiverHomeController controller;
   final String title;
-
   const _CategorySheet({required this.controller, required this.title});
 
   @override
+  State<_CategorySheet> createState() => _CategorySheetState();
+}
+
+class _CategorySheetState extends State<_CategorySheet> {
+  late final TextEditingController _nameCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameCtrl = TextEditingController(text: widget.controller.catInitialName);
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final c = widget.controller;
     return _SheetWrapper(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -388,31 +420,27 @@ class _CategorySheet extends StatelessWidget {
         children: [
           _SheetHandle(),
           const SizedBox(height: 16),
-          Text(title,
-              style: const TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.w700)),
+          Text(widget.title,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
           const SizedBox(height: 20),
           TextField(
-            controller: controller.catNameController,
+            controller: _nameCtrl,
             autofocus: true,
             decoration: _inputDecoration('category_name_label'.tr),
           ),
           const SizedBox(height: 16),
-          Text('color'.tr,
-              style: const TextStyle(fontWeight: FontWeight.w600)),
+          Text('color'.tr, style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           Obx(() => Wrap(
             spacing: 10,
             runSpacing: 10,
             children: kColorOptions.map((opt) {
-              final c = _hexToColor(opt['hex']!);
-              final selected =
-                  controller.catColorHex.value == opt['hex'];
+              final color = _hexToColor(opt['hex']!);
+              final selected = c.catColorHex.value == opt['hex'];
               return _ColorDot(
-                color: c,
+                color: color,
                 selected: selected,
-                onTap: () =>
-                controller.catColorHex.value = opt['hex']!,
+                onTap: () => c.catColorHex.value = opt['hex']!,
               );
             }).toList(),
           )),
@@ -420,16 +448,13 @@ class _CategorySheet extends StatelessWidget {
           Text('image_optional'.tr,
               style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
-          Obx(() => controller.catImageFile.value != null
-              ? _ImagePreview(
-            file: controller.catImageFile.value!,
-            onRemove: controller.removeCatImage,
-          )
-              : _PickImageBtn(onTap: controller.pickCatImage)),
+          Obx(() => c.catImageFile.value != null
+              ? _ImagePreview(file: c.catImageFile.value!, onRemove: c.removeCatImage)
+              : _PickImageBtn(onTap: c.pickCatImage)),
           const SizedBox(height: 24),
           Obx(() => _SaveBtn(
-            loading: controller.catFormLoading.value,
-            onTap: controller.saveCategory,
+            loading: c.catFormLoading.value,
+            onTap: () => c.saveCategory(_nameCtrl.text),
           )),
         ],
       ),
@@ -440,15 +465,34 @@ class _CategorySheet extends StatelessWidget {
 // ════════════════════════════════════════════════════════════════
 //  QUICKSPEAK BOTTOM SHEET
 // ════════════════════════════════════════════════════════════════
-class _QuickSpeakSheet extends StatelessWidget {
+
+class _QuickSpeakSheet extends StatefulWidget {
   final CaregiverHomeController controller;
   final String title;
+  const _QuickSpeakSheet({required this.controller, required this.title});
 
-  const _QuickSpeakSheet(
-      {required this.controller, required this.title});
+  @override
+  State<_QuickSpeakSheet> createState() => _QuickSpeakSheetState();
+}
+
+class _QuickSpeakSheetState extends State<_QuickSpeakSheet> {
+  late final TextEditingController _wordCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _wordCtrl = TextEditingController(text: widget.controller.qsInitialWord);
+  }
+
+  @override
+  void dispose() {
+    _wordCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final c = widget.controller;
     return _SheetWrapper(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -456,31 +500,27 @@ class _QuickSpeakSheet extends StatelessWidget {
         children: [
           _SheetHandle(),
           const SizedBox(height: 16),
-          Text(title,
-              style: const TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.w700)),
+          Text(widget.title,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
           const SizedBox(height: 20),
           TextField(
-            controller: controller.qsWordController,
+            controller: _wordCtrl,
             autofocus: true,
             decoration: _inputDecoration('word_label'.tr),
           ),
           const SizedBox(height: 16),
-          Text('color'.tr,
-              style: const TextStyle(fontWeight: FontWeight.w600)),
+          Text('color'.tr, style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           Obx(() => Wrap(
             spacing: 10,
             runSpacing: 10,
             children: kColorOptions.map((opt) {
-              final c = _hexToColor(opt['hex']!);
-              final selected =
-                  controller.qsColorHex.value == opt['hex'];
+              final color = _hexToColor(opt['hex']!);
+              final selected = c.qsColorHex.value == opt['hex'];
               return _ColorDot(
-                color: c,
+                color: color,
                 selected: selected,
-                onTap: () =>
-                controller.qsColorHex.value = opt['hex']!,
+                onTap: () => c.qsColorHex.value = opt['hex']!,
               );
             }).toList(),
           )),
@@ -488,58 +528,43 @@ class _QuickSpeakSheet extends StatelessWidget {
           Text('image_optional'.tr,
               style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
-          Obx(() => controller.qsImageFile.value != null
-              ? _ImagePreview(
-            file: controller.qsImageFile.value!,
-            onRemove: controller.removeQsImage,
-          )
-              : _PickImageBtn(onTap: controller.pickQsImage)),
+          Obx(() => c.qsImageFile.value != null
+              ? _ImagePreview(file: c.qsImageFile.value!, onRemove: c.removeQsImage)
+              : _PickImageBtn(onTap: c.pickQsImage)),
           const SizedBox(height: 16),
           Text('voice_audio_speak'.tr,
               style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           Obx(() {
-            final hasAudio = controller.qsAudioFile.value != null;
+            final hasAudio = c.qsAudioFile.value != null;
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
+                Row(children: [
+                  _AudioBtn(
+                    icon: c.qsIsRecording.value ? Icons.stop : Icons.mic,
+                    color: c.qsIsRecording.value ? Colors.red : const Color(0xFFFFC857),
+                    label: c.qsIsRecording.value ? 'stop'.tr : 'record'.tr,
+                    onTap: c.toggleQsRecording,
+                  ),
+                  if (hasAudio) ...[
+                    const SizedBox(width: 10),
                     _AudioBtn(
-                      icon: controller.qsIsRecording.value
-                          ? Icons.stop
-                          : Icons.mic,
-                      color: controller.qsIsRecording.value
-                          ? Colors.red
-                          : const Color(0xFFFFC857),
-                      label: controller.qsIsRecording.value
-                          ? 'stop'.tr
-                          : 'record'.tr,
-                      onTap: controller.toggleQsRecording,
+                      icon: c.qsIsPlayingAudio.value ? Icons.stop : Icons.play_arrow,
+                      color: const Color(0xFF4CAF50),
+                      label: c.qsIsPlayingAudio.value ? 'stop'.tr : 'play'.tr,
+                      onTap: c.toggleQsPlayback,
                     ),
-                    if (hasAudio) ...[
-                      const SizedBox(width: 10),
-                      _AudioBtn(
-                        icon: controller.qsIsPlayingAudio.value
-                            ? Icons.stop
-                            : Icons.play_arrow,
-                        color: const Color(0xFF4CAF50),
-                        label: controller.qsIsPlayingAudio.value
-                            ? 'stop'.tr
-                            : 'play'.tr,
-                        onTap: controller.toggleQsPlayback,
-                      ),
-                      const SizedBox(width: 10),
-                      _AudioBtn(
-                        icon: Icons.delete_outline,
-                        color: Colors.red,
-                        label: 'delete'.tr,
-                        onTap: controller.removeQsAudio,
-                      ),
-                    ],
+                    const SizedBox(width: 10),
+                    _AudioBtn(
+                      icon: Icons.delete_outline,
+                      color: Colors.red,
+                      label: 'delete'.tr,
+                      onTap: c.removeQsAudio,
+                    ),
                   ],
-                ),
-                if (controller.qsIsRecording.value) ...[
+                ]),
+                if (c.qsIsRecording.value) ...[
                   const SizedBox(height: 8),
                   Row(children: [
                     Container(
@@ -549,15 +574,14 @@ class _QuickSpeakSheet extends StatelessWidget {
                             color: Colors.red, shape: BoxShape.circle)),
                     const SizedBox(width: 6),
                     Text('recording_indicator'.tr,
-                        style: const TextStyle(
-                            color: Colors.red, fontSize: 12)),
+                        style: const TextStyle(color: Colors.red, fontSize: 12)),
                   ]),
                 ],
-                if (hasAudio && !controller.qsIsRecording.value) ...[
+                if (hasAudio && !c.qsIsRecording.value) ...[
                   const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 6),
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: const Color(0xFFE8F5E9),
                       borderRadius: BorderRadius.circular(8),
@@ -569,9 +593,9 @@ class _QuickSpeakSheet extends StatelessWidget {
                             color: Color(0xFF4CAF50), size: 16),
                         const SizedBox(width: 6),
                         Text(
-                          controller.qsAudioFileName.value.isEmpty
+                          c.qsAudioFileName.value.isEmpty
                               ? 'audio_ready'.tr
-                              : controller.qsAudioFileName.value,
+                              : c.qsAudioFileName.value,
                           style: const TextStyle(
                               color: Color(0xFF4CAF50), fontSize: 12),
                         ),
@@ -581,15 +605,14 @@ class _QuickSpeakSheet extends StatelessWidget {
                 ],
                 const SizedBox(height: 4),
                 Text('record_voice_hint'.tr,
-                    style: TextStyle(
-                        fontSize: 11, color: Colors.grey[500])),
+                    style: TextStyle(fontSize: 11, color: Colors.grey[500])),
               ],
             );
           }),
           const SizedBox(height: 24),
           Obx(() => _SaveBtn(
-            loading: controller.qsFormLoading.value,
-            onTap: controller.saveQuickSpeak,
+            loading: c.qsFormLoading.value,
+            onTap: () => c.saveQuickSpeak(_wordCtrl.text),
           )),
         ],
       ),
@@ -631,8 +654,7 @@ class _SheetHandle extends StatelessWidget {
         width: 40,
         height: 4,
         decoration: BoxDecoration(
-            color: Colors.grey[300],
-            borderRadius: BorderRadius.circular(2)),
+            color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
       ),
     );
   }
@@ -642,11 +664,7 @@ class _ColorDot extends StatelessWidget {
   final Color color;
   final bool selected;
   final VoidCallback onTap;
-
-  const _ColorDot(
-      {required this.color,
-        required this.selected,
-        required this.onTap});
+  const _ColorDot({required this.color, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -667,9 +685,7 @@ class _ColorDot extends StatelessWidget {
               ? [BoxShadow(color: color.withOpacity(0.5), blurRadius: 6)]
               : [],
         ),
-        child: selected
-            ? const Icon(Icons.check, color: Colors.white, size: 18)
-            : null,
+        child: selected ? const Icon(Icons.check, color: Colors.white, size: 18) : null,
       ),
     );
   }
@@ -678,7 +694,6 @@ class _ColorDot extends StatelessWidget {
 class _ImagePreview extends StatelessWidget {
   final File file;
   final VoidCallback onRemove;
-
   const _ImagePreview({required this.file, required this.onRemove});
 
   @override
@@ -709,8 +724,7 @@ class _PickImageBtn extends StatelessWidget {
       icon: const Icon(Icons.image_outlined),
       label: Text('choose_image'.tr),
       style: OutlinedButton.styleFrom(
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10))),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
     );
   }
 }
@@ -718,7 +732,6 @@ class _PickImageBtn extends StatelessWidget {
 class _SaveBtn extends StatelessWidget {
   final bool loading;
   final VoidCallback onTap;
-
   const _SaveBtn({required this.loading, required this.onTap});
 
   @override
@@ -730,16 +743,14 @@ class _SaveBtn extends StatelessWidget {
         onPressed: loading ? null : onTap,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFFFFC857),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 0,
         ),
         child: loading
             ? const SizedBox(
             width: 20,
             height: 20,
-            child: CircularProgressIndicator(
-                strokeWidth: 2, color: Colors.black))
+            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
             : Text('save'.tr,
             style: const TextStyle(
                 color: Colors.black,
@@ -755,7 +766,6 @@ class _AudioBtn extends StatelessWidget {
   final Color color;
   final String label;
   final VoidCallback onTap;
-
   const _AudioBtn(
       {required this.icon,
         required this.color,
@@ -780,9 +790,7 @@ class _AudioBtn extends StatelessWidget {
         const SizedBox(height: 4),
         Text(label,
             style: TextStyle(
-                fontSize: 10,
-                color: color,
-                fontWeight: FontWeight.w600)),
+                fontSize: 10, color: color, fontWeight: FontWeight.w600)),
       ]),
     );
   }
@@ -802,8 +810,7 @@ InputDecoration _inputDecoration(String label) {
     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide:
-      const BorderSide(color: Color(0xFFFFC857), width: 1.5),
+      borderSide: const BorderSide(color: Color(0xFFFFC857), width: 1.5),
     ),
   );
 }

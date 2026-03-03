@@ -1,7 +1,7 @@
 // lib/config/app_url.dart
 
 class AppUrl {
-  static const String baseUrl = 'https://wrist-reviews-boulevard-hamilton.trycloudflare.com';
+  static const String baseUrl = 'https://rangers-amenities-collaboration-great.trycloudflare.com';
 
   // ==================== AUTH ====================
   static const String login = '$baseUrl/api/auth/login/';
@@ -32,15 +32,22 @@ class AppUrl {
   static const String copyDefaultContent = '$baseUrl/api/caregiver/customization/copy-defaults/';
   static const String resetCustomization = '$baseUrl/api/caregiver/customization/reset/';
 
-  // GET user content — pass communicator_id
-  static String getUserContent(int communicatorId) =>
-      '$baseUrl/api/caregiver/customization/user/$communicatorId/';
-  // UPDATE  category (PUT form-data: name, color, image_icon, speak)
+  // GET user content — normal mode (lang param supported)
+  static String getUserContent(int communicatorId, {String lang = 'en'}) =>
+      '$baseUrl/api/caregiver/customization/user/$communicatorId/?lang=$lang';
+
+  // GET user content — buddy mode
+  static String getUserBuddyModeContent(int communicatorId, {String lang = 'en'}) =>
+      '$baseUrl/api/caregiver/customization/buddy-mode/user/$communicatorId/?lang=$lang';
+
+  // UPDATE category (PUT form-data: name, color, image_icon, speak)
   static String updateUserCategory(int catagoryid) =>
       '$baseUrl/api/caregiver/customization/category/$catagoryid/';
-  // UPDATE sub category (PUT form-data: name, color, image_icon, speak)
+
+  // UPDATE sub category
   static String updateUserSubCategory(int subcatagoryid) =>
       '$baseUrl/api/caregiver/customization/category/$subcatagoryid/';
+
   // UPDATE item (PUT form-data: word, color, image_icon, order, speak)
   static String updateUserItem(int itemId) =>
       '$baseUrl/api/caregiver/customization/item/$itemId/';
@@ -49,36 +56,28 @@ class AppUrl {
   static String updateUserQuickSpeak(int id) =>
       '$baseUrl/api/caregiver/customization/quickspeak/$id/';
 
-
-
-  // CREATE main category (POST form-data: name, color, order, image_icon?, speak?)
+  // CREATE endpoints
   static const String createCategory = '$baseUrl/api/caregiver/content/create-category/';
-
-  // CREATE sub category (POST form-data: name, color, order, communicator_id, main_category_id)
   static const String createSubCategory = '$baseUrl/api/caregiver/content/create-subcategory/';
-
-  // CREATE item (POST form-data: category_id, name, word, color, communicator_id, image_icon?, speak?)
   static const String createItem = '$baseUrl/api/caregiver/content/create-item/';
-
-  // CREATE quick speak (POST form-data: name, word, color, communicator_id, image_icon?, speak?)
   static const String createQuickSpeak = '$baseUrl/api/caregiver/content/create-quickspeak/';
 
+  // ==================== COMMUNICATOR ====================
+  // Normal mode
+  static String getCommunicatorContent({String lang = 'en'}) =>
+      '$baseUrl/api/communicator/content/?lang=$lang';
 
-
-
-
-// ==================== COMMUNICATOR ====================
- static const String getCommunicatorContent = '$baseUrl/api/communicator/content/';
+  // Buddy mode
+  static String getCommunicatorBuddyModeContent({String lang = 'en'}) =>
+      '$baseUrl/api/communicator/content/buddy-mode/?lang=$lang';
 
   // ── Activity Endpoints ──────────────────────────────────────────────────
-    static const String activities       = '/api/activity/activities/';
-    static const String activitiesCreate = '/api/activity/activities/create/';
-     static String activityDelete(int id) => '/api/activity/activities/$id/delete/';
-     static String activityUpdate(int id) => '/api/activity/activities/$id/update/';
-
+  static const String activities       = '/api/activity/activities/';
+  static const String activitiesCreate = '/api/activity/activities/create/';
+  static String activityDelete(int id) => '/api/activity/activities/$id/delete/';
+  static String activityUpdate(int id) => '/api/activity/activities/$id/update/';
 
   // ==================== MEDIA ====================
-  // Converts relative path to full URL for image/audio from API
   static String? mediaUrl(String? path) {
     if (path == null || path.isEmpty) return null;
     if (path.startsWith('http')) return path;

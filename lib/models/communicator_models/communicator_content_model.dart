@@ -1,3 +1,4 @@
+// lib/models/communicator_models/communicator_content_model.dart
 
 class CommunicatorContentModel {
   final List<CommCategoryModel> categories;
@@ -12,20 +13,54 @@ class CommunicatorContentModel {
     required this.totalQuickSpeaks,
   });
 
-  factory CommunicatorContentModel.fromJson(Map<String, dynamic> json) {
+  factory CommunicatorContentModel.fromJson(Map<String, dynamic> json, {String lang = 'en'}) {
     return CommunicatorContentModel(
       categories: (json['categories'] as List? ?? [])
-          .map((e) => CommCategoryModel.fromJson(e))
+          .map((e) => CommCategoryModel.fromJson(e, lang: lang))
           .where((c) => !c.isDeleted && c.isActive)
           .toList(),
       quickSpeaks: (json['quickspeaks'] as List? ?? [])
-          .map((e) => CommQuickSpeakModel.fromJson(e))
+          .map((e) => CommQuickSpeakModel.fromJson(e, lang: lang))
           .where((q) => !q.isDeleted && q.isActive)
           .toList(),
       totalCategories: json['total_categories'] ?? 0,
       totalQuickSpeaks: json['total_quickspeaks'] ?? 0,
     );
   }
+}
+
+// ─── Helper: translations থেকে name/speak বের করা ───────────────────────────
+String _resolveName(Map<String, dynamic> json, String lang) {
+  final translations = json['translations'];
+  if (translations is Map) {
+    final t = translations[lang];
+    if (t is Map && t['name'] != null && (t['name'] as String).isNotEmpty) {
+      return t['name'] as String;
+    }
+  }
+  return json['name'] ?? '';
+}
+
+String? _resolveSpeak(Map<String, dynamic> json, String lang) {
+  final translations = json['translations'];
+  if (translations is Map) {
+    final t = translations[lang];
+    if (t is Map && t['speak'] != null) {
+      return t['speak'] as String?;
+    }
+  }
+  return json['speak'];
+}
+
+String? _resolveWord(Map<String, dynamic> json, String lang) {
+  final translations = json['translations'];
+  if (translations is Map) {
+    final t = translations[lang];
+    if (t is Map && t['name'] != null) {
+      return t['name'] as String?;
+    }
+  }
+  return json['word'];
 }
 
 // ── Category ──────────────────────────────────────────────────────────────────
@@ -55,11 +90,11 @@ class CommCategoryModel {
     required this.subCategoriesCount,
   });
 
-  factory CommCategoryModel.fromJson(Map<String, dynamic> json) {
+  factory CommCategoryModel.fromJson(Map<String, dynamic> json, {String lang = 'en'}) {
     return CommCategoryModel(
       id: json['id'] ?? 0,
-      name: json['name'] ?? '',
-      speak: json['speak'],
+      name: _resolveName(json, lang),
+      speak: _resolveSpeak(json, lang),
       color: json['color'] ?? '#B5CFD1',
       imageIcon: json['image_icon'],
       order: json['order'] ?? 0,
@@ -67,7 +102,7 @@ class CommCategoryModel {
       isDeleted: json['is_deleted'] ?? false,
       subCategoriesCount: json['sub_categories_count'] ?? 0,
       subCategories: (json['sub_categories'] as List? ?? [])
-          .map((e) => CommSubCategoryModel.fromJson(e))
+          .map((e) => CommSubCategoryModel.fromJson(e, lang: lang))
           .where((s) => !s.isDeleted && s.isActive)
           .toList(),
     );
@@ -103,12 +138,12 @@ class CommSubCategoryModel {
     required this.itemsCount,
   });
 
-  factory CommSubCategoryModel.fromJson(Map<String, dynamic> json) {
+  factory CommSubCategoryModel.fromJson(Map<String, dynamic> json, {String lang = 'en'}) {
     return CommSubCategoryModel(
       id: json['id'] ?? 0,
       mainCategory: json['main_category'],
-      name: json['name'] ?? '',
-      speak: json['speak'],
+      name: _resolveName(json, lang),
+      speak: _resolveSpeak(json, lang),
       color: json['color'] ?? '#B5CFD1',
       imageIcon: json['image_icon'],
       order: json['order'] ?? 0,
@@ -116,7 +151,7 @@ class CommSubCategoryModel {
       isDeleted: json['is_deleted'] ?? false,
       itemsCount: json['items_count'] ?? 0,
       items: (json['items'] as List? ?? [])
-          .map((e) => CommItemModel.fromJson(e))
+          .map((e) => CommItemModel.fromJson(e, lang: lang))
           .where((i) => !i.isDeleted && i.isActive)
           .toList(),
     );
@@ -148,12 +183,12 @@ class CommItemModel {
     required this.isDeleted,
   });
 
-  factory CommItemModel.fromJson(Map<String, dynamic> json) {
+  factory CommItemModel.fromJson(Map<String, dynamic> json, {String lang = 'en'}) {
     return CommItemModel(
       id: json['id'] ?? 0,
       category: json['category'],
-      word: json['word'],
-      speak: json['speak'],
+      word: _resolveWord(json, lang) ?? json['word'],
+      speak: _resolveSpeak(json, lang),
       color: json['color'] ?? '#FFD700',
       imageIcon: json['image_icon'],
       order: json['order'] ?? 0,
@@ -186,11 +221,11 @@ class CommQuickSpeakModel {
     required this.isDeleted,
   });
 
-  factory CommQuickSpeakModel.fromJson(Map<String, dynamic> json) {
+  factory CommQuickSpeakModel.fromJson(Map<String, dynamic> json, {String lang = 'en'}) {
     return CommQuickSpeakModel(
       id: json['id'] ?? 0,
-      word: json['word'],
-      speak: json['speak'],
+      word: _resolveWord(json, lang) ?? json['word'],
+      speak: _resolveSpeak(json, lang),
       color: json['color'] ?? '#FFD700',
       imageIcon: json['image_icon'],
       order: json['order'] ?? 0,

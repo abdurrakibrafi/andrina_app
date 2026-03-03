@@ -98,23 +98,14 @@ class ActivitiesScreen extends GetView<ActivitiesController> {
                     : RefreshIndicator(
                   onRefresh: controller.fetchActivities,
                   color: const Color(0xFFFDD268),
-                  child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: controller.todayActivities.length,
-                    separatorBuilder: (_, __) =>
-                    const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final activity =
-                      controller.todayActivities[index];
-                      return _ActivityListItem(
-                        activity: activity,
-                        onDelete: () =>
-                            controller.deleteActivity(activity),
-                        onEdit: () =>
-                            controller.goToEditActivity(activity),
-                      );
-                    },
-                  ),
+                  child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+          children: [
+          _buildStatusSection('in_progress'),
+          _buildStatusSection('hold'),
+          _buildStatusSection('done'),
+          ],
+          ),
                 ),
               ),
 
@@ -151,6 +142,54 @@ class ActivitiesScreen extends GetView<ActivitiesController> {
         }),
       ),
     );
+  }
+  Widget _buildStatusSection(String status) {
+    final items = controller.todayActivities
+        .where((e) => e.status == status)
+        .toList();
+
+    if (items.isEmpty) return const SizedBox();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 12),
+
+        /// 🔹 Status Header
+        Text(
+          _statusHeader(status),
+          style: GoogleFonts.nunito(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: Colors.black87,
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        /// 🔹 Activities
+        ...items.map((activity) => Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _ActivityListItem(
+            activity: activity,
+            onDelete: () => controller.deleteActivity(activity),
+            onEdit: () => controller.goToEditActivity(activity),
+          ),
+        )),
+      ],
+    );
+  }
+  String _statusHeader(String? status) {
+    switch (status) {
+      case 'in_progress':
+        return 'status_in_progress'.tr;
+      case 'hold':
+        return 'status_hold'.tr;
+      case 'done':
+        return 'status_done'.tr;
+      default:
+        return '';
+    }
   }
 }
 

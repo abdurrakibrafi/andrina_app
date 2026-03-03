@@ -1,5 +1,41 @@
 // lib/models/caregiver_models/caregiver_content_model.dart
 
+// ─── Helper: translations থেকে name/word/speak বের করা ──────────────────────
+String _resolveName(Map<String, dynamic> json, String lang) {
+  final translations = json['translations'];
+  if (translations is Map) {
+    final t = translations[lang];
+    if (t is Map && t['name'] != null && (t['name'] as String).isNotEmpty) {
+      return t['name'] as String;
+    }
+  }
+  return json['name'] ?? '';
+}
+
+String? _resolveWord(Map<String, dynamic> json, String lang) {
+  final translations = json['translations'];
+  if (translations is Map) {
+    final t = translations[lang];
+    if (t is Map && t['name'] != null) {
+      return t['name'] as String?;
+    }
+  }
+  return json['word'];
+}
+
+String? _resolveSpeak(Map<String, dynamic> json, String lang) {
+  final translations = json['translations'];
+  if (translations is Map) {
+    final t = translations[lang];
+    if (t is Map && t['speak'] != null) {
+      return t['speak'] as String?;
+    }
+  }
+  return json['speak'];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 class UserContentModel {
   final bool isCustomized;
   final List<CategoryModel> categories;
@@ -11,15 +47,15 @@ class UserContentModel {
     required this.quickSpeaks,
   });
 
-  factory UserContentModel.fromJson(Map<String, dynamic> json) {
+  factory UserContentModel.fromJson(Map<String, dynamic> json, {String lang = 'en'}) {
     final data = json['data'] ?? json;
     return UserContentModel(
       isCustomized: data['is_customized'] ?? false,
       categories: (data['categories'] as List? ?? [])
-          .map((e) => CategoryModel.fromJson(e))
+          .map((e) => CategoryModel.fromJson(e, lang: lang))
           .toList(),
       quickSpeaks: (data['quickspeaks'] as List? ?? [])
-          .map((e) => QuickSpeakModel.fromJson(e))
+          .map((e) => QuickSpeakModel.fromJson(e, lang: lang))
           .toList(),
     );
   }
@@ -46,17 +82,17 @@ class CategoryModel {
     required this.subCategories,
   });
 
-  factory CategoryModel.fromJson(Map<String, dynamic> json) {
+  factory CategoryModel.fromJson(Map<String, dynamic> json, {String lang = 'en'}) {
     return CategoryModel(
       id: json['id'] ?? 0,
-      name: json['name'] ?? '',
+      name: _resolveName(json, lang),
       imageIcon: json['image_icon'],
-      speak: json['speak'],
+      speak: _resolveSpeak(json, lang),
       color: json['color'] ?? '#B5CFD1',
       order: json['order'] ?? 0,
       isActive: json['is_active'] ?? true,
       subCategories: (json['sub_categories'] as List? ?? [])
-          .map((e) => SubCategoryModel.fromJson(e))
+          .map((e) => SubCategoryModel.fromJson(e, lang: lang))
           .toList(),
     );
   }
@@ -85,18 +121,18 @@ class SubCategoryModel {
     required this.items,
   });
 
-  factory SubCategoryModel.fromJson(Map<String, dynamic> json) {
+  factory SubCategoryModel.fromJson(Map<String, dynamic> json, {String lang = 'en'}) {
     return SubCategoryModel(
       id: json['id'] ?? 0,
       mainCategory: json['main_category'] ?? 0,
-      name: json['name'] ?? '',
+      name: _resolveName(json, lang),
       imageIcon: json['image_icon'],
-      speak: json['speak'],
+      speak: _resolveSpeak(json, lang),
       color: json['color'] ?? '#B5CFD1',
       order: json['order'] ?? 0,
       isActive: json['is_active'] ?? true,
       items: (json['items'] as List? ?? [])
-          .map((e) => ItemModel.fromJson(e))
+          .map((e) => ItemModel.fromJson(e, lang: lang))
           .toList(),
     );
   }
@@ -123,13 +159,13 @@ class ItemModel {
     required this.isActive,
   });
 
-  factory ItemModel.fromJson(Map<String, dynamic> json) {
+  factory ItemModel.fromJson(Map<String, dynamic> json, {String lang = 'en'}) {
     return ItemModel(
       id: json['id'] ?? 0,
       category: json['category'] ?? 0,
-      word: json['word'],
+      word: _resolveWord(json, lang) ?? json['word'],
       imageIcon: json['image_icon'],
-      speak: json['speak'],
+      speak: _resolveSpeak(json, lang),
       color: json['color'] ?? '#FFD700',
       order: json['order'] ?? 0,
       isActive: json['is_active'] ?? true,
@@ -156,12 +192,12 @@ class QuickSpeakModel {
     required this.isActive,
   });
 
-  factory QuickSpeakModel.fromJson(Map<String, dynamic> json) {
+  factory QuickSpeakModel.fromJson(Map<String, dynamic> json, {String lang = 'en'}) {
     return QuickSpeakModel(
       id: json['id'] ?? 0,
-      word: json['word'],
+      word: _resolveWord(json, lang) ?? json['word'],
       imageIcon: json['image_icon'],
-      speak: json['speak'],
+      speak: _resolveSpeak(json, lang),
       color: json['color'] ?? '#FFD700',
       order: json['order'] ?? 0,
       isActive: json['is_active'] ?? true,

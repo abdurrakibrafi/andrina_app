@@ -25,7 +25,7 @@ class ActivitiesController extends GetxController {
       final response = await _repository.getActivities(days: 30, limit: 100);
       if (response.isSuccess && response.data != null) {
         activities.value = response.data!;
-        activities.sort((a, b) => a.datetime.compareTo(b.datetime));
+        _sortActivities();
       } else {
         errorMessage.value = response.message;
       }
@@ -54,7 +54,8 @@ class ActivitiesController extends GetxController {
   // ─── Add Optimistic ──────────────────────────────────────────────────────
   void onActivityAdded(ActivityModel activity) {
     activities.add(activity);
-    activities.sort((a, b) => a.datetime.compareTo(b.datetime));
+
+    _sortActivities();
   }
 
   // ─── Update Optimistic ───────────────────────────────────────────────────
@@ -62,7 +63,7 @@ class ActivitiesController extends GetxController {
     final idx = activities.indexWhere((a) => a.id == updated.id);
     if (idx != -1) {
       activities[idx] = updated;
-      activities.sort((a, b) => a.datetime.compareTo(b.datetime));
+      _sortActivities();
     }
   }
 
@@ -130,6 +131,29 @@ class ActivitiesController extends GetxController {
         colorText: Colors.red.shade900,
       );
     }
+  }
+  int _statusPriority(String? status) {
+    switch (status) {
+      case 'in_progress':
+        return 0;
+      case 'hold':
+        return 1;
+      case 'done':
+        return 2;
+      default:
+        return 3;
+    }
+  }
+
+  void _sortActivities() {
+    activities.sort((a, b) {
+      final statusCompare =
+      _statusPriority(a.status).compareTo(_statusPriority(b.status));
+
+      if (statusCompare != 0) return statusCompare;
+
+      return a.datetime.compareTo(b.datetime);
+    });
   }
 
   // ─── Confirm Delete Dialog ───────────────────────────────────────────────
