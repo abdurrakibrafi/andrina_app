@@ -29,7 +29,6 @@ class CaregiverItemController extends GetxController {
   final RxSet<int> selectedIds = <int>{}.obs;
   final RxInt playingItemId = (-1).obs;
 
-  // ─── Form state ───────────────────────────────────────────────
   final RxString formColorHex = '#FFD700'.obs;
   final Rx<File?> formImageFile = Rx<File?>(null);
   final Rx<File?> formAudioFile = Rx<File?>(null);
@@ -72,7 +71,6 @@ class CaregiverItemController extends GetxController {
     await _soundPlayer!.openPlayer();
   }
 
-  // ── Current language ──────────────────────────────────────────
   String get _currentLang {
     try {
       return LanguageController.to.currentLocale.value.languageCode;
@@ -81,7 +79,6 @@ class CaregiverItemController extends GetxController {
     }
   }
 
-  // ── Buddy mode flag — CaregiverHomeController থেকে নাও ───────
   bool get _isBuddyMode {
     try {
       return Get.find<CaregiverHomeController>().isBuddyMode.value;
@@ -99,13 +96,11 @@ class CaregiverItemController extends GetxController {
     }
   }
 
-  // ── Refresh with buddy mode + lang ────────────────────────────
   Future<void> refresh() async {
     final communicatorId = CommunicatorSessionService.to.communicatorId.value;
     if (communicatorId == 0) return;
 
     isLoading.value = true;
-
     final lang = _currentLang;
 
     final response = _isBuddyMode
@@ -200,6 +195,7 @@ class CaregiverItemController extends GetxController {
       return;
     }
     formLoading.value = true;
+    final lang = _currentLang; // ✅
 
     if (_editingItem != null) {
       final response = await _repo.updateItem(
@@ -208,6 +204,7 @@ class CaregiverItemController extends GetxController {
         color: formColorHex.value,
         imageFile: formImageFile.value,
         audioFile: formAudioFile.value,
+        lang: lang, // ✅
       );
       formLoading.value = false;
       if (response.isSuccess) {
@@ -228,6 +225,7 @@ class CaregiverItemController extends GetxController {
         communicatorId: communicatorId,
         imageFile: formImageFile.value,
         audioFile: formAudioFile.value,
+        lang: lang, // ✅
       );
       formLoading.value = false;
       if (response.isSuccess) {
@@ -330,7 +328,7 @@ class CaregiverItemController extends GetxController {
 }
 
 // ════════════════════════════════════════════════════════════════
-//  ITEM FORM BOTTOM SHEET
+//  ITEM FORM BOTTOM SHEET  (unchanged UI)
 // ════════════════════════════════════════════════════════════════
 
 class ItemFormSheet extends StatefulWidget {
@@ -434,15 +432,22 @@ class _ItemFormSheetState extends State<ItemFormSheet> {
                       color: col,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: isSelected ? Colors.black87 : Colors.transparent,
+                        color: isSelected
+                            ? Colors.black87
+                            : Colors.transparent,
                         width: 2.5,
                       ),
                       boxShadow: isSelected
-                          ? [BoxShadow(color: col.withOpacity(0.5), blurRadius: 6)]
+                          ? [
+                        BoxShadow(
+                            color: col.withOpacity(0.5),
+                            blurRadius: 6)
+                      ]
                           : [],
                     ),
                     child: isSelected
-                        ? const Icon(Icons.check, color: Colors.white, size: 18)
+                        ? const Icon(Icons.check,
+                        color: Colors.white, size: 18)
                         : null,
                   ),
                 );
@@ -462,7 +467,8 @@ class _ItemFormSheetState extends State<ItemFormSheet> {
               const SizedBox(width: 12),
               TextButton.icon(
                 onPressed: c.removeImage,
-                icon: const Icon(Icons.delete, color: Colors.red, size: 18),
+                icon: const Icon(Icons.delete,
+                    color: Colors.red, size: 18),
                 label: Text('remove'.tr,
                     style: const TextStyle(color: Colors.red)),
               ),
@@ -500,7 +506,8 @@ class _ItemFormSheetState extends State<ItemFormSheet> {
                             ? Icons.stop
                             : Icons.play_arrow,
                         color: const Color(0xFF4CAF50),
-                        label: c.isPlayingFormAudio.value ? 'stop'.tr : 'play'.tr,
+                        label:
+                        c.isPlayingFormAudio.value ? 'stop'.tr : 'play'.tr,
                         onTap: c.toggleFormAudioPlayback,
                       ),
                       const SizedBox(width: 10),
@@ -554,7 +561,8 @@ class _ItemFormSheetState extends State<ItemFormSheet> {
                   ],
                   const SizedBox(height: 4),
                   Text('record_voice_hint2'.tr,
-                      style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+                      style:
+                      TextStyle(fontSize: 11, color: Colors.grey[500])),
                 ],
               );
             }),

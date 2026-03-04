@@ -33,7 +33,6 @@ class CaregiverHomeController extends GetxController {
   final ImagePicker _picker = ImagePicker();
   final AudioPlayer _audioPlayer = AudioPlayer();
 
-  // ── State ─────────────────────────────────────────────────────────────────
   final RxBool isLoading = false.obs;
   final RxBool isBuddyMode = false.obs;
   final RxBool isEditMode = false.obs;
@@ -45,13 +44,11 @@ class CaregiverHomeController extends GetxController {
 
   List<CategoryModel> get apiCategories => categories;
 
-  // ─── Category Form state ──────────────────────────────────────────────────
   final RxString catColorHex = '#B5CFD1'.obs;
   final Rx<File?> catImageFile = Rx<File?>(null);
   final RxBool catFormLoading = false.obs;
   CategoryModel? _editingCategory;
 
-  // ─── QuickSpeak Form state ────────────────────────────────────────────────
   final RxString qsColorHex = '#FFD700'.obs;
   final Rx<File?> qsImageFile = Rx<File?>(null);
   final Rx<File?> qsAudioFile = Rx<File?>(null);
@@ -71,7 +68,7 @@ class CaregiverHomeController extends GetxController {
   void onInit() {
     super.onInit();
     _initAudio();
-    loadContent();
+    _initLoad(); // ✅ profile একবার, তারপর content
   }
 
   Future<void> _initAudio() async {
@@ -81,23 +78,14 @@ class CaregiverHomeController extends GetxController {
     await _soundPlayer!.openPlayer();
   }
 
-  // ── Current language code (en / es / ar) ──────────────────────────────────
-  String get _currentLang {
-    try {
-      return LanguageController.to.currentLocale.value.languageCode;
-    } catch (_) {
-      return 'en';
-    }
+  // ✅ onInit-এ শুধু একবার profile fetch হবে
+  Future<void> _initLoad() async {
+    await _fetchProfile();
+    await loadContent();
   }
 
-  // ── Load content with buddy mode + lang routing ────────────────────────────
-  Future<void> loadContent() async {
-    final communicatorId = CommunicatorSessionService.to.communicatorId.value;
-    if (communicatorId == 0) return;
-
-    isLoading.value = true;
-
-    // 1️⃣ Profile থেকে buddy_mode check করো
+  // ✅ Profile fetch — buddy_mode জানার জন্য, আলাদা করা হয়েছে
+  Future<void> _fetchProfile() async {
     try {
       final profileRes = await _authRepository.getProfile();
       if (profileRes.isSuccess && profileRes.data != null) {
@@ -107,11 +95,45 @@ class CaregiverHomeController extends GetxController {
     } catch (e) {
       debugPrint('CaregiverHomeController: profile fetch error: $e');
     }
+  }
 
-    // 2️⃣ Current language নাও
+  String get _currentLang {
+    try {
+      return LanguageController.to.currentLocale.value.languageCode;
+    } catch (_) {
+      return 'en';
+    }
+  }
+
+  // ✅ loadContent শুধু content fetch করে — profile call নেই
+  // save-এর পরে call করলে double API call হবে না
+  // Future<void> loadContent() async {
+  //   final communicatorId = CommunicatorSessionService.to.communicatorId.value;
+  //   if (communicatorId == 0) return;
+  //
+  //   isLoading.value = true;
+  //   final lang = _currentLang;
+  //
+  //   // isBuddyMode _fetchProfile() থেকে already set আছে
+  //   final response = isBuddyMode.value
+  //       ? await _repo.getUserBuddyModeContent(communicatorId, lang: lang)
+  //       : await _repo.getUserContent(communicatorId, lang: lang);
+  //
+  //   isLoading.value = false;
+  //
+  //   if (response.isSuccess && response.data != null) {
+  //     categories.value = response.data!.categories;
+  //     quickSpeaks.value = response.data!.quickSpeaks;
+  //   }
+  // }
+
+  Future<void> loadContent() async {
+    final communicatorId = CommunicatorSessionService.to.communicatorId.value;
+    if (communicatorId == 0) return;
+
+    isLoading.value = true;
     final lang = _currentLang;
 
-    // 3️⃣ Buddy mode অনুযায়ী সঠিক endpoint hit করো
     final response = isBuddyMode.value
         ? await _repo.getUserBuddyModeContent(communicatorId, lang: lang)
         : await _repo.getUserContent(communicatorId, lang: lang);
@@ -119,8 +141,11 @@ class CaregiverHomeController extends GetxController {
     isLoading.value = false;
 
     if (response.isSuccess && response.data != null) {
-      categories.value = response.data!.categories;
-      quickSpeaks.value = response.data!.quickSpeaks;
+      // ✅ এটাই proper fix
+      categories.assignAll(response.data!.categories);
+      quickSpeaks.assignAll(response.data!.quickSpeaks);
+      debugPrint('API থেকে quickSpack: ${response.data!.quickSpeaks.length
+      }');
     }
   }
 
@@ -183,7 +208,10 @@ class CaregiverHomeController extends GetxController {
 
   Future<void> pickCatImage() async {
     final picked = await _picker.pickImage(
-        source: ImageSource.gallery, imageQuality: 80, maxWidth: 512, maxHeight: 512);
+        source: ImageSource.gallery,
+        imageQuality: 80,
+        maxWidth: 512,
+        maxHeight: 512);
     if (picked != null) catImageFile.value = File(picked.path);
   }
 
@@ -197,6 +225,7 @@ class CaregiverHomeController extends GetxController {
     }
     catFormLoading.value = true;
     final communicatorId = CommunicatorSessionService.to.communicatorId.value;
+    final lang = _currentLang;
 
     if (_editingCategory != null) {
       final res = await _repo.updateCategory(
@@ -204,15 +233,17 @@ class CaregiverHomeController extends GetxController {
         name: name.trim(),
         color: catColorHex.value,
         imageFile: catImageFile.value,
+        lang: lang,
       );
       catFormLoading.value = false;
       if (res.isSuccess) {
         Get.back();
-        loadContent();
+        await loadContent(); // ✅ await — race condition নেই
         Get.snackbar('updated'.tr, 'category_updated'.tr,
             snackPosition: SnackPosition.BOTTOM);
       } else {
-        Get.snackbar('error'.tr, res.message, snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar('error'.tr, res.message,
+            snackPosition: SnackPosition.BOTTOM);
       }
     } else {
       final res = await _repo.createCategory(
@@ -221,15 +252,17 @@ class CaregiverHomeController extends GetxController {
         communicatorId: communicatorId,
         order: categories.length,
         imageFile: catImageFile.value,
+        lang: lang,
       );
       catFormLoading.value = false;
       if (res.isSuccess) {
         Get.back();
-        loadContent();
+        await loadContent(); // ✅ await
         Get.snackbar('created'.tr, 'category_created'.tr,
             snackPosition: SnackPosition.BOTTOM);
       } else {
-        Get.snackbar('error'.tr, res.message, snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar('error'.tr, res.message,
+            snackPosition: SnackPosition.BOTTOM);
       }
     }
   }
@@ -262,7 +295,10 @@ class CaregiverHomeController extends GetxController {
 
   Future<void> pickQsImage() async {
     final picked = await _picker.pickImage(
-        source: ImageSource.gallery, imageQuality: 80, maxWidth: 512, maxHeight: 512);
+        source: ImageSource.gallery,
+        imageQuality: 80,
+        maxWidth: 512,
+        maxHeight: 512);
     if (picked != null) qsImageFile.value = File(picked.path);
   }
 
@@ -330,6 +366,7 @@ class CaregiverHomeController extends GetxController {
     }
     qsFormLoading.value = true;
     final communicatorId = CommunicatorSessionService.to.communicatorId.value;
+    final lang = _currentLang;
 
     if (_editingQuickSpeak != null) {
       final res = await _repo.updateQuickSpeak(
@@ -338,15 +375,17 @@ class CaregiverHomeController extends GetxController {
         color: qsColorHex.value,
         imageFile: qsImageFile.value,
         audioFile: qsAudioFile.value,
+        lang: lang,
       );
       qsFormLoading.value = false;
       if (res.isSuccess) {
         Get.back();
-        loadContent();
+        await loadContent(); // ✅ await
         Get.snackbar('updated'.tr, 'quick_speak_updated'.tr,
             snackPosition: SnackPosition.BOTTOM);
       } else {
-        Get.snackbar('error'.tr, res.message, snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar('error'.tr, res.message,
+            snackPosition: SnackPosition.BOTTOM);
       }
     } else {
       final res = await _repo.createQuickSpeak(
@@ -355,15 +394,17 @@ class CaregiverHomeController extends GetxController {
         communicatorId: communicatorId,
         imageFile: qsImageFile.value,
         audioFile: qsAudioFile.value,
+        lang: lang,
       );
       qsFormLoading.value = false;
       if (res.isSuccess) {
         Get.back();
-        loadContent();
+        await loadContent(); // ✅ await
         Get.snackbar('created'.tr, 'quick_speak_created'.tr,
             snackPosition: SnackPosition.BOTTOM);
       } else {
-        Get.snackbar('error'.tr, res.message, snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar('error'.tr, res.message,
+            snackPosition: SnackPosition.BOTTOM);
       }
     }
   }
@@ -421,7 +462,8 @@ class _CategorySheetState extends State<_CategorySheet> {
           _SheetHandle(),
           const SizedBox(height: 16),
           Text(widget.title,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+              style: const TextStyle(
+                  fontSize: 18, fontWeight: FontWeight.w700)),
           const SizedBox(height: 20),
           TextField(
             controller: _nameCtrl,
@@ -429,7 +471,8 @@ class _CategorySheetState extends State<_CategorySheet> {
             decoration: _inputDecoration('category_name_label'.tr),
           ),
           const SizedBox(height: 16),
-          Text('color'.tr, style: const TextStyle(fontWeight: FontWeight.w600)),
+          Text('color'.tr,
+              style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           Obx(() => Wrap(
             spacing: 10,
@@ -449,7 +492,8 @@ class _CategorySheetState extends State<_CategorySheet> {
               style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           Obx(() => c.catImageFile.value != null
-              ? _ImagePreview(file: c.catImageFile.value!, onRemove: c.removeCatImage)
+              ? _ImagePreview(
+              file: c.catImageFile.value!, onRemove: c.removeCatImage)
               : _PickImageBtn(onTap: c.pickCatImage)),
           const SizedBox(height: 24),
           Obx(() => _SaveBtn(
@@ -501,7 +545,8 @@ class _QuickSpeakSheetState extends State<_QuickSpeakSheet> {
           _SheetHandle(),
           const SizedBox(height: 16),
           Text(widget.title,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+              style: const TextStyle(
+                  fontSize: 18, fontWeight: FontWeight.w700)),
           const SizedBox(height: 20),
           TextField(
             controller: _wordCtrl,
@@ -509,7 +554,8 @@ class _QuickSpeakSheetState extends State<_QuickSpeakSheet> {
             decoration: _inputDecoration('word_label'.tr),
           ),
           const SizedBox(height: 16),
-          Text('color'.tr, style: const TextStyle(fontWeight: FontWeight.w600)),
+          Text('color'.tr,
+              style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           Obx(() => Wrap(
             spacing: 10,
@@ -529,7 +575,8 @@ class _QuickSpeakSheetState extends State<_QuickSpeakSheet> {
               style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           Obx(() => c.qsImageFile.value != null
-              ? _ImagePreview(file: c.qsImageFile.value!, onRemove: c.removeQsImage)
+              ? _ImagePreview(
+              file: c.qsImageFile.value!, onRemove: c.removeQsImage)
               : _PickImageBtn(onTap: c.pickQsImage)),
           const SizedBox(height: 16),
           Text('voice_audio_speak'.tr,
@@ -543,16 +590,23 @@ class _QuickSpeakSheetState extends State<_QuickSpeakSheet> {
                 Row(children: [
                   _AudioBtn(
                     icon: c.qsIsRecording.value ? Icons.stop : Icons.mic,
-                    color: c.qsIsRecording.value ? Colors.red : const Color(0xFFFFC857),
-                    label: c.qsIsRecording.value ? 'stop'.tr : 'record'.tr,
+                    color: c.qsIsRecording.value
+                        ? Colors.red
+                        : const Color(0xFFFFC857),
+                    label:
+                    c.qsIsRecording.value ? 'stop'.tr : 'record'.tr,
                     onTap: c.toggleQsRecording,
                   ),
                   if (hasAudio) ...[
                     const SizedBox(width: 10),
                     _AudioBtn(
-                      icon: c.qsIsPlayingAudio.value ? Icons.stop : Icons.play_arrow,
+                      icon: c.qsIsPlayingAudio.value
+                          ? Icons.stop
+                          : Icons.play_arrow,
                       color: const Color(0xFF4CAF50),
-                      label: c.qsIsPlayingAudio.value ? 'stop'.tr : 'play'.tr,
+                      label: c.qsIsPlayingAudio.value
+                          ? 'stop'.tr
+                          : 'play'.tr,
                       onTap: c.toggleQsPlayback,
                     ),
                     const SizedBox(width: 10),
@@ -574,14 +628,15 @@ class _QuickSpeakSheetState extends State<_QuickSpeakSheet> {
                             color: Colors.red, shape: BoxShape.circle)),
                     const SizedBox(width: 6),
                     Text('recording_indicator'.tr,
-                        style: const TextStyle(color: Colors.red, fontSize: 12)),
+                        style: const TextStyle(
+                            color: Colors.red, fontSize: 12)),
                   ]),
                 ],
                 if (hasAudio && !c.qsIsRecording.value) ...[
                   const SizedBox(height: 8),
                   Container(
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: const Color(0xFFE8F5E9),
                       borderRadius: BorderRadius.circular(8),
@@ -605,7 +660,8 @@ class _QuickSpeakSheetState extends State<_QuickSpeakSheet> {
                 ],
                 const SizedBox(height: 4),
                 Text('record_voice_hint'.tr,
-                    style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+                    style: TextStyle(
+                        fontSize: 11, color: Colors.grey[500])),
               ],
             );
           }),
@@ -654,7 +710,8 @@ class _SheetHandle extends StatelessWidget {
         width: 40,
         height: 4,
         decoration: BoxDecoration(
-            color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+            color: Colors.grey[300],
+            borderRadius: BorderRadius.circular(2)),
       ),
     );
   }
@@ -664,7 +721,8 @@ class _ColorDot extends StatelessWidget {
   final Color color;
   final bool selected;
   final VoidCallback onTap;
-  const _ColorDot({required this.color, required this.selected, required this.onTap});
+  const _ColorDot(
+      {required this.color, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -685,7 +743,9 @@ class _ColorDot extends StatelessWidget {
               ? [BoxShadow(color: color.withOpacity(0.5), blurRadius: 6)]
               : [],
         ),
-        child: selected ? const Icon(Icons.check, color: Colors.white, size: 18) : null,
+        child: selected
+            ? const Icon(Icons.check, color: Colors.white, size: 18)
+            : null,
       ),
     );
   }
@@ -707,7 +767,8 @@ class _ImagePreview extends StatelessWidget {
       TextButton.icon(
         onPressed: onRemove,
         icon: const Icon(Icons.delete, color: Colors.red, size: 18),
-        label: Text('remove'.tr, style: const TextStyle(color: Colors.red)),
+        label: Text('remove'.tr,
+            style: const TextStyle(color: Colors.red)),
       ),
     ]);
   }
@@ -724,7 +785,8 @@ class _PickImageBtn extends StatelessWidget {
       icon: const Icon(Icons.image_outlined),
       label: Text('choose_image'.tr),
       style: OutlinedButton.styleFrom(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10))),
     );
   }
 }
@@ -743,14 +805,16 @@ class _SaveBtn extends StatelessWidget {
         onPressed: loading ? null : onTap,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFFFFC857),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12)),
           elevation: 0,
         ),
         child: loading
             ? const SizedBox(
             width: 20,
             height: 20,
-            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+            child: CircularProgressIndicator(
+                strokeWidth: 2, color: Colors.black))
             : Text('save'.tr,
             style: const TextStyle(
                 color: Colors.black,
@@ -790,7 +854,9 @@ class _AudioBtn extends StatelessWidget {
         const SizedBox(height: 4),
         Text(label,
             style: TextStyle(
-                fontSize: 10, color: color, fontWeight: FontWeight.w600)),
+                fontSize: 10,
+                color: color,
+                fontWeight: FontWeight.w600)),
       ]),
     );
   }

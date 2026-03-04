@@ -33,11 +33,11 @@ class AppUrl {
   static const String resetCustomization = '$baseUrl/api/caregiver/customization/reset/';
 
   // GET user content — normal mode (lang param supported)
-  static String getUserContent(int communicatorId, {String lang = 'en'}) =>
+  static String getCaregiverContent(int communicatorId, {String lang = 'en'}) =>
       '$baseUrl/api/caregiver/customization/user/$communicatorId/?lang=$lang';
 
   // GET user content — buddy mode
-  static String getUserBuddyModeContent(int communicatorId, {String lang = 'en'}) =>
+  static String getCaregiverBuddyModeContent(int communicatorId, {String lang = 'en'}) =>
       '$baseUrl/api/caregiver/customization/buddy-mode/user/$communicatorId/?lang=$lang';
 
   // UPDATE category (PUT form-data: name, color, image_icon, speak)

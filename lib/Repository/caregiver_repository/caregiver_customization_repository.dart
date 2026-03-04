@@ -1,5 +1,4 @@
 // lib/Repository/caregiver_repository/caregiver_customization_repository.dart
-
 import 'dart:io';
 import 'package:chatter_bee/config/app_url.dart';
 import 'package:chatter_bee/models/caregiver_models/caregiver_content_model.dart';
@@ -11,34 +10,32 @@ class CaregiverCustomizationRepository {
 
   // ============================================================
   // GET USER CONTENT — Normal mode
-  // GET /api/caregiver/customization/user/{id}/?lang={lang}
   // ============================================================
   Future<ApiResponse<UserContentModel>> getUserContent(
       int communicatorId, {
         String lang = 'en',
       }) async {
     return _fetchUserContent(
-      AppUrl.getUserContent(communicatorId, lang: lang),
+      AppUrl.getCaregiverContent(communicatorId, lang: lang),
       lang: lang,
     );
   }
 
   // ============================================================
   // GET USER CONTENT — Buddy mode
-  // GET /api/caregiver/customization/buddy-mode/user/{id}/?lang={lang}
   // ============================================================
   Future<ApiResponse<UserContentModel>> getUserBuddyModeContent(
       int communicatorId, {
         String lang = 'en',
       }) async {
     return _fetchUserContent(
-      AppUrl.getUserBuddyModeContent(communicatorId, lang: lang),
+      AppUrl.getCaregiverBuddyModeContent(communicatorId, lang: lang),
       lang: lang,
     );
   }
 
-  // ── Shared fetch ──────────────────────────────────────────────────────────
-  Future<ApiResponse<UserContentModel>> _fetchUserContent(String url, {String lang = 'en'}) async {
+  Future<ApiResponse<UserContentModel>> _fetchUserContent(String url,
+      {String lang = 'en'}) async {
     try {
       final response = await _apiClient.get(url);
       if (response.isSuccess && response.data != null) {
@@ -66,6 +63,7 @@ class CaregiverCustomizationRepository {
     required int communicatorId,
     required int order,
     File? imageFile,
+    String lang = 'en', // ✅
   }) async {
     try {
       final formData = FormData.fromMap({
@@ -73,6 +71,7 @@ class CaregiverCustomizationRepository {
         'color': color,
         'communicator_id': communicatorId.toString(),
         'order': order.toString(),
+        'lang': lang, // ✅
         if (imageFile != null)
           'image_icon': await MultipartFile.fromFile(imageFile.path,
               filename: imageFile.path.split('/').last),
@@ -92,11 +91,13 @@ class CaregiverCustomizationRepository {
     required String name,
     required String color,
     File? imageFile,
+    String lang = 'en', // ✅
   }) async {
     try {
       final formData = FormData.fromMap({
         'name': name,
         'color': color,
+        'lang': lang, // ✅
         if (imageFile != null)
           'image_icon': await MultipartFile.fromFile(imageFile.path,
               filename: imageFile.path.split('/').last),
@@ -119,6 +120,7 @@ class CaregiverCustomizationRepository {
     required int communicatorId,
     required int mainCategoryId,
     File? imageFile,
+    String lang = 'en', // ✅
   }) async {
     try {
       final formData = FormData.fromMap({
@@ -127,6 +129,7 @@ class CaregiverCustomizationRepository {
         'order': order.toString(),
         'communicator_id': communicatorId.toString(),
         'main_category_id': mainCategoryId.toString(),
+        'lang': lang, // ✅
         if (imageFile != null)
           'image_icon': await MultipartFile.fromFile(imageFile.path,
               filename: imageFile.path.split('/').last),
@@ -146,11 +149,13 @@ class CaregiverCustomizationRepository {
     required String name,
     required String color,
     File? imageFile,
+    String lang = 'en', // ✅
   }) async {
     try {
       final formData = FormData.fromMap({
         'name': name,
         'color': color,
+        'lang': lang, // ✅
         if (imageFile != null)
           'image_icon': await MultipartFile.fromFile(imageFile.path,
               filename: imageFile.path.split('/').last),
@@ -173,6 +178,7 @@ class CaregiverCustomizationRepository {
     required int communicatorId,
     File? imageFile,
     File? audioFile,
+    String lang = 'en', // ✅
   }) async {
     try {
       final formData = FormData.fromMap({
@@ -180,6 +186,7 @@ class CaregiverCustomizationRepository {
         'word': word,
         'color': color,
         'communicator_id': communicatorId.toString(),
+        'lang': lang, // ✅
         if (imageFile != null)
           'image_icon': await MultipartFile.fromFile(imageFile.path,
               filename: imageFile.path.split('/').last),
@@ -204,11 +211,13 @@ class CaregiverCustomizationRepository {
     required String color,
     File? imageFile,
     File? audioFile,
+    String lang = 'en', // ✅
   }) async {
     try {
       final formData = FormData.fromMap({
         'word': word,
         'color': color,
+        'lang': lang, // ✅
         if (imageFile != null)
           'image_icon': await MultipartFile.fromFile(imageFile.path,
               filename: imageFile.path.split('/').last),
@@ -233,12 +242,14 @@ class CaregiverCustomizationRepository {
     required int communicatorId,
     File? imageFile,
     File? audioFile,
+    String lang = 'en', // ✅
   }) async {
     try {
       final formData = FormData.fromMap({
         'word': word,
         'color': color,
         'communicator_id': communicatorId.toString(),
+        'lang': lang, // ✅
         if (imageFile != null)
           'image_icon': await MultipartFile.fromFile(imageFile.path,
               filename: imageFile.path.split('/').last),
@@ -263,11 +274,13 @@ class CaregiverCustomizationRepository {
     required String color,
     File? imageFile,
     File? audioFile,
+    String lang = 'en', // ✅
   }) async {
     try {
       final formData = FormData.fromMap({
         'word': word,
         'color': color,
+        'lang': lang, // ✅
         if (imageFile != null)
           'image_icon': await MultipartFile.fromFile(imageFile.path,
               filename: imageFile.path.split('/').last),

@@ -17,13 +17,11 @@ class CaregiverSubCategoryController extends GetxController {
 
   late final CategoryModel parentCategory;
 
-  // ─── State ───────────────────────────────────────────────────
   final RxList<SubCategoryModel> subCategories = <SubCategoryModel>[].obs;
   final RxBool isLoading = false.obs;
   final RxBool isEditMode = false.obs;
   final RxSet<int> selectedIds = <int>{}.obs;
 
-  // ─── Form state ───────────────────────────────────────────────
   final RxString formColorHex = '#B5CFD1'.obs;
   final Rx<File?> formImageFile = Rx<File?>(null);
   final RxBool formLoading = false.obs;
@@ -39,7 +37,6 @@ class CaregiverSubCategoryController extends GetxController {
     subCategories.value = parentCategory.subCategories;
   }
 
-  // ── Current language ──────────────────────────────────────────
   String get _currentLang {
     try {
       return LanguageController.to.currentLocale.value.languageCode;
@@ -48,7 +45,6 @@ class CaregiverSubCategoryController extends GetxController {
     }
   }
 
-  // ── Buddy mode flag — CaregiverHomeController থেকে নাও ───────
   bool get _isBuddyMode {
     try {
       return Get.find<CaregiverHomeController>().isBuddyMode.value;
@@ -57,16 +53,13 @@ class CaregiverSubCategoryController extends GetxController {
     }
   }
 
-  // ─── Refresh from API ─────────────────────────────────────────
   Future<void> refresh() async {
     final communicatorId = CommunicatorSessionService.to.communicatorId.value;
     if (communicatorId == 0) return;
 
     isLoading.value = true;
-
     final lang = _currentLang;
 
-    // Buddy mode অনুযায়ী সঠিক endpoint
     final response = _isBuddyMode
         ? await _repo.getUserBuddyModeContent(communicatorId, lang: lang)
         : await _repo.getUserContent(communicatorId, lang: lang);
@@ -78,14 +71,12 @@ class CaregiverSubCategoryController extends GetxController {
           .firstWhereOrNull((c) => c.id == parentCategory.id);
       if (updated != null) subCategories.value = updated.subCategories;
 
-      // Home controller ও refresh করো
       if (Get.isRegistered<CaregiverHomeController>()) {
         Get.find<CaregiverHomeController>().loadContent();
       }
     }
   }
 
-  // ─── Edit mode ───────────────────────────────────────────────
   void toggleEditMode() {
     isEditMode.value = !isEditMode.value;
     if (!isEditMode.value) selectedIds.clear();
@@ -99,7 +90,6 @@ class CaregiverSubCategoryController extends GetxController {
     }
   }
 
-  // ─── Navigation ──────────────────────────────────────────────
   void onSubCategoryTap(SubCategoryModel sub) {
     if (isEditMode.value) {
       toggleSelection(sub.id);
@@ -108,7 +98,6 @@ class CaregiverSubCategoryController extends GetxController {
     }
   }
 
-  // ─── Add ─────────────────────────────────────────────────────
   void showAddSheet() {
     _editingSub = null;
     formColorHex.value = '#B5CFD1';
@@ -116,7 +105,6 @@ class CaregiverSubCategoryController extends GetxController {
     _openSheet('add_sub_category'.tr);
   }
 
-  // ─── Edit ────────────────────────────────────────────────────
   void showEditSheet(SubCategoryModel sub) {
     _editingSub = sub;
     formColorHex.value = sub.color.isNotEmpty ? sub.color : '#B5CFD1';
@@ -132,7 +120,6 @@ class CaregiverSubCategoryController extends GetxController {
     );
   }
 
-  // ─── Image ───────────────────────────────────────────────────
   Future<void> pickImage() async {
     final picked = await _picker.pickImage(
         source: ImageSource.gallery,
@@ -144,7 +131,6 @@ class CaregiverSubCategoryController extends GetxController {
 
   void removeImage() => formImageFile.value = null;
 
-  // ─── Save ─────────────────────────────────────────────────────
   Future<void> save(String name) async {
     if (name.trim().isEmpty) {
       Get.snackbar('error'.tr, 'please_enter_name'.tr,
@@ -152,6 +138,7 @@ class CaregiverSubCategoryController extends GetxController {
       return;
     }
     formLoading.value = true;
+    final lang = _currentLang; // ✅
 
     if (_editingSub != null) {
       final res = await _repo.updateSubCategory(
@@ -159,6 +146,7 @@ class CaregiverSubCategoryController extends GetxController {
         name: name.trim(),
         color: formColorHex.value,
         imageFile: formImageFile.value,
+        lang: lang, // ✅
       );
       formLoading.value = false;
       if (res.isSuccess) {
@@ -179,6 +167,7 @@ class CaregiverSubCategoryController extends GetxController {
         communicatorId: communicatorId,
         mainCategoryId: parentCategory.id,
         imageFile: formImageFile.value,
+        lang: lang, // ✅
       );
       formLoading.value = false;
       if (res.isSuccess) {
@@ -192,15 +181,10 @@ class CaregiverSubCategoryController extends GetxController {
       }
     }
   }
-
-  @override
-  void onClose() {
-    super.onClose();
-  }
 }
 
 // ════════════════════════════════════════════════════════════════
-//  SUBCATEGORY BOTTOM SHEET
+//  SUBCATEGORY BOTTOM SHEET  (unchanged UI)
 // ════════════════════════════════════════════════════════════════
 
 class _SubCategorySheet extends StatefulWidget {
@@ -265,8 +249,8 @@ class _SubCategorySheetState extends State<_SubCategorySheet> {
               autofocus: true,
               decoration: InputDecoration(
                 labelText: 'sub_category_name_label'.tr,
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                border:
+                OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide:
@@ -301,15 +285,22 @@ class _SubCategorySheetState extends State<_SubCategorySheet> {
                       color: col,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: selected ? Colors.black87 : Colors.transparent,
+                        color: selected
+                            ? Colors.black87
+                            : Colors.transparent,
                         width: 2.5,
                       ),
                       boxShadow: selected
-                          ? [BoxShadow(color: col.withOpacity(0.5), blurRadius: 6)]
+                          ? [
+                        BoxShadow(
+                            color: col.withOpacity(0.5),
+                            blurRadius: 6)
+                      ]
                           : [],
                     ),
                     child: selected
-                        ? const Icon(Icons.check, color: Colors.white, size: 18)
+                        ? const Icon(Icons.check,
+                        color: Colors.white, size: 18)
                         : null,
                   ),
                 );
@@ -329,7 +320,8 @@ class _SubCategorySheetState extends State<_SubCategorySheet> {
               const SizedBox(width: 12),
               TextButton.icon(
                 onPressed: c.removeImage,
-                icon: const Icon(Icons.delete, color: Colors.red, size: 18),
+                icon: const Icon(Icons.delete,
+                    color: Colors.red, size: 18),
                 label: Text('remove'.tr,
                     style: const TextStyle(color: Colors.red)),
               ),
@@ -347,8 +339,9 @@ class _SubCategorySheetState extends State<_SubCategorySheet> {
               width: double.infinity,
               height: 48,
               child: ElevatedButton(
-                onPressed:
-                c.formLoading.value ? null : () => c.save(_nameCtrl.text),
+                onPressed: c.formLoading.value
+                    ? null
+                    : () => c.save(_nameCtrl.text),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFFFC857),
                   shape: RoundedRectangleBorder(
