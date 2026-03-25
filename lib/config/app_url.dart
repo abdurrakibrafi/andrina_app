@@ -1,7 +1,7 @@
 // lib/config/app_url.dart
 
 class AppUrl {
-  static const String baseUrl = 'https://rangers-amenities-collaboration-great.trycloudflare.com';
+  static const String baseUrl = 'https://prominent-leads-pride-believe.trycloudflare.com';
 
   // ==================== AUTH ====================
   static const String login = '$baseUrl/api/auth/login/';
