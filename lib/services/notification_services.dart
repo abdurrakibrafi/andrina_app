@@ -161,33 +161,66 @@ class NotificationService extends GetxService {
   //   });
   // }
 
+  // Future<void> _initFcmToken() async {
+  //   if (Platform.isIOS) {
+  //     String? apnsToken;
+  //     // Wait until APNS token is available
+  //     for (int i = 0; i < 10; i++) {
+  //       apnsToken = await _fcm.getAPNSToken();
+  //       debugPrint('📱 APNS 1: $apnsToken');
+  //       if (apnsToken != null) break;
+  //       debugPrint('📱 APNS 2: $apnsToken');
+  //       await Future.delayed(const Duration(seconds: 1));
+  //     }
+  //
+  //     debugPrint('📱 APNS 3: $apnsToken');
+  //   }
+  //
+  //   try {
+  //     fcmToken.value = await _fcm.getToken();
+  //     debugPrint('🔑 FCM Token: ${fcmToken.value}');
+  //   } catch (e) {
+  //     debugPrint('❌ FCM error: $e');
+  //   }
+  //
+  //   _fcm.onTokenRefresh.listen((newToken) {
+  //     fcmToken.value = newToken;
+  //     debugPrint('🔄 Token refreshed: $newToken');
+  //   });
+  // }
+
   Future<void> _initFcmToken() async {
+    // Listen for token refreshes first — catches late APNS arrival too
+    _fcm.onTokenRefresh.listen((newToken) {
+      fcmToken.value = newToken;
+      debugPrint('🔄 Token refreshed: $newToken');
+      // TODO: send newToken to your backend
+    });
+
     if (Platform.isIOS) {
-      String? apnsToken;
-      // Wait until APNS token is available
-      for (int i = 0; i < 10; i++) {
-        apnsToken = await _fcm.getAPNSToken();
-        debugPrint('📱 APNS 1: $apnsToken');
-        if (apnsToken != null) break;
-        debugPrint('📱 APNS 2: $apnsToken');
-        await Future.delayed(const Duration(seconds: 1));
+      String? apns;
+      // Increase attempts to 15, with 2-second gaps (30 s total)
+      for (int i = 0; i < 15; i++) {
+        apns = await _fcm.getAPNSToken();
+        debugPrint('📱 APNS attempt ${i + 1}: $apns');
+        if (apns != null) break;
+        await Future.delayed(const Duration(seconds: 2));
       }
 
-      debugPrint('📱 APNS 3: $apnsToken');
+      if (apns == null) {
+        debugPrint('⚠️ APNS token unavailable — FCM token will arrive via onTokenRefresh');
+        return; // ← exit cleanly; token will come via the stream above
+      }
     }
 
     try {
       fcmToken.value = await _fcm.getToken();
       debugPrint('🔑 FCM Token: ${fcmToken.value}');
     } catch (e) {
-      debugPrint('❌ FCM error: $e');
+      debugPrint('❌ FCM getToken() failed: $e — will retry via onTokenRefresh');
     }
-
-    _fcm.onTokenRefresh.listen((newToken) {
-      fcmToken.value = newToken;
-      debugPrint('🔄 Token refreshed: $newToken');
-    });
   }
+
 
   // ─────────────────────────────────────────────────────────
   // 5. Foreground — FCM does NOT auto-show on Android/iOS
@@ -227,34 +260,68 @@ class NotificationService extends GetxService {
   // ─────────────────────────────────────────────────────────
   // Internal: show local notification (for foreground FCM)
   // ─────────────────────────────────────────────────────────
+  // Future<void> _showLocalNotification(RemoteMessage message) async {
+  //   final notification = message.notification;
+  //   if (notification == null) return;
+  //
+  //   await _localNotifications.show(
+  //     notification.hashCode,
+  //     notification.title,
+  //     notification.body,
+  //     NotificationDetails(
+  //       android: AndroidNotificationDetails(
+  //         _channel.id,
+  //         _channel.name,
+  //         channelDescription: _channel.description,
+  //         importance: Importance.high,
+  //         priority: Priority.high,
+  //         icon: '@mipmap/ic_launcher',
+  //         playSound: true,
+  //         enableVibration: true,
+  //       ),
+  //       iOS: const DarwinNotificationDetails(
+  //         presentAlert: true,
+  //         presentBadge: true,
+  //         presentSound: true,
+  //       ),
+  //     ),
+  //   );
+  // }
   Future<void> _showLocalNotification(RemoteMessage message) async {
-    final notification = message.notification;
-    if (notification == null) return;
+    final title = message.notification?.title ?? message.data['title'];
+    final body  = message.notification?.body  ?? message.data['body'];
 
-    await _localNotifications.show(
-      notification.hashCode,
-      notification.title,
-      notification.body,
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          _channel.id,
-          _channel.name,
-          channelDescription: _channel.description,
-          importance: Importance.high,
-          priority: Priority.high,
-          icon: '@mipmap/ic_launcher',
-          playSound: true,
-          enableVibration: true,
+    debugPrint('🔔 [FG] title: $title | body: $body'); // ← এটা কী print করে দেখো
+
+    try {
+      await _localNotifications.show(
+        message.hashCode,
+        title,
+        body,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            _channel.id,
+            _channel.name,
+            channelDescription: _channel.description,
+            importance: Importance.high,
+            priority: Priority.high,
+            icon: '@mipmap/ic_launcher',
+            playSound: true,
+            enableVibration: true,
+          ),
+          iOS: const DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
         ),
-        iOS: const DarwinNotificationDetails(
-          presentAlert: true,
-          presentBadge: true,
-          presentSound: true,
-        ),
-      ),
-    );
+      );
+      debugPrint('✅ Local notification shown successfully');
+    } catch (e, stack) {
+      debugPrint('❌ Local notification error: $e');
+      debugPrint('❌ Stack: $stack');
+    }
   }
-
   // ─────────────────────────────────────────────────────────
   // PUBLIC: Show a local notification manually (testing etc.)
   // ─────────────────────────────────────────────────────────
