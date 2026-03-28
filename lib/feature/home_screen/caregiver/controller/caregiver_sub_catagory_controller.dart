@@ -37,9 +37,15 @@ class CaregiverSubCategoryController extends GetxController {
     subCategories.value = parentCategory.subCategories;
   }
 
+  // ✅ FIX: toLanguageTag() → "en-US" → normalize → "en"
+  String _normalizeLang(String lang) {
+    return lang.split('-').first.split('_').first.toLowerCase();
+  }
+
   String get _currentLang {
     try {
-      return LanguageController.to.currentLocale.value.languageCode;
+      final raw = LanguageController.to.currentLocale.value.toLanguageTag();
+      return _normalizeLang(raw);
     } catch (_) {
       return 'en';
     }
@@ -138,7 +144,8 @@ class CaregiverSubCategoryController extends GetxController {
       return;
     }
     formLoading.value = true;
-    final lang = _currentLang; // ✅
+    final lang = _currentLang;
+    debugPrint('🌐 SubCategory save lang: $lang');
 
     if (_editingSub != null) {
       final res = await _repo.updateSubCategory(
@@ -146,7 +153,7 @@ class CaregiverSubCategoryController extends GetxController {
         name: name.trim(),
         color: formColorHex.value,
         imageFile: formImageFile.value,
-        lang: lang, // ✅
+        lang: lang,
       );
       formLoading.value = false;
       if (res.isSuccess) {
@@ -159,7 +166,8 @@ class CaregiverSubCategoryController extends GetxController {
             snackPosition: SnackPosition.BOTTOM);
       }
     } else {
-      final communicatorId = CommunicatorSessionService.to.communicatorId.value;
+      final communicatorId =
+          CommunicatorSessionService.to.communicatorId.value;
       final res = await _repo.createSubCategory(
         name: name.trim(),
         color: formColorHex.value,
@@ -167,7 +175,7 @@ class CaregiverSubCategoryController extends GetxController {
         communicatorId: communicatorId,
         mainCategoryId: parentCategory.id,
         imageFile: formImageFile.value,
-        lang: lang, // ✅
+        lang: lang,
       );
       formLoading.value = false;
       if (res.isSuccess) {
@@ -184,7 +192,7 @@ class CaregiverSubCategoryController extends GetxController {
 }
 
 // ════════════════════════════════════════════════════════════════
-//  SUBCATEGORY BOTTOM SHEET  (unchanged UI)
+//  SUBCATEGORY BOTTOM SHEET
 // ════════════════════════════════════════════════════════════════
 
 class _SubCategorySheet extends StatefulWidget {
@@ -214,63 +222,53 @@ class _SubCategorySheetState extends State<_SubCategorySheet> {
   @override
   Widget build(BuildContext context) {
     final c = widget.controller;
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
     return Container(
-      padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
-        top: 20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 30,
-      ),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SingleChildScrollView(
+        padding: EdgeInsets.only(
+          left: 20, right: 20, top: 20, bottom: bottomInset + 30,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
               child: Container(
-                width: 40,
-                height: 4,
+                width: 40, height: 4,
                 decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2)),
+                    color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
               ),
             ),
             const SizedBox(height: 16),
             Text(widget.title,
-                style: const TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.w700)),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
             const SizedBox(height: 20),
             TextField(
               controller: _nameCtrl,
               autofocus: true,
               decoration: InputDecoration(
                 labelText: 'sub_category_name_label'.tr,
-                border:
-                OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide:
-                  const BorderSide(color: Color(0xFFFFC857), width: 1.5),
+                  borderSide: const BorderSide(color: Color(0xFFFFC857), width: 1.5),
                 ),
               ),
             ),
             const SizedBox(height: 16),
-            Text('color'.tr,
-                style: const TextStyle(fontWeight: FontWeight.w600)),
+            Text('color'.tr, style: const TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Obx(() => Wrap(
-              spacing: 10,
-              runSpacing: 10,
+              spacing: 10, runSpacing: 10,
               children: kColorOptions.map((opt) {
                 Color col;
                 try {
-                  col = Color(int.parse(
-                      'FF${opt['hex']!.replaceAll('#', '')}',
-                      radix: 16));
+                  col = Color(int.parse('FF${opt['hex']!.replaceAll('#', '')}', radix: 16));
                 } catch (_) {
                   col = const Color(0xFFB5CFD1);
                 }
@@ -279,51 +277,35 @@ class _SubCategorySheetState extends State<_SubCategorySheet> {
                   onTap: () => c.formColorHex.value = opt['hex']!,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
-                    width: 36,
-                    height: 36,
+                    width: 36, height: 36,
                     decoration: BoxDecoration(
-                      color: col,
-                      shape: BoxShape.circle,
+                      color: col, shape: BoxShape.circle,
                       border: Border.all(
-                        color: selected
-                            ? Colors.black87
-                            : Colors.transparent,
-                        width: 2.5,
+                        color: selected ? Colors.black87 : Colors.transparent, width: 2.5,
                       ),
                       boxShadow: selected
-                          ? [
-                        BoxShadow(
-                            color: col.withOpacity(0.5),
-                            blurRadius: 6)
-                      ]
+                          ? [BoxShadow(color: col.withOpacity(0.5), blurRadius: 6)]
                           : [],
                     ),
-                    child: selected
-                        ? const Icon(Icons.check,
-                        color: Colors.white, size: 18)
-                        : null,
+                    child: selected ? const Icon(Icons.check, color: Colors.white, size: 18) : null,
                   ),
                 );
               }).toList(),
             )),
             const SizedBox(height: 16),
-            Text('image_optional'.tr,
-                style: const TextStyle(fontWeight: FontWeight.w600)),
+            Text('image_optional'.tr, style: const TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Obx(() => c.formImageFile.value != null
                 ? Row(children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.file(c.formImageFile.value!,
-                    width: 60, height: 60, fit: BoxFit.cover),
+                child: Image.file(c.formImageFile.value!, width: 60, height: 60, fit: BoxFit.cover),
               ),
               const SizedBox(width: 12),
               TextButton.icon(
                 onPressed: c.removeImage,
-                icon: const Icon(Icons.delete,
-                    color: Colors.red, size: 18),
-                label: Text('remove'.tr,
-                    style: const TextStyle(color: Colors.red)),
+                icon: const Icon(Icons.delete, color: Colors.red, size: 18),
+                label: Text('remove'.tr, style: const TextStyle(color: Colors.red)),
               ),
             ])
                 : OutlinedButton.icon(
@@ -331,34 +313,23 @@ class _SubCategorySheetState extends State<_SubCategorySheet> {
               icon: const Icon(Icons.image_outlined),
               label: Text('choose_image'.tr),
               style: OutlinedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10))),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
             )),
             const SizedBox(height: 24),
             Obx(() => SizedBox(
-              width: double.infinity,
-              height: 48,
+              width: double.infinity, height: 48,
               child: ElevatedButton(
-                onPressed: c.formLoading.value
-                    ? null
-                    : () => c.save(_nameCtrl.text),
+                onPressed: c.formLoading.value ? null : () => c.save(_nameCtrl.text),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFFFC857),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   elevation: 0,
                 ),
                 child: c.formLoading.value
-                    ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.black))
+                    ? const SizedBox(width: 20, height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
                     : Text('save'.tr,
-                    style: const TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16)),
+                    style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w700, fontSize: 16)),
               ),
             )),
           ],

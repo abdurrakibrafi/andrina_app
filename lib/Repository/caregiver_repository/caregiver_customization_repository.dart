@@ -63,7 +63,7 @@ class CaregiverCustomizationRepository {
     required int communicatorId,
     required int order,
     File? imageFile,
-    String lang = 'en', // ✅
+    String lang = 'en',
   }) async {
     try {
       final formData = FormData.fromMap({
@@ -71,7 +71,7 @@ class CaregiverCustomizationRepository {
         'color': color,
         'communicator_id': communicatorId.toString(),
         'order': order.toString(),
-        'lang': lang, // ✅
+        'lang': lang,
         if (imageFile != null)
           'image_icon': await MultipartFile.fromFile(imageFile.path,
               filename: imageFile.path.split('/').last),
@@ -91,20 +91,19 @@ class CaregiverCustomizationRepository {
     required String name,
     required String color,
     File? imageFile,
-    String lang = 'en', // ✅
+    String lang = 'en',
   }) async {
     try {
       final formData = FormData.fromMap({
         'name': name,
         'color': color,
-        'lang': lang, // ✅
+        'lang': lang,
         if (imageFile != null)
           'image_icon': await MultipartFile.fromFile(imageFile.path,
               filename: imageFile.path.split('/').last),
       });
       return await _apiClient.multipartPut(
-          AppUrl.updateUserCategory(categoryId),
-          formData: formData);
+          AppUrl.updateUserCategory(categoryId), formData: formData);
     } catch (e) {
       return ApiResponse.error(statusCode: 500, message: e.toString());
     }
@@ -120,7 +119,7 @@ class CaregiverCustomizationRepository {
     required int communicatorId,
     required int mainCategoryId,
     File? imageFile,
-    String lang = 'en', // ✅
+    String lang = 'en',
   }) async {
     try {
       final formData = FormData.fromMap({
@@ -129,7 +128,7 @@ class CaregiverCustomizationRepository {
         'order': order.toString(),
         'communicator_id': communicatorId.toString(),
         'main_category_id': mainCategoryId.toString(),
-        'lang': lang, // ✅
+        'lang': lang,
         if (imageFile != null)
           'image_icon': await MultipartFile.fromFile(imageFile.path,
               filename: imageFile.path.split('/').last),
@@ -149,20 +148,19 @@ class CaregiverCustomizationRepository {
     required String name,
     required String color,
     File? imageFile,
-    String lang = 'en', // ✅
+    String lang = 'en',
   }) async {
     try {
       final formData = FormData.fromMap({
         'name': name,
         'color': color,
-        'lang': lang, // ✅
+        'lang': lang,
         if (imageFile != null)
           'image_icon': await MultipartFile.fromFile(imageFile.path,
               filename: imageFile.path.split('/').last),
       });
       return await _apiClient.multipartPut(
-          AppUrl.updateUserSubCategory(subCategoryId),
-          formData: formData);
+          AppUrl.updateUserSubCategory(subCategoryId), formData: formData);
     } catch (e) {
       return ApiResponse.error(statusCode: 500, message: e.toString());
     }
@@ -178,7 +176,7 @@ class CaregiverCustomizationRepository {
     required int communicatorId,
     File? imageFile,
     File? audioFile,
-    String lang = 'en', // ✅
+    String lang = 'en',
   }) async {
     try {
       final formData = FormData.fromMap({
@@ -186,14 +184,15 @@ class CaregiverCustomizationRepository {
         'word': word,
         'color': color,
         'communicator_id': communicatorId.toString(),
-        'lang': lang, // ✅
+        'lang': lang,
         if (imageFile != null)
           'image_icon': await MultipartFile.fromFile(imageFile.path,
               filename: imageFile.path.split('/').last),
         if (audioFile != null)
+        // ✅ FIX: audio/mpeg → audio/aac (record করা file .aac format এ)
           'speak': await MultipartFile.fromFile(audioFile.path,
-              filename: audioFile.path.split('/').last,
-              contentType: DioMediaType('audio', 'mpeg')),
+              filename: '${DateTime.now().millisecondsSinceEpoch}.aac',
+              contentType: DioMediaType('audio', 'aac')),
       });
       return await _apiClient.multipartPost(AppUrl.createItem,
           formData: formData);
@@ -211,20 +210,21 @@ class CaregiverCustomizationRepository {
     required String color,
     File? imageFile,
     File? audioFile,
-    String lang = 'en', // ✅
+    String lang = 'en',
   }) async {
     try {
       final formData = FormData.fromMap({
         'word': word,
         'color': color,
-        'lang': lang, // ✅
+        'lang': lang,
         if (imageFile != null)
           'image_icon': await MultipartFile.fromFile(imageFile.path,
               filename: imageFile.path.split('/').last),
         if (audioFile != null)
+        // ✅ FIX: audio/mpeg → audio/aac
           'speak': await MultipartFile.fromFile(audioFile.path,
-              filename: audioFile.path.split('/').last,
-              contentType: DioMediaType('audio', 'mpeg')),
+              filename: '${DateTime.now().millisecondsSinceEpoch}.aac',
+              contentType: DioMediaType('audio', 'aac')),
       });
       return await _apiClient.multipartPut(AppUrl.updateUserItem(itemId),
           formData: formData);
@@ -242,21 +242,22 @@ class CaregiverCustomizationRepository {
     required int communicatorId,
     File? imageFile,
     File? audioFile,
-    String lang = 'en', // ✅
+    String lang = 'en',
   }) async {
     try {
       final formData = FormData.fromMap({
         'word': word,
         'color': color,
         'communicator_id': communicatorId.toString(),
-        'lang': lang, // ✅
+        'lang': lang,
         if (imageFile != null)
           'image_icon': await MultipartFile.fromFile(imageFile.path,
               filename: imageFile.path.split('/').last),
         if (audioFile != null)
+        // ✅ FIX: audio/mpeg → audio/aac
           'speak': await MultipartFile.fromFile(audioFile.path,
-              filename: audioFile.path.split('/').last,
-              contentType: DioMediaType('audio', 'mpeg')),
+              filename: '${DateTime.now().millisecondsSinceEpoch}.aac',
+              contentType: DioMediaType('audio', 'aac')),
       });
       return await _apiClient.multipartPost(AppUrl.createQuickSpeak,
           formData: formData);
@@ -274,24 +275,24 @@ class CaregiverCustomizationRepository {
     required String color,
     File? imageFile,
     File? audioFile,
-    String lang = 'en', // ✅
+    String lang = 'en',
   }) async {
     try {
       final formData = FormData.fromMap({
         'word': word,
         'color': color,
-        'lang': lang, // ✅
+        'lang': lang,
         if (imageFile != null)
           'image_icon': await MultipartFile.fromFile(imageFile.path,
               filename: imageFile.path.split('/').last),
         if (audioFile != null)
+        // ✅ FIX: audio/mpeg → audio/aac
           'speak': await MultipartFile.fromFile(audioFile.path,
-              filename: audioFile.path.split('/').last,
-              contentType: DioMediaType('audio', 'mpeg')),
+              filename: '${DateTime.now().millisecondsSinceEpoch}.aac',
+              contentType: DioMediaType('audio', 'aac')),
       });
       return await _apiClient.multipartPut(
-          AppUrl.updateUserQuickSpeak(quickSpeakId),
-          formData: formData);
+          AppUrl.updateUserQuickSpeak(quickSpeakId), formData: formData);
     } catch (e) {
       return ApiResponse.error(statusCode: 500, message: e.toString());
     }

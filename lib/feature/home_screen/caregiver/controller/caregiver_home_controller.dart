@@ -61,6 +61,7 @@ class CaregiverHomeController extends GetxController {
   String get catInitialName => _editingCategory?.name ?? '';
   String get qsInitialWord => _editingQuickSpeak?.word ?? '';
 
+  bool _isRecorderInitialized = false;
   FlutterSoundRecorder? _recorder;
   FlutterSoundPlayer? _soundPlayer;
 
@@ -68,23 +69,22 @@ class CaregiverHomeController extends GetxController {
   void onInit() {
     super.onInit();
     _initAudio();
-    _initLoad(); // ✅ profile একবার, তারপর content
+    _initLoad();
   }
 
   Future<void> _initAudio() async {
     _recorder = FlutterSoundRecorder();
     _soundPlayer = FlutterSoundPlayer();
     await _recorder!.openRecorder();
+    _isRecorderInitialized = true;
     await _soundPlayer!.openPlayer();
   }
 
-  // ✅ onInit-এ শুধু একবার profile fetch হবে
   Future<void> _initLoad() async {
     await _fetchProfile();
     await loadContent();
   }
 
-  // ✅ Profile fetch — buddy_mode জানার জন্য, আলাদা করা হয়েছে
   Future<void> _fetchProfile() async {
     try {
       final profileRes = await _authRepository.getProfile();
@@ -97,35 +97,21 @@ class CaregiverHomeController extends GetxController {
     }
   }
 
+  // ✅ FIX: toLanguageTag() → "en-US" → normalize → "en"
+  String _normalizeLang(String lang) {
+    return lang.split('-').first.split('_').first.toLowerCase();
+  }
+
   String get _currentLang {
     try {
-      return LanguageController.to.currentLocale.value.languageCode;
+      final raw = LanguageController.to.currentLocale.value.toLanguageTag();
+      final normalized = _normalizeLang(raw);
+      debugPrint('🌐 lang raw=$raw normalized=$normalized');
+      return normalized;
     } catch (_) {
       return 'en';
     }
   }
-
-  // ✅ loadContent শুধু content fetch করে — profile call নেই
-  // save-এর পরে call করলে double API call হবে না
-  // Future<void> loadContent() async {
-  //   final communicatorId = CommunicatorSessionService.to.communicatorId.value;
-  //   if (communicatorId == 0) return;
-  //
-  //   isLoading.value = true;
-  //   final lang = _currentLang;
-  //
-  //   // isBuddyMode _fetchProfile() থেকে already set আছে
-  //   final response = isBuddyMode.value
-  //       ? await _repo.getUserBuddyModeContent(communicatorId, lang: lang)
-  //       : await _repo.getUserContent(communicatorId, lang: lang);
-  //
-  //   isLoading.value = false;
-  //
-  //   if (response.isSuccess && response.data != null) {
-  //     categories.value = response.data!.categories;
-  //     quickSpeaks.value = response.data!.quickSpeaks;
-  //   }
-  // }
 
   Future<void> loadContent() async {
     final communicatorId = CommunicatorSessionService.to.communicatorId.value;
@@ -141,11 +127,8 @@ class CaregiverHomeController extends GetxController {
     isLoading.value = false;
 
     if (response.isSuccess && response.data != null) {
-      // ✅ এটাই proper fix
       categories.assignAll(response.data!.categories);
       quickSpeaks.assignAll(response.data!.quickSpeaks);
-      debugPrint('API থেকে quickSpack: ${response.data!.quickSpeaks.length
-      }');
     }
   }
 
@@ -187,10 +170,6 @@ class CaregiverHomeController extends GetxController {
       debugPrint('Audio play error: $e');
     }
   }
-
-  // ════════════════════════════════════════════════════════════════
-  //  CATEGORY FORM
-  // ════════════════════════════════════════════════════════════════
 
   void showAddCategorySheet() {
     _editingCategory = null;
@@ -238,7 +217,7 @@ class CaregiverHomeController extends GetxController {
       catFormLoading.value = false;
       if (res.isSuccess) {
         Get.back();
-        await loadContent(); // ✅ await — race condition নেই
+        await loadContent();
         Get.snackbar('updated'.tr, 'category_updated'.tr,
             snackPosition: SnackPosition.BOTTOM);
       } else {
@@ -257,7 +236,7 @@ class CaregiverHomeController extends GetxController {
       catFormLoading.value = false;
       if (res.isSuccess) {
         Get.back();
-        await loadContent(); // ✅ await
+        await loadContent();
         Get.snackbar('created'.tr, 'category_created'.tr,
             snackPosition: SnackPosition.BOTTOM);
       } else {
@@ -266,10 +245,6 @@ class CaregiverHomeController extends GetxController {
       }
     }
   }
-
-  // ════════════════════════════════════════════════════════════════
-  //  QUICKSPEAK FORM
-  // ════════════════════════════════════════════════════════════════
 
   void showAddQuickSpeakSheet() {
     _editingQuickSpeak = null;
@@ -311,19 +286,33 @@ class CaregiverHomeController extends GetxController {
           snackPosition: SnackPosition.BOTTOM);
       return;
     }
+
+    if (_recorder == null || !_isRecorderInitialized) {
+      _recorder = FlutterSoundRecorder();
+      await _recorder!.openRecorder();
+      _isRecorderInitialized = true;
+    }
+
     if (qsIsRecording.value) {
       final path = await _recorder!.stopRecorder();
       qsIsRecording.value = false;
       if (path != null) {
-        qsAudioFile.value = File(path);
-        qsAudioFileName.value = 'recorded_audio.aac';
+        final file = File(path);
+        if (await file.exists()) {
+          qsAudioFile.value = file;
+          qsAudioFileName.value = 'recorded_audio.aac';
+          debugPrint('✅ QS Audio saved: $path');
+        } else {
+          debugPrint('❌ QS Audio not found: $path');
+        }
       }
     } else {
       if (qsIsPlayingAudio.value) {
         await _soundPlayer!.stopPlayer();
         qsIsPlayingAudio.value = false;
       }
-      final dir = await getTemporaryDirectory();
+      // ✅ FIX: getApplicationDocumentsDirectory (getTemporaryDirectory নয়)
+      final dir = await getApplicationDocumentsDirectory();
       final path =
           '${dir.path}/qs_audio_${DateTime.now().millisecondsSinceEpoch}.aac';
       await _recorder!.startRecorder(toFile: path, codec: Codec.aacADTS);
@@ -380,7 +369,7 @@ class CaregiverHomeController extends GetxController {
       qsFormLoading.value = false;
       if (res.isSuccess) {
         Get.back();
-        await loadContent(); // ✅ await
+        await loadContent();
         Get.snackbar('updated'.tr, 'quick_speak_updated'.tr,
             snackPosition: SnackPosition.BOTTOM);
       } else {
@@ -399,7 +388,7 @@ class CaregiverHomeController extends GetxController {
       qsFormLoading.value = false;
       if (res.isSuccess) {
         Get.back();
-        await loadContent(); // ✅ await
+        await loadContent();
         Get.snackbar('created'.tr, 'quick_speak_created'.tr,
             snackPosition: SnackPosition.BOTTOM);
       } else {
@@ -419,7 +408,34 @@ class CaregiverHomeController extends GetxController {
     _recorder?.closeRecorder();
     _soundPlayer?.closePlayer();
     _audioPlayer.dispose();
+    _isRecorderInitialized = false;
     super.onClose();
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  _SheetWrapper
+// ════════════════════════════════════════════════════════════════
+
+class _SheetWrapper extends StatelessWidget {
+  final Widget child;
+  const _SheetWrapper({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: SingleChildScrollView(
+        padding: EdgeInsets.only(
+          left: 20, right: 20, top: 20, bottom: bottomInset + 30,
+        ),
+        child: child,
+      ),
+    );
   }
 }
 
@@ -462,8 +478,7 @@ class _CategorySheetState extends State<_CategorySheet> {
           _SheetHandle(),
           const SizedBox(height: 16),
           Text(widget.title,
-              style: const TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.w700)),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
           const SizedBox(height: 20),
           TextField(
             controller: _nameCtrl,
@@ -471,20 +486,15 @@ class _CategorySheetState extends State<_CategorySheet> {
             decoration: _inputDecoration('category_name_label'.tr),
           ),
           const SizedBox(height: 16),
-          Text('color'.tr,
-              style: const TextStyle(fontWeight: FontWeight.w600)),
+          Text('color'.tr, style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           Obx(() => Wrap(
-            spacing: 10,
-            runSpacing: 10,
+            spacing: 10, runSpacing: 10,
             children: kColorOptions.map((opt) {
               final color = _hexToColor(opt['hex']!);
               final selected = c.catColorHex.value == opt['hex'];
-              return _ColorDot(
-                color: color,
-                selected: selected,
-                onTap: () => c.catColorHex.value = opt['hex']!,
-              );
+              return _ColorDot(color: color, selected: selected,
+                  onTap: () => c.catColorHex.value = opt['hex']!);
             }).toList(),
           )),
           const SizedBox(height: 16),
@@ -492,8 +502,7 @@ class _CategorySheetState extends State<_CategorySheet> {
               style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           Obx(() => c.catImageFile.value != null
-              ? _ImagePreview(
-              file: c.catImageFile.value!, onRemove: c.removeCatImage)
+              ? _ImagePreview(file: c.catImageFile.value!, onRemove: c.removeCatImage)
               : _PickImageBtn(onTap: c.pickCatImage)),
           const SizedBox(height: 24),
           Obx(() => _SaveBtn(
@@ -545,8 +554,7 @@ class _QuickSpeakSheetState extends State<_QuickSpeakSheet> {
           _SheetHandle(),
           const SizedBox(height: 16),
           Text(widget.title,
-              style: const TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.w700)),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
           const SizedBox(height: 20),
           TextField(
             controller: _wordCtrl,
@@ -554,20 +562,15 @@ class _QuickSpeakSheetState extends State<_QuickSpeakSheet> {
             decoration: _inputDecoration('word_label'.tr),
           ),
           const SizedBox(height: 16),
-          Text('color'.tr,
-              style: const TextStyle(fontWeight: FontWeight.w600)),
+          Text('color'.tr, style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           Obx(() => Wrap(
-            spacing: 10,
-            runSpacing: 10,
+            spacing: 10, runSpacing: 10,
             children: kColorOptions.map((opt) {
               final color = _hexToColor(opt['hex']!);
               final selected = c.qsColorHex.value == opt['hex'];
-              return _ColorDot(
-                color: color,
-                selected: selected,
-                onTap: () => c.qsColorHex.value = opt['hex']!,
-              );
+              return _ColorDot(color: color, selected: selected,
+                  onTap: () => c.qsColorHex.value = opt['hex']!);
             }).toList(),
           )),
           const SizedBox(height: 16),
@@ -575,8 +578,7 @@ class _QuickSpeakSheetState extends State<_QuickSpeakSheet> {
               style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           Obx(() => c.qsImageFile.value != null
-              ? _ImagePreview(
-              file: c.qsImageFile.value!, onRemove: c.removeQsImage)
+              ? _ImagePreview(file: c.qsImageFile.value!, onRemove: c.removeQsImage)
               : _PickImageBtn(onTap: c.pickQsImage)),
           const SizedBox(height: 16),
           Text('voice_audio_speak'.tr,
@@ -590,23 +592,16 @@ class _QuickSpeakSheetState extends State<_QuickSpeakSheet> {
                 Row(children: [
                   _AudioBtn(
                     icon: c.qsIsRecording.value ? Icons.stop : Icons.mic,
-                    color: c.qsIsRecording.value
-                        ? Colors.red
-                        : const Color(0xFFFFC857),
-                    label:
-                    c.qsIsRecording.value ? 'stop'.tr : 'record'.tr,
+                    color: c.qsIsRecording.value ? Colors.red : const Color(0xFFFFC857),
+                    label: c.qsIsRecording.value ? 'stop'.tr : 'record'.tr,
                     onTap: c.toggleQsRecording,
                   ),
                   if (hasAudio) ...[
                     const SizedBox(width: 10),
                     _AudioBtn(
-                      icon: c.qsIsPlayingAudio.value
-                          ? Icons.stop
-                          : Icons.play_arrow,
+                      icon: c.qsIsPlayingAudio.value ? Icons.stop : Icons.play_arrow,
                       color: const Color(0xFF4CAF50),
-                      label: c.qsIsPlayingAudio.value
-                          ? 'stop'.tr
-                          : 'play'.tr,
+                      label: c.qsIsPlayingAudio.value ? 'stop'.tr : 'play'.tr,
                       onTap: c.toggleQsPlayback,
                     ),
                     const SizedBox(width: 10),
@@ -621,22 +616,17 @@ class _QuickSpeakSheetState extends State<_QuickSpeakSheet> {
                 if (c.qsIsRecording.value) ...[
                   const SizedBox(height: 8),
                   Row(children: [
-                    Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                            color: Colors.red, shape: BoxShape.circle)),
+                    Container(width: 8, height: 8,
+                        decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle)),
                     const SizedBox(width: 6),
                     Text('recording_indicator'.tr,
-                        style: const TextStyle(
-                            color: Colors.red, fontSize: 12)),
+                        style: const TextStyle(color: Colors.red, fontSize: 12)),
                   ]),
                 ],
                 if (hasAudio && !c.qsIsRecording.value) ...[
                   const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: const Color(0xFFE8F5E9),
                       borderRadius: BorderRadius.circular(8),
@@ -644,15 +634,11 @@ class _QuickSpeakSheetState extends State<_QuickSpeakSheet> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.audio_file,
-                            color: Color(0xFF4CAF50), size: 16),
+                        const Icon(Icons.audio_file, color: Color(0xFF4CAF50), size: 16),
                         const SizedBox(width: 6),
                         Text(
-                          c.qsAudioFileName.value.isEmpty
-                              ? 'audio_ready'.tr
-                              : c.qsAudioFileName.value,
-                          style: const TextStyle(
-                              color: Color(0xFF4CAF50), fontSize: 12),
+                          c.qsAudioFileName.value.isEmpty ? 'audio_ready'.tr : c.qsAudioFileName.value,
+                          style: const TextStyle(color: Color(0xFF4CAF50), fontSize: 12),
                         ),
                       ],
                     ),
@@ -660,8 +646,7 @@ class _QuickSpeakSheetState extends State<_QuickSpeakSheet> {
                 ],
                 const SizedBox(height: 4),
                 Text('record_voice_hint'.tr,
-                    style: TextStyle(
-                        fontSize: 11, color: Colors.grey[500])),
+                    style: TextStyle(fontSize: 11, color: Colors.grey[500])),
               ],
             );
           }),
@@ -680,38 +665,14 @@ class _QuickSpeakSheetState extends State<_QuickSpeakSheet> {
 //  SHARED SMALL WIDGETS
 // ════════════════════════════════════════════════════════════════
 
-class _SheetWrapper extends StatelessWidget {
-  final Widget child;
-  const _SheetWrapper({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
-        top: 20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 30,
-      ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: SingleChildScrollView(child: child),
-    );
-  }
-}
-
 class _SheetHandle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Container(
-        width: 40,
-        height: 4,
+        width: 40, height: 4,
         decoration: BoxDecoration(
-            color: Colors.grey[300],
-            borderRadius: BorderRadius.circular(2)),
+            color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
       ),
     );
   }
@@ -721,8 +682,7 @@ class _ColorDot extends StatelessWidget {
   final Color color;
   final bool selected;
   final VoidCallback onTap;
-  const _ColorDot(
-      {required this.color, required this.selected, required this.onTap});
+  const _ColorDot({required this.color, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -730,22 +690,17 @@ class _ColorDot extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        width: 36,
-        height: 36,
+        width: 36, height: 36,
         decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
+          color: color, shape: BoxShape.circle,
           border: Border.all(
-            color: selected ? Colors.black87 : Colors.transparent,
-            width: 2.5,
+            color: selected ? Colors.black87 : Colors.transparent, width: 2.5,
           ),
           boxShadow: selected
               ? [BoxShadow(color: color.withOpacity(0.5), blurRadius: 6)]
               : [],
         ),
-        child: selected
-            ? const Icon(Icons.check, color: Colors.white, size: 18)
-            : null,
+        child: selected ? const Icon(Icons.check, color: Colors.white, size: 18) : null,
       ),
     );
   }
@@ -767,8 +722,7 @@ class _ImagePreview extends StatelessWidget {
       TextButton.icon(
         onPressed: onRemove,
         icon: const Icon(Icons.delete, color: Colors.red, size: 18),
-        label: Text('remove'.tr,
-            style: const TextStyle(color: Colors.red)),
+        label: Text('remove'.tr, style: const TextStyle(color: Colors.red)),
       ),
     ]);
   }
@@ -785,8 +739,7 @@ class _PickImageBtn extends StatelessWidget {
       icon: const Icon(Icons.image_outlined),
       label: Text('choose_image'.tr),
       style: OutlinedButton.styleFrom(
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10))),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
     );
   }
 }
@@ -799,27 +752,19 @@ class _SaveBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: double.infinity,
-      height: 48,
+      width: double.infinity, height: 48,
       child: ElevatedButton(
         onPressed: loading ? null : onTap,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFFFFC857),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 0,
         ),
         child: loading
-            ? const SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-                strokeWidth: 2, color: Colors.black))
+            ? const SizedBox(width: 20, height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
             : Text('save'.tr,
-            style: const TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.w700,
-                fontSize: 16)),
+            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w700, fontSize: 16)),
       ),
     );
   }
@@ -830,11 +775,7 @@ class _AudioBtn extends StatelessWidget {
   final Color color;
   final String label;
   final VoidCallback onTap;
-  const _AudioBtn(
-      {required this.icon,
-        required this.color,
-        required this.label,
-        required this.onTap});
+  const _AudioBtn({required this.icon, required this.color, required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -842,21 +783,15 @@ class _AudioBtn extends StatelessWidget {
       onTap: onTap,
       child: Column(children: [
         Container(
-          width: 44,
-          height: 44,
+          width: 44, height: 44,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
-            shape: BoxShape.circle,
+            color: color.withOpacity(0.15), shape: BoxShape.circle,
             border: Border.all(color: color.withOpacity(0.3)),
           ),
           child: Icon(icon, color: color, size: 22),
         ),
         const SizedBox(height: 4),
-        Text(label,
-            style: TextStyle(
-                fontSize: 10,
-                color: color,
-                fontWeight: FontWeight.w600)),
+        Text(label, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w600)),
       ]),
     );
   }

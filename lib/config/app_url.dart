@@ -1,7 +1,7 @@
 // lib/config/app_url.dart
 
 class AppUrl {
-  static const String baseUrl = 'https://prominent-leads-pride-believe.trycloudflare.com';
+  static const String baseUrl = 'https://api.chatterbeeapp.com';
 
   // ==================== AUTH ====================
   static const String login = '$baseUrl/api/auth/login/';

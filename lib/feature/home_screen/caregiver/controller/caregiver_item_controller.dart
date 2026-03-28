@@ -71,9 +71,15 @@ class CaregiverItemController extends GetxController {
     await _soundPlayer!.openPlayer();
   }
 
+  // ✅ FIX: toLanguageTag() → "en-US" → normalize → "en"
+  String _normalizeLang(String lang) {
+    return lang.split('-').first.split('_').first.toLowerCase();
+  }
+
   String get _currentLang {
     try {
-      return LanguageController.to.currentLocale.value.languageCode;
+      final raw = LanguageController.to.currentLocale.value.toLanguageTag();
+      return _normalizeLang(raw);
     } catch (_) {
       return 'en';
     }
@@ -195,7 +201,8 @@ class CaregiverItemController extends GetxController {
       return;
     }
     formLoading.value = true;
-    final lang = _currentLang; // ✅
+    final lang = _currentLang;
+    debugPrint('🌐 Item save lang: $lang');
 
     if (_editingItem != null) {
       final response = await _repo.updateItem(
@@ -204,7 +211,7 @@ class CaregiverItemController extends GetxController {
         color: formColorHex.value,
         imageFile: formImageFile.value,
         audioFile: formAudioFile.value,
-        lang: lang, // ✅
+        lang: lang,
       );
       formLoading.value = false;
       if (response.isSuccess) {
@@ -217,7 +224,8 @@ class CaregiverItemController extends GetxController {
             snackPosition: SnackPosition.BOTTOM);
       }
     } else {
-      final communicatorId = CommunicatorSessionService.to.communicatorId.value;
+      final communicatorId =
+          CommunicatorSessionService.to.communicatorId.value;
       final response = await _repo.createItem(
         categoryId: parentSubCategory.id,
         word: word.trim(),
@@ -225,7 +233,7 @@ class CaregiverItemController extends GetxController {
         communicatorId: communicatorId,
         imageFile: formImageFile.value,
         audioFile: formAudioFile.value,
-        lang: lang, // ✅
+        lang: lang,
       );
       formLoading.value = false;
       if (response.isSuccess) {
@@ -269,7 +277,8 @@ class CaregiverItemController extends GetxController {
     final hasPermission = await requestMicPermission();
     if (!hasPermission) return;
 
-    if (!_isRecorderInitialized) {
+    if (_recorder == null || !_isRecorderInitialized) {
+      _recorder = FlutterSoundRecorder();
       await _recorder!.openRecorder();
       _isRecorderInitialized = true;
     }
@@ -278,11 +287,18 @@ class CaregiverItemController extends GetxController {
       final path = await _recorder!.stopRecorder();
       isRecording.value = false;
       if (path != null) {
-        formAudioFile.value = File(path);
-        audioFileName.value = 'recorded_audio.aac';
+        final file = File(path);
+        if (await file.exists()) {
+          formAudioFile.value = file;
+          audioFileName.value = 'recorded_audio.aac';
+          debugPrint('✅ Item Audio saved: $path');
+        } else {
+          debugPrint('❌ Item Audio not found: $path');
+        }
       }
     } else {
-      final dir = await getTemporaryDirectory();
+      // ✅ FIX: getApplicationDocumentsDirectory (getTemporaryDirectory নয়)
+      final dir = await getApplicationDocumentsDirectory();
       final recordPath =
           '${dir.path}/item_audio_${DateTime.now().millisecondsSinceEpoch}.aac';
       await _recorder!.startRecorder(toFile: recordPath, codec: Codec.aacADTS);
@@ -328,15 +344,14 @@ class CaregiverItemController extends GetxController {
 }
 
 // ════════════════════════════════════════════════════════════════
-//  ITEM FORM BOTTOM SHEET  (unchanged UI)
+//  ITEM FORM BOTTOM SHEET
 // ════════════════════════════════════════════════════════════════
 
 class ItemFormSheet extends StatefulWidget {
   final CaregiverItemController controller;
   final String title;
 
-  const ItemFormSheet(
-      {super.key, required this.controller, required this.title});
+  const ItemFormSheet({super.key, required this.controller, required this.title});
 
   @override
   State<ItemFormSheet> createState() => _ItemFormSheetState();
@@ -360,35 +375,31 @@ class _ItemFormSheetState extends State<ItemFormSheet> {
   @override
   Widget build(BuildContext context) {
     final c = widget.controller;
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
     return Container(
-      padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
-        top: 20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 30,
-      ),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SingleChildScrollView(
+        padding: EdgeInsets.only(
+          left: 20, right: 20, top: 20, bottom: bottomInset + 30,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
               child: Container(
-                width: 40,
-                height: 4,
+                width: 40, height: 4,
                 decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2)),
+                    color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
               ),
             ),
             const SizedBox(height: 16),
             Text(widget.title,
-                style: const TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.w700)),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
             const SizedBox(height: 20),
             TextField(
               controller: _wordCtrl,
@@ -396,28 +407,22 @@ class _ItemFormSheetState extends State<ItemFormSheet> {
               decoration: InputDecoration(
                 labelText: 'word_label'.tr,
                 hintText: 'word_hint'.tr,
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide:
-                  const BorderSide(color: Color(0xFFFFC857), width: 1.5),
+                  borderSide: const BorderSide(color: Color(0xFFFFC857), width: 1.5),
                 ),
               ),
             ),
             const SizedBox(height: 16),
-            Text('color'.tr,
-                style: const TextStyle(fontWeight: FontWeight.w600)),
+            Text('color'.tr, style: const TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Obx(() => Wrap(
-              spacing: 10,
-              runSpacing: 10,
+              spacing: 10, runSpacing: 10,
               children: c.colorOptions.map((opt) {
                 Color col;
                 try {
-                  col = Color(int.parse(
-                      'FF${opt['hex']!.replaceAll('#', '')}',
-                      radix: 16));
+                  col = Color(int.parse('FF${opt['hex']!.replaceAll('#', '')}', radix: 16));
                 } catch (_) {
                   col = const Color(0xFFFFD700);
                 }
@@ -426,51 +431,35 @@ class _ItemFormSheetState extends State<ItemFormSheet> {
                   onTap: () => c.formColorHex.value = opt['hex']!,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
-                    width: 36,
-                    height: 36,
+                    width: 36, height: 36,
                     decoration: BoxDecoration(
-                      color: col,
-                      shape: BoxShape.circle,
+                      color: col, shape: BoxShape.circle,
                       border: Border.all(
-                        color: isSelected
-                            ? Colors.black87
-                            : Colors.transparent,
-                        width: 2.5,
+                        color: isSelected ? Colors.black87 : Colors.transparent, width: 2.5,
                       ),
                       boxShadow: isSelected
-                          ? [
-                        BoxShadow(
-                            color: col.withOpacity(0.5),
-                            blurRadius: 6)
-                      ]
+                          ? [BoxShadow(color: col.withOpacity(0.5), blurRadius: 6)]
                           : [],
                     ),
-                    child: isSelected
-                        ? const Icon(Icons.check,
-                        color: Colors.white, size: 18)
-                        : null,
+                    child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 18) : null,
                   ),
                 );
               }).toList(),
             )),
             const SizedBox(height: 16),
-            Text('image_optional'.tr,
-                style: const TextStyle(fontWeight: FontWeight.w600)),
+            Text('image_optional'.tr, style: const TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Obx(() => c.formImageFile.value != null
                 ? Row(children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.file(c.formImageFile.value!,
-                    width: 60, height: 60, fit: BoxFit.cover),
+                child: Image.file(c.formImageFile.value!, width: 60, height: 60, fit: BoxFit.cover),
               ),
               const SizedBox(width: 12),
               TextButton.icon(
                 onPressed: c.removeImage,
-                icon: const Icon(Icons.delete,
-                    color: Colors.red, size: 18),
-                label: Text('remove'.tr,
-                    style: const TextStyle(color: Colors.red)),
+                icon: const Icon(Icons.delete, color: Colors.red, size: 18),
+                label: Text('remove'.tr, style: const TextStyle(color: Colors.red)),
               ),
             ])
                 : OutlinedButton.icon(
@@ -478,12 +467,10 @@ class _ItemFormSheetState extends State<ItemFormSheet> {
               icon: const Icon(Icons.image_outlined),
               label: Text('choose_image'.tr),
               style: OutlinedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10))),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
             )),
             const SizedBox(height: 16),
-            Text('voice_audio_speak'.tr,
-                style: const TextStyle(fontWeight: FontWeight.w600)),
+            Text('voice_audio_speak'.tr, style: const TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Obx(() {
               final hasAudio = c.formAudioFile.value != null;
@@ -493,21 +480,16 @@ class _ItemFormSheetState extends State<ItemFormSheet> {
                   Row(children: [
                     _AudioBtn(
                       icon: c.isRecording.value ? Icons.stop : Icons.mic,
-                      color: c.isRecording.value
-                          ? Colors.red
-                          : const Color(0xFFFFC857),
+                      color: c.isRecording.value ? Colors.red : const Color(0xFFFFC857),
                       label: c.isRecording.value ? 'stop'.tr : 'record'.tr,
                       onTap: c.toggleRecording,
                     ),
                     if (hasAudio) ...[
                       const SizedBox(width: 10),
                       _AudioBtn(
-                        icon: c.isPlayingFormAudio.value
-                            ? Icons.stop
-                            : Icons.play_arrow,
+                        icon: c.isPlayingFormAudio.value ? Icons.stop : Icons.play_arrow,
                         color: const Color(0xFF4CAF50),
-                        label:
-                        c.isPlayingFormAudio.value ? 'stop'.tr : 'play'.tr,
+                        label: c.isPlayingFormAudio.value ? 'stop'.tr : 'play'.tr,
                         onTap: c.toggleFormAudioPlayback,
                       ),
                       const SizedBox(width: 10),
@@ -522,22 +504,17 @@ class _ItemFormSheetState extends State<ItemFormSheet> {
                   if (c.isRecording.value) ...[
                     const SizedBox(height: 8),
                     Row(children: [
-                      Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                              color: Colors.red, shape: BoxShape.circle)),
+                      Container(width: 8, height: 8,
+                          decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle)),
                       const SizedBox(width: 6),
                       Text('recording_indicator'.tr,
-                          style: const TextStyle(
-                              color: Colors.red, fontSize: 12)),
+                          style: const TextStyle(color: Colors.red, fontSize: 12)),
                     ]),
                   ],
                   if (hasAudio && !c.isRecording.value) ...[
                     const SizedBox(height: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
                         color: const Color(0xFFE8F5E9),
                         borderRadius: BorderRadius.circular(8),
@@ -545,15 +522,11 @@ class _ItemFormSheetState extends State<ItemFormSheet> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.audio_file,
-                              color: Color(0xFF4CAF50), size: 16),
+                          const Icon(Icons.audio_file, color: Color(0xFF4CAF50), size: 16),
                           const SizedBox(width: 6),
                           Text(
-                            c.audioFileName.value.isEmpty
-                                ? 'audio_ready'.tr
-                                : c.audioFileName.value,
-                            style: const TextStyle(
-                                color: Color(0xFF4CAF50), fontSize: 12),
+                            c.audioFileName.value.isEmpty ? 'audio_ready'.tr : c.audioFileName.value,
+                            style: const TextStyle(color: Color(0xFF4CAF50), fontSize: 12),
                           ),
                         ],
                       ),
@@ -561,36 +534,25 @@ class _ItemFormSheetState extends State<ItemFormSheet> {
                   ],
                   const SizedBox(height: 4),
                   Text('record_voice_hint2'.tr,
-                      style:
-                      TextStyle(fontSize: 11, color: Colors.grey[500])),
+                      style: TextStyle(fontSize: 11, color: Colors.grey[500])),
                 ],
               );
             }),
             const SizedBox(height: 24),
             Obx(() => SizedBox(
-              width: double.infinity,
-              height: 48,
+              width: double.infinity, height: 48,
               child: ElevatedButton(
-                onPressed: c.formLoading.value
-                    ? null
-                    : () => c.save(_wordCtrl.text),
+                onPressed: c.formLoading.value ? null : () => c.save(_wordCtrl.text),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFFFC857),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   elevation: 0,
                 ),
                 child: c.formLoading.value
-                    ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.black))
+                    ? const SizedBox(width: 20, height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
                     : Text('save'.tr,
-                    style: const TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16)),
+                    style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w700, fontSize: 16)),
               ),
             )),
           ],
@@ -606,11 +568,7 @@ class _AudioBtn extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
 
-  const _AudioBtn(
-      {required this.icon,
-        required this.color,
-        required this.label,
-        required this.onTap});
+  const _AudioBtn({required this.icon, required this.color, required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -618,19 +576,15 @@ class _AudioBtn extends StatelessWidget {
       onTap: onTap,
       child: Column(children: [
         Container(
-          width: 44,
-          height: 44,
+          width: 44, height: 44,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
-            shape: BoxShape.circle,
+            color: color.withOpacity(0.15), shape: BoxShape.circle,
             border: Border.all(color: color.withOpacity(0.3)),
           ),
           child: Icon(icon, color: color, size: 22),
         ),
         const SizedBox(height: 4),
-        Text(label,
-            style: TextStyle(
-                fontSize: 10, color: color, fontWeight: FontWeight.w600)),
+        Text(label, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w600)),
       ]),
     );
   }

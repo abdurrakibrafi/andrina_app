@@ -1,6 +1,6 @@
 import 'package:chatter_bee/feature/Activity/buinding/activities_binding.dart';
 import 'package:chatter_bee/feature/Activity/buinding/edit_activity_buinding.dart';
-import 'package:chatter_bee/feature/Activity/controller/edit_activity_controller.dart';
+
 import 'package:chatter_bee/feature/Activity/view/activities_screen.dart';
 import 'package:chatter_bee/feature/Activity/buinding/add_activity_binding.dart';
 import 'package:chatter_bee/feature/Activity/view/add_activity_screen.dart';
@@ -61,8 +61,6 @@ import 'package:chatter_bee/feature/communicator/sub_category/meals/meals_bindin
 import 'package:chatter_bee/feature/communicator/sub_category/meals/meals_screen.dart';
 import 'package:chatter_bee/feature/communicator/sub_category/snacks/snacks_binding.dart';
 import 'package:chatter_bee/feature/communicator/sub_category/snacks/snacks_screen.dart';
-import 'package:chatter_bee/feature/edit_button_screen/edit_button_binding.dart';
-import 'package:chatter_bee/feature/edit_button_screen/edit_button_screen.dart';
 import 'package:chatter_bee/feature/home_screen/caregiver/buinding/caregiver_item_buinding.dart';
 import 'package:chatter_bee/feature/home_screen/caregiver/view/caregiver_item_screen.dart';
 import 'package:chatter_bee/feature/home_screen/caregiver/view/caregiver_sub_catagory_screen.dart';
@@ -174,11 +172,6 @@ final List<GetPage> routes = [
     page: () => SupportScreen(),
     binding: SupportBonding(),
   ),
-  // GetPage(
-  //   name: AppRoutes.LANGUAGESCREEN,
-  //   page: () => LanguageScreen(),
-  //   binding: LanguageBinding(),
-  // ),
   GetPage(
     name: AppRoutes.TEXT_TO_SPEAK,
     page: () => TextToSpeakScreen(),
