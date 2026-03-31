@@ -25,6 +25,7 @@ workflows:
       - name: Run tests
         script: flutter test
 
+      # 🔐 ANDROID SIGNING
       - name: Decode keystore
         script: |
           echo $CM_KEYSTORE | base64 --decode > keystore.jks
@@ -41,12 +42,25 @@ workflows:
       - name: Move keystore
         script: mv keystore.jks android/
 
+      # 📦 ANDROID BUILD
       - name: Build AAB
         script: |
           flutter build appbundle --release \
             --build-name=${CM_TAG#v} \
             --build-number=$BUILD_NUMBER
 
+      # 🍏 iOS SIGNING
+      - name: Fetch iOS signing files
+        script: |
+          app-store-connect fetch-signing-files $IOS_BUNDLE_ID \
+            --type IOS_APP_STORE \
+            --create
+
+      - name: Add signing certificate to keychain
+        script: |
+          keychain add-certificates
+
+      # 🍏 iOS BUILD
       - name: Build IPA
         script: |
           xcode-project use-profiles
@@ -59,11 +73,13 @@ workflows:
       - build/ios/ipa/*.ipa
 
     publishing:
+      # 🤖 GOOGLE PLAY AUTO PUBLISH
       google_play:
         credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
         track: internal
         submit_as_draft: false
 
+      # 🍏 TESTFLIGHT AUTO PUBLISH
       app_store_connect:
         api_key: $APP_STORE_CONNECT_PRIVATE_KEY
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
@@ -76,13 +92,3 @@ workflows:
         notify:
           success: true
           failure: true
-
-
-## Flow এখন হবে:
-
-#git tag v1.0.0 → git push origin v1.0.0
-#↓
-#Codemagic build
-#↓
-#Android → Google Play Internal ✅
-#iOS     → TestFlight ✅
