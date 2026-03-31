@@ -51,7 +51,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyDEkjTw0VIer4Q7BdJ06NtV04evFeDphLo',
-    appId: '1:266665436778:android:4a7d9a49a878433cc10c13',
+    appId: '1:266665436778:android:51f61c7972537219c10c13',
     messagingSenderId: '266665436778',
     projectId: 'chatterbee-9f4a0',
     storageBucket: 'chatterbee-9f4a0.firebasestorage.app',
@@ -59,11 +59,11 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyBpu2LWj48bKcCvWCksWWmtgsEW5AAqdZE',
-    appId: '1:266665436778:ios:91ff20ae82ef9be1c10c13',
+    appId: '1:266665436778:ios:ef43f7b1845c07f3c10c13',
     messagingSenderId: '266665436778',
     projectId: 'chatterbee-9f4a0',
     storageBucket: 'chatterbee-9f4a0.firebasestorage.app',
-    iosBundleId: 'com.example.chatterBee',
+    iosBundleId: 'com.chatterbee.app',
   );
 
 }

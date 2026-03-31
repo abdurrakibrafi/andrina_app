@@ -7,6 +7,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:266665436778:android:51f61c7972537219c10c13",
+        "android_client_info": {
+          "package_name": "com.chatterbee.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDEkjTw0VIer4Q7BdJ06NtV04evFeDphLo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:266665436778:android:4a7d9a49a878433cc10c13",
         "android_client_info": {
           "package_name": "com.example.chatter_bee"
