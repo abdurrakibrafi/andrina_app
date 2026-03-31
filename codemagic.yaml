@@ -49,6 +49,7 @@ workflows:
 
       - name: Build IPA
         script: |
+          xcode-project use-profiles
           flutter build ipa --release \
             --build-name=${CM_TAG#v} \
             --build-number=$BUILD_NUMBER
