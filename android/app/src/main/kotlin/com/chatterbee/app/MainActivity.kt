@@ -1,4 +1,4 @@
-package com.example.chatter_bee
+package com.chatterbee.app
 
 import io.flutter.embedding.android.FlutterActivity
 

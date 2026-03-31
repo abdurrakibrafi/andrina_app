@@ -8,7 +8,7 @@ workflows:
       groups:
         - chatterbee
       vars:
-        ANDROID_PACKAGE_NAME: "com.example.chatter_bee"
+        ANDROID_PACKAGE_NAME: "com.chatterbee.app"
         IOS_BUNDLE_ID: "com.example.chatterBee"
 
     triggering:
