@@ -42,13 +42,14 @@ workflows:
       - name: Build AAB
         script: |
           flutter build appbundle --release \
-            --build-name=1.0.0 \
-            --build-number=1
+            --build-name=${CM_TAG#v} \
+            --build-number=$BUILD_NUMBER
 
       - name: Build IPA
         script: |
           flutter build ipa --release \
-            --build-name=1.0.0
+            --build-name=${CM_TAG#v} \
+            --build-number=$BUILD_NUMBER
 
     artifacts:
       - build/**/outputs/**/*.aab
