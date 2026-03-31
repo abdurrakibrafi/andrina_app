@@ -5,6 +5,8 @@ workflows:
 
     environment:
       flutter: stable
+      groups:
+        - chatterbee
       vars:
         ANDROID_PACKAGE_NAME: "com.example.chatter_bee"
         IOS_BUNDLE_ID: "com.example.chatterBee"
