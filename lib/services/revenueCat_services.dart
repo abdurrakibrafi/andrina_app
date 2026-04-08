@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 class RevenueCatService {
@@ -11,10 +10,10 @@ class RevenueCatService {
 
   // ── Init (call once in main.dart) ──────────────────────────
   Future<void> init() async {
-    final apiKey = Platform.isAndroid
-        ? dotenv.env['REVENUECAT_ANDROID_KEY']!
-        : dotenv.env['REVENUECAT_IOS_KEY']!;
+    final androidKey = const String.fromEnvironment('RC_ANDROID_PUBLIC_KEY');
+    final iosKey = const String.fromEnvironment('RC_IOS_PUBLIC_KEY');
 
+    final apiKey = Platform.isAndroid ? androidKey : iosKey;
     await Purchases.setLogLevel(
       kDebugMode ? LogLevel.debug : LogLevel.error,
     );
