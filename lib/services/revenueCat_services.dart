@@ -14,6 +14,11 @@ class RevenueCatService {
     final iosKey = const String.fromEnvironment('RC_IOS_PUBLIC_KEY');
 
     final apiKey = Platform.isAndroid ? androidKey : iosKey;
+
+    if (apiKey.isEmpty) {
+      debugPrint('[RC] ❌ API key is empty! Use --dart-define to pass it.');
+      return; // crash না করে gracefully বের হও
+    }
     await Purchases.setLogLevel(
       kDebugMode ? LogLevel.debug : LogLevel.error,
     );
