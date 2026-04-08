@@ -12,20 +12,29 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
+    print('🔥 Step 1: Firebase init...');
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    print('✅ Step 1: Firebase done');
 
+    print('💾 Step 2: Storage init...');
     await StorageService().init();
+    print('✅ Step 2: Storage done');
 
+    print('📡 Step 3: CommunicatorSession init...');
     await Get.putAsync(() async => CommunicatorSessionService());
+    print('✅ Step 3: CommunicatorSession done');
 
+    print('🔔 Step 4: Notification init...');
     await Get.putAsync(() async => await NotificationService().init());
+    print('✅ Step 4: Notification done');
 
+    print('💰 Step 5: RevenueCat init...');
     await RevenueCatService.instance.init();
+    print('✅ Step 5: RevenueCat done');
 
     print('✅ App initialized successfully');
-
     runApp(const MyApp());
   } catch (e, stack) {
     print('❌ ERROR: $e');

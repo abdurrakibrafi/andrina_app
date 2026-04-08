@@ -7,7 +7,7 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 
 class SubscriptionController extends GetxController {
   // ── State ──────────────────────────────────────────────────
-  final selectedPlan = 'monthly'.obs; // 'monthly' | 'annually'
+  final selectedPlan = 'monthly'.obs;
   final isLoading    = false.obs;
   final isProUser    = false.obs;
 
@@ -61,11 +61,24 @@ class SubscriptionController extends GetxController {
     isLoading.value = true;
     try {
       final list = await RevenueCatService.instance.getOfferings();
+
       for (final pkg in list) {
-        final id = pkg.storeProduct.identifier;
-        if (id.contains('monthly'))  _monthlyPackage  = pkg;
-        if (id.contains('annually')) _annuallyPackage = pkg;
+        // ✅ packageType দিয়ে match — $rc_monthly/$rc_annual এর সাথে কাজ করে
+        if (pkg.packageType == PackageType.monthly) {
+          _monthlyPackage = pkg;
+          debugPrint('[RC] ✅ Monthly found: ${pkg.storeProduct.priceString}');
+        }
+        if (pkg.packageType == PackageType.annual) {
+          _annuallyPackage = pkg;
+          debugPrint('[RC] ✅ Annual found: ${pkg.storeProduct.priceString}');
+        }
       }
+
+      if (_monthlyPackage == null && _annuallyPackage == null) {
+        debugPrint('[RC] ⚠️ No packages found! Check RevenueCat dashboard.');
+      }
+    } catch (e) {
+      debugPrint('[RC] _loadOfferings error: $e');
     } finally {
       isLoading.value = false;
     }

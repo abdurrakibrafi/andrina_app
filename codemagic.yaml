@@ -42,14 +42,20 @@ workflows:
       - name: Move keystore
         script: mv keystore.jks android/
 
+      # 🔑 CREATE .env FILE
+      - name: Create .env file
+        script: |
+          printf 'RC_ANDROID_PUBLIC_KEY=%s\nRC_IOS_PUBLIC_KEY=%s\n' \
+            "$RC_ANDROID_PUBLIC_KEY" \
+            "$RC_IOS_PUBLIC_KEY" > .env
+
       # 📦 ANDROID BUILD
       - name: Build AAB
         script: |
           flutter build appbundle --release \
             --build-name=${CM_TAG#v} \
             --build-number=$BUILD_NUMBER \
-            --dart-define=RC_ANDROID_PUBLIC_KEY=$RC_ANDROID_PUBLIC_KEY \
-            --dart-define=RC_IOS_PUBLIC_KEY=$RC_IOS_PUBLIC_KEY
+            --dart-define-from-file=.env
 
       # 🍏 iOS SIGNING
       - name: Initialize keychain
@@ -74,19 +80,20 @@ workflows:
           flutter build ipa --release \
             --build-name=${CM_TAG#v} \
             --build-number=$BUILD_NUMBER \
-            --dart-define=RC_ANDROID_PUBLIC_KEY=$RC_ANDROID_PUBLIC_KEY \
-            --dart-define=RC_IOS_PUBLIC_KEY=$RC_IOS_PUBLIC_KEY
+            --dart-define-from-file=.env
 
     artifacts:
       - build/**/outputs/**/*.aab
       - build/ios/ipa/*.ipa
 
     publishing:
+      # 🤖 GOOGLE PLAY
       google_play:
         credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
         track: internal
         submit_as_draft: false
 
+      # 🍏 TESTFLIGHT
       app_store_connect:
         api_key: $APP_STORE_CONNECT_PRIVATE_KEY
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
