@@ -47,9 +47,10 @@ workflows:
         script: |
           flutter build appbundle --release \
             --build-name=${CM_TAG#v} \
-            --build-number=$BUILD_NUMBER
+            --build-number=$BUILD_NUMBER \
             --dart-define=RC_ANDROID_PUBLIC_KEY=$RC_ANDROID_PUBLIC_KEY \
             --dart-define=RC_IOS_PUBLIC_KEY=$RC_IOS_PUBLIC_KEY
+
       # 🍏 iOS SIGNING
       - name: Initialize keychain
         script: |
@@ -72,26 +73,20 @@ workflows:
           xcode-project use-profiles
           flutter build ipa --release \
             --build-name=${CM_TAG#v} \
-            --build-number=$BUILD_NUMBER
-        #code magic  production run time rc api key .
+            --build-number=$BUILD_NUMBER \
             --dart-define=RC_ANDROID_PUBLIC_KEY=$RC_ANDROID_PUBLIC_KEY \
             --dart-define=RC_IOS_PUBLIC_KEY=$RC_IOS_PUBLIC_KEY
-        #ios or android debug testing ----->.  flutter run \
-        #  --dart-define=RC_ANDROID_PUBLIC_KEY=your_actual_key_here \
-        #  --dart-define=RC_IOS_PUBLIC_KEY=your_actual_key_here
 
     artifacts:
       - build/**/outputs/**/*.aab
       - build/ios/ipa/*.ipa
 
     publishing:
-      # 🤖 GOOGLE PLAY AUTO PUBLISH
       google_play:
         credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
         track: internal
         submit_as_draft: false
 
-      # 🍏 TESTFLIGHT AUTO PUBLISH
       app_store_connect:
         api_key: $APP_STORE_CONNECT_PRIVATE_KEY
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
