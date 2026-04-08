@@ -12,22 +12,26 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  // Initialize SharedPreferences
-  await StorageService().init();
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
 
-  // Initialize CommunicatorSessionService
-  await Get.putAsync(() async => CommunicatorSessionService());
+    await StorageService().init();
 
-  // Initialize NotificationService
-  Get.putAsync(() => NotificationService().init());
+    await Get.putAsync(() async => CommunicatorSessionService());
 
-  await dotenv.load(fileName: ".env");
-  await RevenueCatService.instance.init();
+    await Get.putAsync(() async => await NotificationService().init());
 
-  print('✅ App initialized successfully');
+    await dotenv.load(fileName: ".env");
 
-  runApp(const MyApp());
+    await RevenueCatService.instance.init();
+
+    print('✅ App initialized successfully');
+
+    runApp(const MyApp());
+  } catch (e, stack) {
+    print('❌ ERROR: $e');
+    print(stack);
+  }
 }
