@@ -1,8 +1,10 @@
 import 'package:chatter_bee/services/communicator_session_service.dart';
 import 'package:chatter_bee/services/notification_services.dart';
+import 'package:chatter_bee/services/revenueCat_services.dart';
 import 'package:chatter_bee/services/storage/data_storage.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'app/my_app.dart';
 import 'firebase_options.dart';
@@ -21,6 +23,9 @@ void main() async {
 
   // Initialize NotificationService
   Get.putAsync(() => NotificationService().init());
+
+  await dotenv.load(fileName: ".env");
+  await RevenueCatService.instance.init();
 
   print('✅ App initialized successfully');
 

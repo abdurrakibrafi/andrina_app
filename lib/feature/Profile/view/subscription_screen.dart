@@ -21,7 +21,7 @@ class SubscriptionScreen extends GetView<SubscriptionController> {
           onPressed: () => Get.back(),
         ),
         title: Text(
-          'subscription'.tr,  // ✅
+          'subscription'.tr,
           style: GoogleFonts.nunito(
               color: Colors.black,
               fontSize: 18,
@@ -34,185 +34,333 @@ class SubscriptionScreen extends GetView<SubscriptionController> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    'unlock_pro'.tr,  // ✅
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.nunito(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'unlock_pro_desc'.tr,  // ✅
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.nunito(
-                        fontSize: 14, color: Colors.black, height: 1.5),
-                  ),
-                  const SizedBox(height: 24),
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFFFFC107)),
+          );
+        }
 
-                  // ── Free Plan ──
-                  Obx(() => _buildPlanCard(
-                    context: context,
-                    planType: 'free',
-                    title: 'free_plan'.tr,  // ✅
-                    price: '\$${controller.freePlanPrice.toStringAsFixed(2)}',
-                    features: [
-                      'free_feature_1'.tr,  // ✅
-                      'free_feature_2'.tr,
-                      'free_feature_3'.tr,
-                      'free_feature_4'.tr,
-                    ],
-                    isSelected: controller.isPlanSelected('free'),
-                    onTap: () => controller.selectPlan('free'),
-                  )),
-                  const SizedBox(height: 22),
+        return Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // ── Already Pro Banner ─────────────────
+                    if (controller.isProUser.value)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFC107).withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                              color: const Color(0xFFFFC107), width: 1.2),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.workspace_premium_rounded,
+                                color: Color(0xFFFFC107)),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'You have an active Pro subscription 🐝',
+                                style: GoogleFonts.nunito(
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
 
-                  // ── Pro Plan ──
-                  Obx(() => _buildPlanCard(
-                    context: context,
-                    planType: 'pro',
-                    title: 'unlock_pro'.tr,  // ✅
-                    price: '\$${controller.proPlanPrice.toStringAsFixed(2)}/month',
-                    features: [
-                      'pro_feature_1'.tr,  // ✅
-                      'pro_feature_2'.tr,
-                      'pro_feature_3'.tr,
-                      'pro_feature_4'.tr,
-                      'pro_feature_5'.tr,
-                    ],
-                    isSelected: controller.isPlanSelected('pro'),
-                    onTap: () => controller.selectPlan('pro'),
-                    isPro: true,
-                  )),
-                ],
+                    // ── Header ─────────────────────────────
+                    Text(
+                      'unlock_pro'.tr,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.nunito(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'unlock_pro_desc'.tr,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.nunito(
+                          fontSize: 14, color: Colors.black, height: 1.5),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // ── Monthly Plan ───────────────────────
+                    _buildPlanCard(
+                      planType: 'monthly',
+                      title: 'Explorer Pro Monthly',
+                      price: controller.monthlyPrice,
+                      period: '/ month',
+                      trialText: controller.monthlyTrialText,
+                      features: [
+                        'pro_feature_1'.tr,
+                        'pro_feature_2'.tr,
+                        'pro_feature_3'.tr,
+                        'pro_feature_4'.tr,
+                        'pro_feature_5'.tr,
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // ── Annually Plan ──────────────────────
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        _buildPlanCard(
+                          planType: 'annually',
+                          title: 'Explorer Pro Annually',
+                          price: controller.annuallyPrice,
+                          period: '/ year',
+                          trialText: controller.annuallyTrialText,
+                          features: [
+                            'pro_feature_1'.tr,
+                            'pro_feature_2'.tr,
+                            'pro_feature_3'.tr,
+                            'pro_feature_4'.tr,
+                            'pro_feature_5'.tr,
+                          ],
+                        ),
+                        // Best Value badge
+                        Positioned(
+                          top: -10,
+                          right: 16,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFC107),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              'Best Value 🐝',
+                              style: GoogleFonts.nunito(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // ── Restore ────────────────────────────
+                    TextButton(
+                      onPressed: controller.restorePurchases,
+                      child: Text(
+                        'Restore purchases',
+                        style: GoogleFonts.nunito(
+                          fontSize: 13,
+                          color: Colors.grey[600],
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
 
-          // ── Continue Button ──
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: () => controller.onContinuePressed(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryColor,
-                  foregroundColor: Colors.black,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+            // ── Continue Button ────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              child: Obx(() => SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: controller.isProUser.value
+                      ? null
+                      : controller.onContinuePressed,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryColor,
+                    disabledBackgroundColor: Colors.grey.shade300,
+                    foregroundColor: Colors.black,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: Text(
+                    controller.continueButtonText,
+                    style: GoogleFonts.nunito(
+                        fontSize: 16, fontWeight: FontWeight.w700),
+                  ),
                 ),
-                child: Text(
-                  'continue_btn'.tr,  // ✅
-                  style: GoogleFonts.nunito(
-                      fontSize: 16, fontWeight: FontWeight.w700),
-                ),
-              ),
+              )),
             ),
-          ),
-        ],
-      ),
+          ],
+        );
+      }),
     );
   }
 
+  // ── Plan Card ──────────────────────────────────────────────
   Widget _buildPlanCard({
-    required BuildContext context,
     required String planType,
     required String title,
     required String price,
+    required String period,
+    required String trialText,
     required List<String> features,
-    required bool isSelected,
-    required VoidCallback onTap,
-    bool isPro = false,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected
-                ? const Color(0xFFFFC107)
-                : Colors.grey.shade300,
-          ),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 18, height: 18,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isSelected
-                          ? const Color(0xFFFFC107)
-                          : Colors.grey[400]!,
-                      width: 2,
-                    ),
-                  ),
-                  child: isSelected
-                      ? Center(
-                    child: Container(
-                      width: 10, height: 10,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Color(0xFFFFC107),
-                      ),
-                    ),
-                  )
-                      : null,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(title,
-                      style: GoogleFonts.nunito(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black)),
-                ),
-                Text(price,
-                    style: GoogleFonts.nunito(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black)),
-              ],
+    return Obx(() {
+      final isSelected = controller.isPlanSelected(planType);
+      return GestureDetector(
+        onTap: () => controller.selectPlan(planType),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isSelected
+                  ? const Color(0xFFFFC107)
+                  : Colors.grey.shade300,
+              width: isSelected ? 2 : 1,
             ),
-            const SizedBox(height: 16),
-            ...features.map((feature) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
+            boxShadow: isSelected
+                ? [
+              BoxShadow(
+                color: const Color(0xFFFFC107).withOpacity(0.15),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              )
+            ]
+                : [],
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Title + Price row ──────────────────────
+              Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SvgPicture.asset(ImagesLink.check),
-                  const SizedBox(width: 8),
+                  // Radio button
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Container(
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isSelected
+                              ? const Color(0xFFFFC107)
+                              : Colors.grey[400]!,
+                          width: 2,
+                        ),
+                      ),
+                      child: isSelected
+                          ? Center(
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Color(0xFFFFC107)),
+                        ),
+                      )
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+
+                  // Title + Trial badge
                   Expanded(
-                    child: Text(feature,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: GoogleFonts.nunito(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black),
+                        ),
+                        const SizedBox(height: 4),
+                        // ── Free Trial Badge ───────────────
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.green.shade50,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                                color: Colors.green.shade300, width: 1),
+                          ),
+                          child: Text(
+                            '🎉 $trialText',
+                            style: GoogleFonts.nunito(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.green.shade700),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Price
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        price,
                         style: GoogleFonts.nunito(
-                            fontSize: 14,
-                            color: Colors.black87,
-                            height: 1.3)),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black),
+                      ),
+                      Text(
+                        period,
+                        style: GoogleFonts.nunito(
+                            fontSize: 12, color: Colors.grey[500]),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            )),
-          ],
+
+              const SizedBox(height: 16),
+
+              // ── Features ───────────────────────────────
+              ...features.map(
+                    (f) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SvgPicture.asset(ImagesLink.check),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          f,
+                          style: GoogleFonts.nunito(
+                              fontSize: 13,
+                              color: Colors.black87,
+                              height: 1.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 }

@@ -1,242 +1,177 @@
 import 'package:chatter_bee/config/app_colors.dart';
+import 'package:chatter_bee/services/revenueCat_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 
 class SubscriptionController extends GetxController {
-  var selectedPlan = 'free'.obs;
-  var selectedPaymentMethod = ''.obs;
+  // ── State ──────────────────────────────────────────────────
+  final selectedPlan = 'monthly'.obs; // 'monthly' | 'annually'
+  final isLoading    = false.obs;
+  final isProUser    = false.obs;
 
-  final double freePlanPrice = 0.00;
-  final double proPlanPrice = 2.99;
+  Package? _monthlyPackage;
+  Package? _annuallyPackage;
 
-  final List<Map<String, String>> paymentMethods = [
-    {'type': 'card', 'number': '**** **** **** 0561', 'icon': 'mastercard'},
-    {'type': 'card', 'number': '**** **** **** 1234', 'icon': 'visa'},
-  ];
+  // ── Price getters ──────────────────────────────────────────
+  String get monthlyPrice =>
+      _monthlyPackage?.storeProduct.priceString ?? '\$2.99';
 
-  void selectPlan(String plan) => selectedPlan.value = plan;
+  String get annuallyPrice =>
+      _annuallyPackage?.storeProduct.priceString ?? '\$29.99';
+
+  // ── Trial text getters ─────────────────────────────────────
+  String get monthlyTrialText {
+    final days = _monthlyPackage
+        ?.storeProduct.introductoryPrice?.periodNumberOfUnits;
+    return days != null ? '$days-day free trial' : '3-day free trial';
+  }
+
+  String get annuallyTrialText {
+    final days = _annuallyPackage
+        ?.storeProduct.introductoryPrice?.periodNumberOfUnits;
+    return days != null ? '$days-day free trial' : '7-day free trial';
+  }
+
+  // ── Button text ────────────────────────────────────────────
+  String get continueButtonText {
+    if (isProUser.value) return 'Already Subscribed';
+    return selectedPlan.value == 'monthly'
+        ? 'Start $monthlyTrialText'
+        : 'Start $annuallyTrialText';
+  }
+
+  // ── Helpers ────────────────────────────────────────────────
   bool isPlanSelected(String plan) => selectedPlan.value == plan;
-  double getCurrentPlanPrice() =>
-      selectedPlan.value == 'free' ? freePlanPrice : proPlanPrice;
-  void selectPaymentMethod(String method) =>
-      selectedPaymentMethod.value = method;
-  bool isPaymentMethodSelected(String method) =>
-      selectedPaymentMethod.value == method;
+  void selectPlan(String plan)     => selectedPlan.value = plan;
 
-  void onContinuePressed() {
-    if (selectedPlan.value == 'pro') {
-      _showPaymentMethodBottomSheet();
-    } else {
-      Get.snackbar(
-        'free_plan_title'.tr, 'free_plan_msg'.tr,  // ✅
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      Get.back();
+  Package? get selectedPackage =>
+      selectedPlan.value == 'monthly' ? _monthlyPackage : _annuallyPackage;
+
+  // ── Init ───────────────────────────────────────────────────
+  @override
+  void onInit() {
+    super.onInit();
+    _loadOfferings();
+    _checkProStatus();
+  }
+
+  Future<void> _loadOfferings() async {
+    isLoading.value = true;
+    try {
+      final list = await RevenueCatService.instance.getOfferings();
+      for (final pkg in list) {
+        final id = pkg.storeProduct.identifier;
+        if (id.contains('monthly'))  _monthlyPackage  = pkg;
+        if (id.contains('annually')) _annuallyPackage = pkg;
+      }
+    } finally {
+      isLoading.value = false;
     }
   }
 
-  void _showPaymentMethodBottomSheet() {
-    selectedPaymentMethod.value = paymentMethods[0]['number']!;
+  Future<void> _checkProStatus() async {
+    isProUser.value = await RevenueCatService.instance.isProUser();
+  }
 
+  // ── Continue ───────────────────────────────────────────────
+  void onContinuePressed() {
+    if (isProUser.value) {
+      Get.snackbar('Already Pro 🐝', 'You have an active subscription.',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
+    final pkg = selectedPackage;
+    if (pkg == null) {
+      Get.snackbar('Error', 'Product not found. Please try again.',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
+    _purchase(pkg);
+  }
+
+  Future<void> _purchase(Package package) async {
+    isLoading.value = true;
+    try {
+      final success = await RevenueCatService.instance.purchase(package);
+      if (success) {
+        isProUser.value = true;
+        _showSuccessSheet();
+      } else {
+        Get.snackbar('Cancelled', 'Purchase was cancelled.',
+            snackPosition: SnackPosition.BOTTOM);
+      }
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // ── Restore ────────────────────────────────────────────────
+  Future<void> restorePurchases() async {
+    isLoading.value = true;
+    try {
+      final restored = await RevenueCatService.instance.restorePurchases();
+      if (restored) {
+        isProUser.value = true;
+        Get.snackbar('Restored! 🐝', 'Your subscription has been restored.',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green.shade100);
+      } else {
+        Get.snackbar('Not found', 'No active subscription to restore.',
+            snackPosition: SnackPosition.BOTTOM);
+      }
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // ── Success Sheet ──────────────────────────────────────────
+  void _showSuccessSheet() {
     Get.bottomSheet(
       Container(
         decoration: const BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
-          ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'payment_method'.tr,  // ✅
-                  style: GoogleFonts.nunito(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black),
-                ),
-                const SizedBox(height: 24),
-                ...paymentMethods.map((method) => Obx(() =>
-                    _buildPaymentMethodCard(
-                      cardNumber: method['number']!,
-                      isSelected:
-                      isPaymentMethodSelected(method['number']!),
-                      onTap: () =>
-                          selectPaymentMethod(method['number']!),
-                    ))),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Get.back();
-                      _showPaymentSuccessBottomSheet();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryColor,
-                      foregroundColor: Colors.black,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: Text(
-                      'confirm_and_pay'.tr,  // ✅
-                      style: GoogleFonts.nunito(
-                          fontSize: 16, fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-      isDismissible: true,
-      enableDrag: true,
-      isScrollControlled: true,
-    );
-  }
-
-  Widget _buildPaymentMethodCard({
-    required String cardNumber,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isSelected
-                  ? const Color(0xFFFFC107)
-                  : Colors.grey.shade300,
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 40, height: 26,
-                decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(4)),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Positioned(
-                      left: 10,
-                      child: Container(
-                        width: 12, height: 12,
-                        decoration: const BoxDecoration(
-                            color: Color(0xFFEB001B),
-                            shape: BoxShape.circle),
-                      ),
-                    ),
-                    Positioned(
-                      right: 10,
-                      child: Container(
-                        width: 12, height: 12,
-                        decoration: const BoxDecoration(
-                            color: Color(0xFFF79E1B),
-                            shape: BoxShape.circle),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(cardNumber,
-                    style: GoogleFonts.nunito(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black)),
-              ),
-              Container(
-                width: 20, height: 20,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isSelected
-                        ? const Color(0xFFFFC107)
-                        : Colors.grey[400]!,
-                    width: 2,
-                  ),
-                ),
-                child: isSelected
-                    ? Center(
-                  child: Container(
-                    width: 10, height: 10,
-                    decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Color(0xFFFFC107)),
-                  ),
-                )
-                    : null,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showPaymentSuccessBottomSheet() {
-    Get.bottomSheet(
-      Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
-          ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
+          child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 80, height: 80,
+                  width: 80,
+                  height: 80,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFC107).withOpacity(0.2),
+                    color: const Color(0xFFFFC107).withOpacity(0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.credit_card,
-                      color: Color(0xFFFFC107), size: 40),
+                  child: const Icon(
+                    Icons.workspace_premium_rounded,
+                    color: Color(0xFFFFC107),
+                    size: 44,
+                  ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
                 Text(
-                  'payment_success'.tr,  // ✅
+                  'payment_success'.tr,
                   textAlign: TextAlign.center,
                   style: GoogleFonts.nunito(
-                      fontSize: 28,
+                      fontSize: 26,
                       fontWeight: FontWeight.w700,
-                      color: Colors.black,
-                      height: 1.2),
+                      color: Colors.black),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 Text(
-                  'payment_success_desc'.tr,  // ✅
+                  'payment_success_desc'.tr,
                   textAlign: TextAlign.center,
                   style: GoogleFonts.nunito(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                      height: 1.5),
+                      fontSize: 14, color: Colors.grey[600], height: 1.5),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 28),
                 SizedBox(
                   width: double.infinity,
                   height: 48,
@@ -253,7 +188,7 @@ class SubscriptionController extends GetxController {
                           borderRadius: BorderRadius.circular(12)),
                     ),
                     child: Text(
-                      'done'.tr,  // ✅
+                      'done'.tr,
                       style: GoogleFonts.nunito(
                           fontSize: 16, fontWeight: FontWeight.w700),
                     ),
@@ -268,11 +203,5 @@ class SubscriptionController extends GetxController {
       enableDrag: false,
       isScrollControlled: true,
     );
-  }
-
-  @override
-  void onInit() {
-    super.onInit();
-    selectedPlan.value = 'free';
   }
 }
