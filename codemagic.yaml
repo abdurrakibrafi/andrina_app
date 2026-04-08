@@ -1,7 +1,7 @@
 workflows:
   android-ios-release:
     name: Android + iOS Release Build
-    max_build_duration: 60
+    max_build_duration: 40
 
     environment:
       flutter: stable
