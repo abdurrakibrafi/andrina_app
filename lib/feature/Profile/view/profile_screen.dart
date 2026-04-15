@@ -93,7 +93,9 @@ class ProfileScreen extends GetView<ProfileController> {
                             title: 'communicator'.tr,  // ✅
                             role: 'communicator',
                             isSelected: controller.selectedRole.value == 'Communicator',
-                            onTap: () => Get.offAllNamed("/SignInScreen"),
+                            onTap: () {
+                              controller.logout();
+                            },
                           ),
                           const SizedBox(height: 12),
                           _buildRoleCard(
@@ -101,7 +103,9 @@ class ProfileScreen extends GetView<ProfileController> {
                             title: 'caregiver'.tr,  // ✅
                             role: 'caregiver',
                             isSelected: controller.selectedRole.value == 'Caregiver',
-                            onTap: () => Get.offAllNamed("/SignInScreen"),
+                            onTap: (){
+                              controller.logout();
+                            },
                           ),
                         ],
                       )),
