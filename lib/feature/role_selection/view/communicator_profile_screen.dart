@@ -97,7 +97,8 @@ class CommunicatorProfileScreen extends GetView<CommunicatorProfileController> {
                     Text('buddy_bee_mode'.tr, style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.w600)),
                     Obx(() => CustomSwitch(
                       value: controller.isBuddyBeeMode.value,
-                      onChanged: (val) { controller.isBuddyBeeMode.value = val; controller.toggleBuddyBeeMode(val); },
+                     // onChanged: (val) { controller.isBuddyBeeMode.value = val; controller.toggleBuddyBeeMode(val); },
+                      onChanged: (val) => controller.toggleBuddyBeeMode(val),
                     )),
                   ],
                 ),

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:chatter_bee/config/imagesUrl.dart';
+import 'package:chatter_bee/feature/Profile/controller/pro_status_controller.dart';
 import 'package:chatter_bee/feature/authentication/repo/auth_repository.dart';
 import 'package:chatter_bee/routes/app_routes.dart';
 import 'package:flutter/material.dart';
@@ -19,13 +20,15 @@ class CommunicatorProfileController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxBool isSaving = false.obs;
 
-  // ✅ 'type' key এ translation key রাখছি
   final List<Map<String, dynamic>> voiceTypes = [
     {'type': 'male_adult',   'key': 'male_adult',   'icon': ImagesLink.adultMale},
     {'type': 'female_adult', 'key': 'female_adult', 'icon': ImagesLink.adultFemale},
     {'type': 'male_child',   'key': 'male_child',   'icon': ImagesLink.maleBoy},
     {'type': 'female_child', 'key': 'female_child', 'icon': ImagesLink.femaleChild},
   ];
+
+  // ✅ Pro check helper
+  bool get _isPro => ProStatusController.to.isProUser.value;
 
   @override
   void onInit() {
@@ -54,10 +57,57 @@ class CommunicatorProfileController extends GetxController {
   String _capitalizeFirst(String s) =>
       s.isEmpty ? s : s[0].toUpperCase() + s.substring(1).toLowerCase();
 
-  void toggleBuddyBeeMode(bool value) => isBuddyBeeMode.value = value;
+  // ✅ Buddy Bee: free user হলে block
+  void toggleBuddyBeeMode(bool value) {
+    if (value && !_isPro) {
+      _showProUpgradeDialog('buddy_bee_mode'.tr);
+      return;
+    }
+    isBuddyBeeMode.value = value;
+  }
+
   void selectProfileType(String type) => selectedProfileType.value = type;
   void selectVoiceType(String key) => selectedVoiceType.value = key;
   void selectLanguage(String language) => selectedLanguage.value = language;
+
+  // ✅ Shared Pro upgrade dialog
+  void _showProUpgradeDialog(String featureName) {
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.workspace_premium, color: Colors.amber),
+            const SizedBox(width: 8),
+            Text('pro_required'.tr,
+                style: const TextStyle(fontWeight: FontWeight.w700)),
+          ],
+        ),
+        content: Text(
+          '${'pro_feature_desc'.tr} "$featureName"',
+          style: const TextStyle(color: Color(0xFF636F85)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text('cancel'.tr),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Get.back();
+              Get.toNamed(AppRoutes.SUBSCRIPTION);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.amber,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text('upgrade_to_pro'.tr,
+                style: const TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
 
   Future<void> pickImage() async {
     try {
@@ -72,23 +122,23 @@ class CommunicatorProfileController extends GetxController {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('choose_profile_picture'.tr,   // ✅
+              Text('choose_profile_picture'.tr,
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
               const SizedBox(height: 20),
               ListTile(
                 leading: const Icon(Icons.camera_alt),
-                title: Text('camera'.tr),   // ✅
+                title: Text('camera'.tr),
                 onTap: () async { Get.back(); await _pickFrom(ImageSource.camera); },
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library),
-                title: Text('gallery'.tr),   // ✅
+                title: Text('gallery'.tr),
                 onTap: () async { Get.back(); await _pickFrom(ImageSource.gallery); },
               ),
               if (profileImage.value != null)
                 ListTile(
                   leading: const Icon(Icons.delete, color: Colors.red),
-                  title: Text('remove_photo'.tr,   // ✅
+                  title: Text('remove_photo'.tr,
                       style: const TextStyle(color: Colors.red)),
                   onTap: () { Get.back(); profileImage.value = null; },
                 ),
@@ -97,7 +147,7 @@ class CommunicatorProfileController extends GetxController {
         ),
       );
     } catch (e) {
-      Get.snackbar('error'.tr, 'failed_open_picker'.tr,   // ✅
+      Get.snackbar('error'.tr, 'failed_open_picker'.tr,
           snackPosition: SnackPosition.BOTTOM);
     }
   }
@@ -108,14 +158,14 @@ class CommunicatorProfileController extends GetxController {
           source: source, maxWidth: 512, maxHeight: 512, imageQuality: 75);
       if (image != null) profileImage.value = File(image.path);
     } catch (e) {
-      Get.snackbar('error'.tr, 'failed_pick_image'.tr,   // ✅
+      Get.snackbar('error'.tr, 'failed_pick_image'.tr,
           snackPosition: SnackPosition.BOTTOM);
     }
   }
 
   Future<void> onContinue() async {
     if (fullNameController.text.trim().isEmpty) {
-      Get.snackbar('error'.tr, 'enter_full_name_error'.tr,   // ✅
+      Get.snackbar('error'.tr, 'enter_full_name_error'.tr,
           snackPosition: SnackPosition.BOTTOM);
       return;
     }
@@ -129,16 +179,16 @@ class CommunicatorProfileController extends GetxController {
         avatar: profileImage.value,
       );
       if (response.isSuccess) {
-        Get.snackbar('success'.tr, 'profile_updated'.tr,   // ✅
+        Get.snackbar('success'.tr, 'profile_updated'.tr,
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: const Color(0xFFE8F5E9));
         Get.offAllNamed(AppRoutes.COMMUNICATORHOMESCREEN);
       } else {
-        Get.snackbar('error'.tr, response.message,   // ✅
+        Get.snackbar('error'.tr, response.message,
             snackPosition: SnackPosition.BOTTOM);
       }
     } catch (e) {
-      Get.snackbar('error'.tr, 'profile_update_failed'.tr,   // ✅
+      Get.snackbar('error'.tr, 'profile_update_failed'.tr,
           snackPosition: SnackPosition.BOTTOM);
     } finally {
       isSaving.value = false;

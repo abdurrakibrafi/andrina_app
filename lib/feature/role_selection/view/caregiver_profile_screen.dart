@@ -106,7 +106,8 @@ class CaregiverProfileScreen extends GetView<CaregiverProfileController> {
                     Text('buddy_bee_mode'.tr, style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.w600)),
                     Obx(() => CustomSwitch(
                       value: controller.isBuddyBeeMode.value,
-                      onChanged: (val) { controller.isBuddyBeeMode.value = val; controller.toggleBuddyBeeMode(val); },
+                      // onChanged: (val) { controller.isBuddyBeeMode.value = val; controller.toggleBuddyBeeMode(val); },
+                      onChanged: (val) => controller.toggleBuddyBeeMode(val),
                     )),
                   ],
                 ),
@@ -141,7 +142,13 @@ class CaregiverProfileScreen extends GetView<CaregiverProfileController> {
                   if (invCtrl.connections.isEmpty) {
                     // Empty state — dashed add button
                     return GestureDetector(
-                      onTap: invCtrl.showInviteDialog,
+                      onTap: () {
+                        // ✅ Free user = 0 connection, তাই canAddCommunicator(0) = true
+                        // কিন্তু connections.length >= 1 হলে block হবে
+                        if (controller.canAddCommunicator(invCtrl.connections.length)) {
+                          invCtrl.showInviteDialog();
+                        }
+                      },
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
@@ -174,7 +181,11 @@ class CaregiverProfileScreen extends GetView<CaregiverProfileController> {
                         // Last item = Add button
                         if (index == invCtrl.connections.length) {
                           return GestureDetector(
-                            onTap: invCtrl.showInviteDialog,
+                            onTap: () {
+                              if (controller.canAddCommunicator(invCtrl.connections.length)) {
+                                invCtrl.showInviteDialog();
+                              }
+                            },
                             child: Container(
                               width: 80, height: 80,
                               margin: const EdgeInsets.only(right: 12),
