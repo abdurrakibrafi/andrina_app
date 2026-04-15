@@ -10,6 +10,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
 Color _parseColor(String hex, Color fallback) {
   try {
     return Color(int.parse('FF${hex.replaceAll('#', '')}', radix: 16));
@@ -17,6 +19,17 @@ Color _parseColor(String hex, Color fallback) {
     return fallback;
   }
 }
+
+int _crossAxisCount(BuildContext context) {
+  final w = MediaQuery.of(context).size.width;
+  if (w >= 900) return 6;
+  if (w >= 600) return 4;
+  return 3;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  COMMUNICATOR ITEM SCREEN
+// ════════════════════════════════════════════════════════════════════════════
 
 class CommunicatorItemScreen extends GetView<CommunicatorItemController> {
   const CommunicatorItemScreen({super.key});
@@ -36,112 +49,30 @@ class CommunicatorItemScreen extends GetView<CommunicatorItemController> {
         title: Text(
           controller.parentSubCategory.name,
           style: GoogleFonts.nunito(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF1A1A1A)),
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF1A1A1A),
+          ),
         ),
       ),
-      body: Obx(() => Column(
+      body: Column(
         children: [
-          // ── Quick Speak Bar ──────────────────────────────────
-          Padding(
+          // ── Speak Bar ────────────────────────────────────────────────────
+          Obx(() => Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 52,
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                          color: const Color(0xFFE3E3E9)),
-                      boxShadow: [
-                        BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
-                            blurRadius: 7,
-                            offset: const Offset(0, 4)),
-                      ],
-                    ),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        controller.selectedWord.value.isEmpty
-                            ? 'tap_an_item'.tr
-                            : controller.selectedWord.value,
-                        style: GoogleFonts.nunito(
-                          fontSize: 16,
-                          color: controller.selectedWord.value.isEmpty
-                              ? Colors.grey[400]
-                              : Colors.black87,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                GestureDetector(
-                  onTap: controller.speakSelected,
-                  child: Container(
-                    height: 46,
-                    width: 46,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF7BC5D3),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4)),
-                      ],
-                    ),
-                    child: Center(
-                      child: SvgPicture.asset(
-                        ImagesLink.speakIcon,
-                        width: 22,
-                        height: 22,
-                        colorFilter: const ColorFilter.mode(
-                            Colors.white, BlendMode.srcIn),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                GestureDetector(
-                  onTap: controller.clearSelection,
-                  child: Container(
-                    height: 46,
-                    width: 46,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE57373),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4)),
-                      ],
-                    ),
-                    child: Center(
-                      child: SvgPicture.asset(
-                        ImagesLink.cancelIcon,
-                        width: 22,
-                        height: 22,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+            child: _SpeakBar(
+              text: controller.selectedWord.value,
+              hint: 'tap_an_item'.tr,
+              onSpeak: controller.speakSelected,
+              onClear: controller.clearSelection,
             ),
-          ),
+          )),
 
           const SizedBox(height: 14),
 
-          // ── Items Grid ──────────────────────────────────────
+          // ── Items Grid ───────────────────────────────────────────────────
           Expanded(
-            child: controller.items.isEmpty
+            child: Obx(() => controller.items.isEmpty
                 ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -157,58 +88,58 @@ class CommunicatorItemScreen extends GetView<CommunicatorItemController> {
                 ],
               ),
             )
-                : GridView.builder(
-              padding:
-              const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              gridDelegate:
-              const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 0.82,
-              ),
-              itemCount: controller.items.length,
-              itemBuilder: (_, i) {
-                final item = controller.items[i];
-                return Obx(() => _ItemCard(
-                  item: item,
-                  isSelected:
-                  controller.selectedItemId.value ==
-                      item.id,
-                  isPlaying:
-                  controller.playingId.value == item.id,
-                  onTap: () => controller.onItemTap(item),
-                  onPlayAudio: item.speak != null
-                      ? () => controller.playAudio(
-                      item.id, item.speak)
-                      : null,
-                ));
+                : OrientationBuilder(
+              builder: (context, _) {
+                final cols = _crossAxisCount(context);
+                return RefreshIndicator(
+                  onRefresh: controller.refresh,
+                  color: const Color(0xFFFFC857),
+                  child: GridView.builder(
+                    padding:
+                    const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    gridDelegate:
+                    SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: cols,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 0.82,
+                    ),
+                    itemCount: controller.items.length,
+                    itemBuilder: (_, i) {
+                      final item = controller.items[i];
+                      return Obx(() => _ItemCard(
+                        item: item,
+                        isSelected:
+                        controller.selectedItemId.value ==
+                            item.id,
+                        onTap: () =>
+                            controller.onItemTap(item),
+                      ));
+                    },
+                  ),
+                );
               },
-            ),
+            )),
           ),
         ],
-      )),
+      ),
     );
   }
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-//  ITEM CARD — folder shape
+//  ITEM CARD  (folder shape — NO audio icon, tap only)
 // ════════════════════════════════════════════════════════════════════════════
 
 class _ItemCard extends StatelessWidget {
   final CommItemModel item;
   final bool isSelected;
-  final bool isPlaying;
   final VoidCallback onTap;
-  final VoidCallback? onPlayAudio;
 
   const _ItemCard({
     required this.item,
     required this.isSelected,
-    required this.isPlaying,
     required this.onTap,
-    this.onPlayAudio,
   });
 
   @override
@@ -218,115 +149,201 @@ class _ItemCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      child: LayoutBuilder(builder: (context, constraints) {
-        final tabH = constraints.maxHeight * 0.10;
-        final topPad = tabH + 6;
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final tabH = constraints.maxHeight * 0.10;
+          final topPad = tabH + 6;
+          final imgSize = constraints.maxWidth * 0.52;
 
-        return CustomPaint(
-          painter: _FolderPainter(
-            cardColor:
-            isSelected ? bgColor.withOpacity(0.15) : Colors.white,
-            tabColor: bgColor,
-            isSelected: isSelected,
-            selectedBorderColor: bgColor,
-          ),
-          child: Stack(children: [
-            Positioned.fill(
-              top: topPad,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  _CardImage(imageUrl: imageUrl, size: 56, bgColor: bgColor),
-                  const SizedBox(height: 6),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Text(
-                      item.word ?? '',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.nunito(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF1A1A1A),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+          return CustomPaint(
+            painter: _FolderPainter(
+              cardColor:
+              isSelected ? bgColor.withOpacity(0.15) : Colors.white,
+              tabColor: bgColor,
+              isSelected: isSelected,
+              selectedBorderColor: bgColor,
             ),
-            if (item.speak != null)
-              Positioned(
-                bottom: 5,
-                right: 5,
-                child: GestureDetector(
-                  onTap: onPlayAudio,
-                  child: Container(
-                    width: 18,
-                    height: 18,
-                    decoration: BoxDecoration(
-                      color: isPlaying ? Colors.red : bgColor,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      isPlaying ? Icons.stop : Icons.volume_up,
-                      color: Colors.white,
-                      size: 11,
-                    ),
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  top: topPad,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: imgSize,
+                        height: imgSize,
+                        decoration: BoxDecoration(
+                          color: bgColor,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: imageUrl != null && imageUrl.isNotEmpty
+                              ? CachedNetworkImage(
+                            imageUrl: imageUrl,
+                            fit: BoxFit.cover,
+                            errorWidget: (_, __, ___) => Icon(
+                                Icons.image_outlined,
+                                color: Colors.white,
+                                size: imgSize * 0.45),
+                          )
+                              : Icon(Icons.image_outlined,
+                              color: Colors.white,
+                              size: imgSize * 0.45),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Text(
+                          item.word ?? '',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.nunito(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF1A1A1A),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            if (isSelected)
-              Positioned(
-                top: tabH - 8,
-                left: 5,
-                child: Container(
-                  width: 18,
-                  height: 18,
-                  decoration: BoxDecoration(
-                      color: bgColor, shape: BoxShape.circle),
-                  child: const Icon(Icons.check,
-                      color: Colors.white, size: 12),
-                ),
-              ),
-          ]),
-        );
-      }),
-    );
-  }
-}
-
-class _CardImage extends StatelessWidget {
-  final String? imageUrl;
-  final double size;
-  final Color bgColor;
-
-  const _CardImage(
-      {this.imageUrl, required this.size, required this.bgColor});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-          color: bgColor, borderRadius: BorderRadius.circular(10)),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: imageUrl != null && imageUrl!.isNotEmpty
-            ? CachedNetworkImage(
-          imageUrl: imageUrl!,
-          fit: BoxFit.cover,
-          errorWidget: (_, __, ___) => Icon(Icons.image_outlined,
-              color: Colors.white, size: size * 0.45),
-        )
-            : Icon(Icons.image_outlined,
-            color: Colors.white, size: size * 0.45),
+                // Selection check badge
+                if (isSelected)
+                  Positioned(
+                    top: tabH - 8,
+                    left: 5,
+                    child: Container(
+                      width: 18,
+                      height: 18,
+                      decoration: BoxDecoration(
+                          color: bgColor, shape: BoxShape.circle),
+                      child: const Icon(Icons.check,
+                          color: Colors.white, size: 12),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 }
+
+// ════════════════════════════════════════════════════════════════════════════
+//  SHARED — SPEAK BAR
+// ════════════════════════════════════════════════════════════════════════════
+
+class _SpeakBar extends StatelessWidget {
+  final String text;
+  final String hint;
+  final VoidCallback onSpeak;
+  final VoidCallback onClear;
+
+  const _SpeakBar({
+    required this.text,
+    required this.hint,
+    required this.onSpeak,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasText = text.isNotEmpty;
+
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            height: 52,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE3E3E9)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 7,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                hasText ? text : hint,
+                style: GoogleFonts.nunito(
+                  fontSize: 16,
+                  color: hasText ? Colors.black87 : Colors.grey[400],
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        _BarBtn(
+          color: const Color(0xFF7BC5D3),
+          onTap: onSpeak,
+          child: SvgPicture.asset(
+            ImagesLink.speakIcon,
+            width: 22,
+            height: 22,
+            colorFilter:
+            const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+          ),
+        ),
+        const SizedBox(width: 10),
+        _BarBtn(
+          color: const Color(0xFFE57373),
+          onTap: onClear,
+          child: SvgPicture.asset(
+              ImagesLink.cancelIcon, width: 22, height: 22),
+        ),
+      ],
+    );
+  }
+}
+
+class _BarBtn extends StatelessWidget {
+  final Color color;
+  final VoidCallback onTap;
+  final Widget child;
+
+  const _BarBtn(
+      {required this.color, required this.onTap, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 46,
+        width: 46,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 4)),
+          ],
+        ),
+        child: Center(child: child),
+      ),
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  FOLDER PAINTER
+// ════════════════════════════════════════════════════════════════════════════
 
 class _FolderPainter extends CustomPainter {
   final Color cardColor;
@@ -343,42 +360,42 @@ class _FolderPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final radius = 16.0;
-    final topRightRadius = 8.0;
+    const radius = 16.0;
+    const topRightRadius = 8.0;
     final tabWidth = size.width * 0.55;
     final tabHeight = size.height * 0.10;
     final tabSlantWidth = tabHeight * 0.5;
 
-    final path = Path();
-    path.moveTo(0, size.height - radius);
-    path.quadraticBezierTo(0, size.height, radius, size.height);
-    path.lineTo(size.width - radius, size.height);
-    path.quadraticBezierTo(
-        size.width, size.height, size.width, size.height - radius);
-    path.lineTo(size.width, topRightRadius);
-    path.quadraticBezierTo(size.width, 0, size.width - topRightRadius, 0);
-    path.lineTo(tabWidth + tabSlantWidth + radius, 0);
-    path.quadraticBezierTo(tabWidth + tabSlantWidth, 0,
-        tabWidth + tabSlantWidth, radius * 0.3);
-    path.lineTo(tabWidth, tabHeight);
-    path.lineTo(radius, tabHeight);
-    path.quadraticBezierTo(0, tabHeight, 0, tabHeight + radius);
-    path.lineTo(0, size.height - radius);
-    path.close();
+    final path = Path()
+      ..moveTo(0, size.height - radius)
+      ..quadraticBezierTo(0, size.height, radius, size.height)
+      ..lineTo(size.width - radius, size.height)
+      ..quadraticBezierTo(
+          size.width, size.height, size.width, size.height - radius)
+      ..lineTo(size.width, topRightRadius)
+      ..quadraticBezierTo(size.width, 0, size.width - topRightRadius, 0)
+      ..lineTo(tabWidth + tabSlantWidth + radius, 0)
+      ..quadraticBezierTo(tabWidth + tabSlantWidth, 0,
+          tabWidth + tabSlantWidth, radius * 0.3)
+      ..lineTo(tabWidth, tabHeight)
+      ..lineTo(radius, tabHeight)
+      ..quadraticBezierTo(0, tabHeight, 0, tabHeight + radius)
+      ..lineTo(0, size.height - radius)
+      ..close();
 
     canvas.drawShadow(path, Colors.black.withOpacity(0.10), 6.0, false);
     canvas.drawPath(path, Paint()
       ..color = cardColor
       ..style = PaintingStyle.fill);
 
-    final tabPath = Path();
-    tabPath.moveTo(0, 0);
-    tabPath.lineTo(tabWidth + tabSlantWidth + radius, 0);
-    tabPath.quadraticBezierTo(tabWidth + tabSlantWidth, 0,
-        tabWidth + tabSlantWidth, radius * 0.3);
-    tabPath.lineTo(tabWidth, tabHeight);
-    tabPath.lineTo(0, tabHeight);
-    tabPath.close();
+    final tabPath = Path()
+      ..moveTo(0, 0)
+      ..lineTo(tabWidth + tabSlantWidth + radius, 0)
+      ..quadraticBezierTo(tabWidth + tabSlantWidth, 0,
+          tabWidth + tabSlantWidth, radius * 0.3)
+      ..lineTo(tabWidth, tabHeight)
+      ..lineTo(0, tabHeight)
+      ..close();
 
     canvas.save();
     canvas.clipPath(path);
@@ -388,10 +405,12 @@ class _FolderPainter extends CustomPainter {
     canvas.restore();
 
     if (isSelected) {
-      canvas.drawPath(path, Paint()
-        ..color = selectedBorderColor
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.0);
+      canvas.drawPath(
+          path,
+          Paint()
+            ..color = selectedBorderColor
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2.0);
     }
   }
 

@@ -13,6 +13,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
 Color _parseColor(String hex, Color fallback) {
   try {
     return Color(int.parse('FF${hex.replaceAll('#', '')}', radix: 16));
@@ -21,12 +23,18 @@ Color _parseColor(String hex, Color fallback) {
   }
 }
 
+int _crossAxisCount(BuildContext context) {
+  final w = MediaQuery.of(context).size.width;
+  if (w >= 900) return 6;
+  if (w >= 600) return 4;
+  return 3;
+}
+
 class _ExploreItem {
   final String labelKey;
   final IconData icon;
   final Color color;
   final String route;
-
   const _ExploreItem({
     required this.labelKey,
     required this.icon,
@@ -53,8 +61,8 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
 
   @override
   Widget build(BuildContext context) {
-    
     final profileController = Get.put(ProfileController());
+
     return Scaffold(
       backgroundColor: AppColors.bgColor,
       body: SafeArea(
@@ -65,287 +73,213 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
             );
           }
 
-          return RefreshIndicator(
-            onRefresh: controller.refresh,
-            color: const Color(0xFFFFC857),
-            child: CustomScrollView(
-              slivers: [
-                // ── Header ──────────────────────────────────────────────────
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Image.asset(ImagesLink.logo, height: 47),
-                        GestureDetector(
-                          onTap: () => Get.toNamed(AppRoutes.PROFILE),
-                          child: CustomPaint(
-                            size: const Size(48, 48),
-                            painter: DashedCirclePainter(
-                              color: const Color(0xFFB5CFD1),
-                              strokeWidth: 1.0,
-                              dashWidth: 4.0,
-                              dashSpace: 3.1,
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(3.0),
-                              child:
-                              Obx(() => CircleAvatar(
-                                radius: 22,
-                                backgroundColor: Colors.grey.shade200,
-                                backgroundImage: profileController.avatarUrl.value.isNotEmpty
-                                    ? CachedNetworkImageProvider(profileController.avatarUrl.value)
-                                    : null,
-                                child: profileController.avatarUrl.value.isEmpty
-                                    ? const Icon(Icons.person, size: 26, color: Colors.grey)
-                                    : null,
-                              )),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+          return OrientationBuilder(
+            builder: (context, orientation) {
+              final cols = _crossAxisCount(context);
 
-                // ── Quick Speak Action Bar ───────────────────────────────────
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-                    child: Obx(() => Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            height: 52,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                width: 1,
-                                color: const Color(0xFFE3E3E9),
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
-                                  blurRadius: 7,
-                                  offset: const Offset(0, 4),
+              return RefreshIndicator(
+                onRefresh: controller.refresh,
+                color: const Color(0xFFFFC857),
+                child: CustomScrollView(
+                  slivers: [
+                    // ── Header ────────────────────────────────────────────
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Image.asset(ImagesLink.logo, height: 47),
+                            GestureDetector(
+                              onTap: () => Get.toNamed(AppRoutes.PROFILE),
+                              child: CustomPaint(
+                                size: const Size(48, 48),
+                                painter: DashedCirclePainter(
+                                  color: const Color(0xFFB5CFD1),
+                                  strokeWidth: 1.0,
+                                  dashWidth: 4.0,
+                                  dashSpace: 3.1,
                                 ),
-                              ],
-                            ),
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                controller.quickSpeakText.value.isEmpty
-                                    ? 'select_quick_speak_hint'.tr
-                                    : controller.quickSpeakText.value,
-                                style: GoogleFonts.nunito(
-                                  fontSize: 16,
-                                  color: controller
-                                      .quickSpeakText.value.isEmpty
-                                      ? Colors.grey[400]
-                                      : Colors.black87,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(3),
+                                  child: Obx(() => CircleAvatar(
+                                    radius: 22,
+                                    backgroundColor: Colors.grey.shade200,
+                                    backgroundImage: profileController
+                                        .avatarUrl.value.isNotEmpty
+                                        ? CachedNetworkImageProvider(
+                                        profileController.avatarUrl.value)
+                                        : null,
+                                    child: profileController
+                                        .avatarUrl.value.isEmpty
+                                        ? const Icon(Icons.person,
+                                        size: 26, color: Colors.grey)
+                                        : null,
+                                  )),
                                 ),
                               ),
                             ),
-                          ),
+                          ],
                         ),
-                        const SizedBox(width: 10),
-                        GestureDetector(
-                          onTap: controller.speakQuickSpeak,
-                          child: Container(
-                            height: 46,
-                            width: 46,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF7BC5D3),
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                    color: Colors.black.withOpacity(0.08),
-                                    blurRadius: 12,
-                                    offset: const Offset(0, 4)),
-                              ],
-                            ),
-                            child: Center(
-                              child: SvgPicture.asset(
-                                ImagesLink.speakIcon,
-                                width: 22,
-                                height: 22,
-                                colorFilter: const ColorFilter.mode(
-                                    Colors.white, BlendMode.srcIn),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        GestureDetector(
-                          onTap: controller.clearQuickSpeak,
-                          child: Container(
-                            height: 46,
-                            width: 46,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFE57373),
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                    color: Colors.black.withOpacity(0.08),
-                                    blurRadius: 12,
-                                    offset: const Offset(0, 4)),
-                              ],
-                            ),
-                            child: Center(
-                              child: SvgPicture.asset(
-                                ImagesLink.cancelIcon,
-                                width: 22,
-                                height: 22,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    )),
-                  ),
-                ),
-
-                // ── Quick Speak Header ───────────────────────────────────────
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
-                    child: _SectionHeader(title: 'quick_speak'.tr),
-                  ),
-                ),
-
-                // ── Quick Speak Cards ────────────────────────────────────────
-                controller.quickSpeaks.isEmpty
-                    ? SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 4),
-                    child: Text(
-                      'no_quick_speaks_yet'.tr,
-                      style: TextStyle(color: Colors.grey[500]),
-                    ),
-                  ),
-                )
-                    : SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: 130,
-                    child: ListView.builder(
-                      padding:
-                      const EdgeInsets.symmetric(horizontal: 12),
-                      scrollDirection: Axis.horizontal,
-                      itemCount: controller.quickSpeaks.length,
-                      itemBuilder: (_, i) {
-                        final qs = controller.quickSpeaks[i];
-                        return Obx(() => _QsCard(
-                          qs: qs,
-                          isSelected:
-                          controller.selectedQsId.value == qs.id,
-                          isPlaying:
-                          controller.playingId.value == qs.id,
-                          onTap: () =>
-                              controller.onQuickSpeakTap(qs),
-                          onPlayAudio: qs.speak != null
-                              ? () => controller.playAudio(
-                              qs.id, qs.speak)
-                              : null,
-                        ));
-                      },
-                    ),
-                  ),
-                ),
-
-                // ── Tap to Talk Header ───────────────────────────────────────
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
-                    child: _SectionHeader(title: 'tap_to_talk'.tr),
-                  ),
-                ),
-
-                // ── Category Grid ────────────────────────────────────────────
-                controller.categories.isEmpty
-                    ? SliverToBoxAdapter(
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(40),
-                      child: Column(
-                        children: [
-                          Icon(Icons.category_outlined,
-                              size: 60, color: Colors.grey[300]),
-                          const SizedBox(height: 12),
-                          Text(
-                            'no_categories_available'.tr,
-                            style:
-                            TextStyle(color: Colors.grey[500]),
-                          ),
-                        ],
                       ),
                     ),
-                  ),
-                )
-                    : SliverPadding(
-                  padding:
-                  const EdgeInsets.fromLTRB(16, 0, 16, 4),
-                  sliver: SliverGrid(
-                    delegate: SliverChildBuilderDelegate(
-                          (_, i) {
-                        final cat = controller.categories[i];
-                        return Obx(() => _CategoryCard(
-                          category: cat,
-                          isPlaying: controller.playingId.value ==
-                              cat.id,
-                          onTap: () =>
-                              controller.onCategoryTap(cat),
-                          onPlayAudio: cat.speak != null
-                              ? () => controller.playAudio(
-                              cat.id, cat.speak)
-                              : null,
-                        ));
-                      },
-                      childCount: controller.categories.length,
-                    ),
-                    gridDelegate:
-                    const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 0.82,
-                    ),
-                  ),
-                ),
 
-                // ── Explore More Header ──────────────────────────────────────
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
-                    child: _SectionHeader(title: 'explore_more'.tr),
-                  ),
-                ),
-
-                // ── Explore More Cards ───────────────────────────────────────
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-                  sliver: SliverGrid(
-                    delegate: SliverChildBuilderDelegate(
-                          (_, i) => _ExploreCard(item: _exploreItems[i]),
-                      childCount: _exploreItems.length,
+                    // ── Speak Bar ─────────────────────────────────────────
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+                        child: Obx(() => _SpeakBar(
+                          text: controller.quickSpeakText.value,
+                          hint: 'select_quick_speak_hint'.tr,
+                          onSpeak: controller.speakQuickSpeak,
+                          onClear: controller.clearQuickSpeak,
+                        )),
+                      ),
                     ),
-                    gridDelegate:
-                    const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 0.82,
-                    ),
-                  ),
-                ),
 
-                const SliverToBoxAdapter(child: SizedBox(height: 80)),
-              ],
-            ),
+                    // ── Quick Speak ───────────────────────────────────────
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
+                        child: _SectionHeader(title: 'quick_speak'.tr),
+                      ),
+                    ),
+
+                    controller.quickSpeaks.isEmpty
+                        ? SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 4),
+                        child: Text('no_quick_speaks_yet'.tr,
+                            style: TextStyle(color: Colors.grey[500])),
+                      ),
+                    )
+                        : SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                      sliver: SliverGrid(
+                        delegate: SliverChildBuilderDelegate(
+                              (_, i) {
+                            final qs = controller.quickSpeaks[i];
+                            return Obx(() => _CommCard(
+                              imageUrl: AppUrl.mediaUrl(qs.imageIcon),
+                              label: qs.word ?? '',
+                              bgColor: _parseColor(
+                                  qs.color, const Color(0xFFFFD700)),
+                              isSelected: controller.selectedQsId.value ==
+                                  qs.id,
+                              showCheck: false,
+                              onTap: () =>
+                                  controller.onQuickSpeakTap(qs),
+                            ));
+                          },
+                          childCount: controller.quickSpeaks.length,
+                        ),
+                        gridDelegate:
+                        SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: cols,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.82,
+                        ),
+                      ),
+                    ),
+
+                    // ── Tap to Talk ───────────────────────────────────────
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
+                        child: _SectionHeader(title: 'tap_to_talk'.tr),
+                      ),
+                    ),
+
+                    controller.categories.isEmpty
+                        ? SliverToBoxAdapter(
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(40),
+                          child: Column(
+                            children: [
+                              Icon(Icons.category_outlined,
+                                  size: 60, color: Colors.grey[300]),
+                              const SizedBox(height: 12),
+                              Text('no_categories_available'.tr,
+                                  style: TextStyle(
+                                      color: Colors.grey[500])),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                        : SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                      sliver: SliverGrid(
+                        delegate: SliverChildBuilderDelegate(
+                              (_, i) {
+                            final cat = controller.categories[i];
+                            return _CommCard(
+                              imageUrl: AppUrl.mediaUrl(cat.imageIcon),
+                              label: cat.name,
+                              subLabel: cat.subCategoriesCount > 0
+                                  ? '${cat.subCategoriesCount} ${'sub_count_suffix'.tr}'
+                                  : null,
+                              bgColor: _parseColor(
+                                  cat.color, const Color(0xFFB5CFD1)),
+                              isSelected: false,
+                              showCheck: false,
+                              onTap: () => controller.onCategoryTap(cat),
+                            );
+                          },
+                          childCount: controller.categories.length,
+                        ),
+                        gridDelegate:
+                        SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: cols,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.82,
+                        ),
+                      ),
+                    ),
+
+                    // ── Explore More ──────────────────────────────────────
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 24, 16, 10),
+                        child: _SectionHeader(title: 'explore_more'.tr),
+                      ),
+                    ),
+
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                      sliver: SliverGrid(
+                        delegate: SliverChildBuilderDelegate(
+                              (_, i) {
+                            final item = _exploreItems[i];
+                            return _CommCard(
+                              label: item.labelKey.tr,
+                              bgColor: item.color,
+                              icon: item.icon,
+                              isSelected: false,
+                              showCheck: false,
+                              onTap: () => Get.toNamed(item.route),
+                            );
+                          },
+                          childCount: _exploreItems.length,
+                        ),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: cols,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.82,
+                        ),
+                      ),
+                    ),
+
+                    const SliverToBoxAdapter(child: SizedBox(height: 80)),
+                  ],
+                ),
+              );
+            },
           );
         }),
       ),
@@ -354,62 +288,230 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-//  EXPLORE MORE CARD
+//  SHARED — SPEAK BAR
 // ════════════════════════════════════════════════════════════════════════════
 
-class _ExploreCard extends StatelessWidget {
-  final _ExploreItem item;
-  const _ExploreCard({required this.item});
+class _SpeakBar extends StatelessWidget {
+  final String text;
+  final String hint;
+  final VoidCallback onSpeak;
+  final VoidCallback onClear;
+
+  const _SpeakBar({
+    required this.text,
+    required this.hint,
+    required this.onSpeak,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasText = text.isNotEmpty;
+
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            height: 52,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE3E3E9)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 7,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                hasText ? text : hint,
+                style: GoogleFonts.nunito(
+                  fontSize: 16,
+                  color: hasText ? Colors.black87 : Colors.grey[400],
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        _BarBtn(
+          color: const Color(0xFF7BC5D3),
+          onTap: onSpeak,
+          child: SvgPicture.asset(
+            ImagesLink.speakIcon,
+            width: 22,
+            height: 22,
+            colorFilter:
+            const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+          ),
+        ),
+        const SizedBox(width: 10),
+        _BarBtn(
+          color: const Color(0xFFE57373),
+          onTap: onClear,
+          child: SvgPicture.asset(ImagesLink.cancelIcon, width: 22, height: 22),
+        ),
+      ],
+    );
+  }
+}
+
+class _BarBtn extends StatelessWidget {
+  final Color color;
+  final VoidCallback onTap;
+  final Widget child;
+
+  const _BarBtn({required this.color, required this.onTap, required this.child});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => Get.toNamed(item.route),
-      child: LayoutBuilder(builder: (context, constraints) {
-        final tabH = constraints.maxHeight * 0.10;
-        final topPad = tabH + 6;
+      onTap: onTap,
+      child: Container(
+        height: 46,
+        width: 46,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 4)),
+          ],
+        ),
+        child: Center(child: child),
+      ),
+    );
+  }
+}
 
-        return CustomPaint(
-          painter: _FolderPainter(cardColor: Colors.white, tabColor: item.color),
-          child: Stack(
-            children: [
-              Positioned.fill(
-                top: topPad,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: item.color.withOpacity(0.25),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(item.icon, color: item.color.darken(30), size: 30),
-                    ),
-                    const SizedBox(height: 6),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Text(
-                        item.labelKey.tr,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.nunito(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF1A1A1A),
+// ════════════════════════════════════════════════════════════════════════════
+//  SHARED — UNIFORM COMM CARD  (folder shape, no audio icon)
+// ════════════════════════════════════════════════════════════════════════════
+
+class _CommCard extends StatelessWidget {
+  final String? imageUrl;
+  final String label;
+  final String? subLabel;
+  final Color bgColor;
+  final IconData? icon; // fallback when no imageUrl
+  final bool isSelected;
+  final bool showCheck;
+  final VoidCallback onTap;
+
+  const _CommCard({
+    this.imageUrl,
+    required this.label,
+    this.subLabel,
+    required this.bgColor,
+    this.icon,
+    required this.isSelected,
+    required this.showCheck,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final tabH = constraints.maxHeight * 0.10;
+          final topPad = tabH + 6;
+          final imgSize = constraints.maxWidth * 0.52;
+
+          return CustomPaint(
+            painter: _FolderPainter(
+              cardColor: isSelected ? bgColor.withOpacity(0.15) : Colors.white,
+              tabColor: bgColor,
+              isSelected: isSelected,
+              selectedBorderColor: bgColor,
+            ),
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  top: topPad,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Image / Icon box
+                      Container(
+                        width: imgSize,
+                        height: imgSize,
+                        decoration: BoxDecoration(
+                          color: bgColor,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: imageUrl != null && imageUrl!.isNotEmpty
+                              ? CachedNetworkImage(
+                            imageUrl: imageUrl!,
+                            fit: BoxFit.cover,
+                            errorWidget: (_, __, ___) => Icon(
+                                Icons.image_outlined,
+                                color: Colors.white,
+                                size: imgSize * 0.45),
+                          )
+                              : Icon(
+                            icon ?? Icons.image_outlined,
+                            color: icon != null
+                                ? bgColor._darken(30)
+                                : Colors.white,
+                            size: imgSize * 0.50,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 6),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Text(
+                          label,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.nunito(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF1A1A1A),
+                          ),
+                        ),
+                      ),
+                      if (subLabel != null)
+                        Text(
+                          subLabel!,
+                          style: TextStyle(
+                              fontSize: 9, color: Colors.grey[400]),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        );
-      }),
+                // Selection check badge
+                if (isSelected && showCheck)
+                  Positioned(
+                    top: tabH - 8,
+                    left: 5,
+                    child: Container(
+                      width: 18,
+                      height: 18,
+                      decoration: BoxDecoration(
+                          color: bgColor, shape: BoxShape.circle),
+                      child: const Icon(Icons.check,
+                          color: Colors.white, size: 12),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }
@@ -449,234 +551,11 @@ class _SectionHeader extends StatelessWidget {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-//  QUICK SPEAK CARD
-// ════════════════════════════════════════════════════════════════════════════
-
-class _QsCard extends StatelessWidget {
-  final CommQuickSpeakModel qs;
-  final bool isSelected;
-  final bool isPlaying;
-  final VoidCallback onTap;
-  final VoidCallback? onPlayAudio;
-
-  const _QsCard({
-    required this.qs,
-    required this.isSelected,
-    required this.isPlaying,
-    required this.onTap,
-    this.onPlayAudio,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final imageUrl = AppUrl.mediaUrl(qs.imageIcon);
-    final bgColor = _parseColor(qs.color, const Color(0xFFFFD700));
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
-        child: SizedBox(
-          width: 90,
-          child: LayoutBuilder(builder: (context, constraints) {
-            final tabH = constraints.maxHeight * 0.10;
-            final topPad = tabH + 8;
-
-            return CustomPaint(
-              painter: _FolderPainter(
-                cardColor: isSelected ? bgColor.withOpacity(0.15) : Colors.white,
-                tabColor: bgColor,
-                isSelected: isSelected,
-                selectedBorderColor: bgColor,
-              ),
-              child: Stack(children: [
-                Positioned.fill(
-                  top: topPad,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      _CardImage(imageUrl: imageUrl, size: 50, bgColor: bgColor),
-                      const SizedBox(height: 5),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Text(
-                          qs.word ?? '',
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF1A1A1A),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (qs.speak != null)
-                  Positioned(
-                    bottom: 5,
-                    right: 5,
-                    child: GestureDetector(
-                      onTap: onPlayAudio,
-                      child: Container(
-                        width: 16,
-                        height: 16,
-                        decoration: BoxDecoration(
-                          color: isPlaying ? Colors.red : bgColor,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          isPlaying ? Icons.stop : Icons.volume_up,
-                          color: Colors.white,
-                          size: 10,
-                        ),
-                      ),
-                    ),
-                  ),
-              ]),
-            );
-          }),
-        ),
-      ),
-    );
-  }
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-//  CATEGORY CARD
-// ════════════════════════════════════════════════════════════════════════════
-
-class _CategoryCard extends StatelessWidget {
-  final CommCategoryModel category;
-  final bool isPlaying;
-  final VoidCallback onTap;
-  final VoidCallback? onPlayAudio;
-
-  const _CategoryCard({
-    required this.category,
-    required this.isPlaying,
-    required this.onTap,
-    this.onPlayAudio,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final imageUrl = AppUrl.mediaUrl(category.imageIcon);
-    final bgColor = _parseColor(category.color, const Color(0xFFB5CFD1));
-
-    return GestureDetector(
-      onTap: onTap,
-      child: LayoutBuilder(builder: (context, constraints) {
-        final tabH = constraints.maxHeight * 0.10;
-        final topPad = tabH + 6;
-
-        return CustomPaint(
-          painter: _FolderPainter(cardColor: Colors.white, tabColor: bgColor),
-          child: Stack(children: [
-            Positioned.fill(
-              top: topPad,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  _CardImage(imageUrl: imageUrl, size: 56, bgColor: bgColor),
-                  const SizedBox(height: 6),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Text(
-                      category.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.nunito(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF1A1A1A),
-                      ),
-                    ),
-                  ),
-                  if (category.subCategoriesCount > 0)
-                    Text(
-                      '${category.subCategoriesCount} ${'sub_count_suffix'.tr}',
-                      style:
-                      TextStyle(fontSize: 9, color: Colors.grey[400]),
-                    ),
-                ],
-              ),
-            ),
-            if (category.speak != null)
-              Positioned(
-                top: tabH - 8,
-                right: 5,
-                child: GestureDetector(
-                  onTap: onPlayAudio,
-                  child: Container(
-                    width: 22,
-                    height: 22,
-                    decoration: BoxDecoration(
-                      color: isPlaying ? Colors.red : bgColor,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      isPlaying ? Icons.stop : Icons.volume_up,
-                      color: Colors.white,
-                      size: 12,
-                    ),
-                  ),
-                ),
-              ),
-          ]),
-        );
-      }),
-    );
-  }
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-//  SHARED WIDGETS
-// ════════════════════════════════════════════════════════════════════════════
-
-class _CardImage extends StatelessWidget {
-  final String? imageUrl;
-  final double size;
-  final Color bgColor;
-
-  const _CardImage({this.imageUrl, required this.size, required this.bgColor});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: imageUrl != null && imageUrl!.isNotEmpty
-            ? CachedNetworkImage(
-          imageUrl: imageUrl!,
-          fit: BoxFit.cover,
-          errorWidget: (_, __, ___) => Icon(Icons.image_outlined,
-              color: Colors.white, size: size * 0.45),
-        )
-            : Icon(Icons.image_outlined,
-            color: Colors.white, size: size * 0.45),
-      ),
-    );
-  }
-}
-
-// ════════════════════════════════════════════════════════════════════════════
 //  COLOR EXTENSION
 // ════════════════════════════════════════════════════════════════════════════
 
 extension _ColorX on Color {
-  Color darken(int percent) {
+  Color _darken(int percent) {
     final f = 1 - percent / 100;
     return Color.fromARGB(
       alpha,
@@ -712,36 +591,36 @@ class _FolderPainter extends CustomPainter {
     final tabHeight = size.height * 0.10;
     final tabSlantWidth = tabHeight * 0.5;
 
-    final path = Path();
-    path.moveTo(0, size.height - radius);
-    path.quadraticBezierTo(0, size.height, radius, size.height);
-    path.lineTo(size.width - radius, size.height);
-    path.quadraticBezierTo(
-        size.width, size.height, size.width, size.height - radius);
-    path.lineTo(size.width, topRightRadius);
-    path.quadraticBezierTo(size.width, 0, size.width - topRightRadius, 0);
-    path.lineTo(tabWidth + tabSlantWidth + radius, 0);
-    path.quadraticBezierTo(tabWidth + tabSlantWidth, 0,
-        tabWidth + tabSlantWidth, radius * 0.3);
-    path.lineTo(tabWidth, tabHeight);
-    path.lineTo(radius, tabHeight);
-    path.quadraticBezierTo(0, tabHeight, 0, tabHeight + radius);
-    path.lineTo(0, size.height - radius);
-    path.close();
+    final path = Path()
+      ..moveTo(0, size.height - radius)
+      ..quadraticBezierTo(0, size.height, radius, size.height)
+      ..lineTo(size.width - radius, size.height)
+      ..quadraticBezierTo(
+          size.width, size.height, size.width, size.height - radius)
+      ..lineTo(size.width, topRightRadius)
+      ..quadraticBezierTo(size.width, 0, size.width - topRightRadius, 0)
+      ..lineTo(tabWidth + tabSlantWidth + radius, 0)
+      ..quadraticBezierTo(tabWidth + tabSlantWidth, 0,
+          tabWidth + tabSlantWidth, radius * 0.3)
+      ..lineTo(tabWidth, tabHeight)
+      ..lineTo(radius, tabHeight)
+      ..quadraticBezierTo(0, tabHeight, 0, tabHeight + radius)
+      ..lineTo(0, size.height - radius)
+      ..close();
 
     canvas.drawShadow(path, Colors.black.withOpacity(0.10), 6.0, false);
     canvas.drawPath(path, Paint()
       ..color = cardColor
       ..style = PaintingStyle.fill);
 
-    final tabPath = Path();
-    tabPath.moveTo(0, 0);
-    tabPath.lineTo(tabWidth + tabSlantWidth + radius, 0);
-    tabPath.quadraticBezierTo(tabWidth + tabSlantWidth, 0,
-        tabWidth + tabSlantWidth, radius * 0.3);
-    tabPath.lineTo(tabWidth, tabHeight);
-    tabPath.lineTo(0, tabHeight);
-    tabPath.close();
+    final tabPath = Path()
+      ..moveTo(0, 0)
+      ..lineTo(tabWidth + tabSlantWidth + radius, 0)
+      ..quadraticBezierTo(tabWidth + tabSlantWidth, 0,
+          tabWidth + tabSlantWidth, radius * 0.3)
+      ..lineTo(tabWidth, tabHeight)
+      ..lineTo(0, tabHeight)
+      ..close();
 
     canvas.save();
     canvas.clipPath(path);
@@ -751,10 +630,12 @@ class _FolderPainter extends CustomPainter {
     canvas.restore();
 
     if (isSelected) {
-      canvas.drawPath(path, Paint()
-        ..color = selectedBorderColor
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.0);
+      canvas.drawPath(
+          path,
+          Paint()
+            ..color = selectedBorderColor
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2.0);
     }
   }
 
@@ -808,9 +689,9 @@ class DashedCirclePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(DashedCirclePainter oldDelegate) =>
-      oldDelegate.color != color ||
-          oldDelegate.strokeWidth != strokeWidth ||
-          oldDelegate.dashWidth != dashWidth ||
-          oldDelegate.dashSpace != dashSpace;
+  bool shouldRepaint(DashedCirclePainter old) =>
+      old.color != color ||
+          old.strokeWidth != strokeWidth ||
+          old.dashWidth != dashWidth ||
+          old.dashSpace != dashSpace;
 }
