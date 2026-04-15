@@ -60,6 +60,8 @@ class LanguageSelector extends StatelessWidget {
               title: Text(lang['name']!),
               trailing: isSelected
                   ? const Icon(Icons.check_circle, color: Colors.purple)
+                  : (!controller.isPro && lang['code'] != 'en')
+                  ? const Icon(Icons.lock, color: Colors.grey)
                   : null,
               tileColor: isSelected ? Colors.purple.withOpacity(0.1) : null,
               onTap: () {
