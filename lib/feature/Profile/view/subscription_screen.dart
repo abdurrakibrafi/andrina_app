@@ -1,5 +1,6 @@
 import 'package:chatter_bee/config/app_colors.dart';
 import 'package:chatter_bee/config/imagesUrl.dart';
+import 'package:chatter_bee/feature/Profile/controller/pro_status_controller.dart';
 import 'package:chatter_bee/feature/Profile/controller/subscription_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -50,7 +51,7 @@ class SubscriptionScreen extends GetView<SubscriptionController> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // ── Already Pro Banner ─────────────────
-                    if (controller.isProUser.value)
+                    if (ProStatusController.to.isProUser.value)
                       Container(
                         margin: const EdgeInsets.only(bottom: 16),
                         padding: const EdgeInsets.symmetric(
@@ -95,6 +96,70 @@ class SubscriptionScreen extends GetView<SubscriptionController> {
                           fontSize: 14, color: Colors.black, height: 1.5),
                     ),
                     const SizedBox(height: 24),
+
+                    // ── Free Plan (non-selectable) ─────────────
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey.shade300, width: 1),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              // Container(
+                              //   width: 20,
+                              //   height: 20,
+                              //   decoration: BoxDecoration(
+                              //     shape: BoxShape.circle,
+                              //     border: Border.all(color: Colors.grey.shade400, width: 2),
+                              //   ),
+                              // ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Free Plan',
+                                  style: GoogleFonts.nunito(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.grey.shade600),
+                                ),
+                              ),
+                              Text(
+                                '\$0',
+                                style: GoogleFonts.nunito(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.grey.shade600),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          // Limitations list
+                          ...[
+                            'free_feature_1'.tr,
+                            'free_feature_2'.tr,
+                            'free_feature_3'.tr,
+                            'free_feature_4'.tr,
+                          ].map(
+                                (f) => Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Text(
+                                f,
+                                style: GoogleFonts.nunito(
+                                    fontSize: 13,
+                                    color: Colors.grey.shade500,
+                                    height: 1.4),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
 
                     // ── Monthly Plan ───────────────────────
                     _buildPlanCard(
@@ -180,7 +245,7 @@ class SubscriptionScreen extends GetView<SubscriptionController> {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: controller.isProUser.value
+                  onPressed: ProStatusController.to.isProUser.value
                       ? null
                       : controller.onContinuePressed,
                   style: ElevatedButton.styleFrom(

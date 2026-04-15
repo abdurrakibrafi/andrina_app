@@ -11,7 +11,7 @@ class LanguageController extends GetxController {
 
   final List<Map<String, String>> supportedLanguages = [
     {'name': 'English',  'code': 'en', 'country': 'US', 'flag': '🇺🇸'},
-    {'name': 'العربية',  'code': 'ar', 'country': 'SA', 'flag': '🇸🇦'},
+   // {'name': 'العربية',  'code': 'ar', 'country': 'SA', 'flag': '🇸🇦'},
     {'name': 'Español',  'code': 'es', 'country': 'ES', 'flag': '🇪🇸'},
   ];
 

@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 class RevenueCatService {
-  static const String _entitlementId = 'ChatterBee_Pro';
+  static const String _entitlementId = 'ChaterBee_Pro';
 
   RevenueCatService._();
   static final RevenueCatService instance = RevenueCatService._();

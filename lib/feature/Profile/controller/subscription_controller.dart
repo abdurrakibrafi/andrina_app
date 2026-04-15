@@ -1,4 +1,5 @@
 import 'package:chatter_bee/config/app_colors.dart';
+import 'package:chatter_bee/feature/Profile/controller/pro_status_controller.dart';
 import 'package:chatter_bee/services/revenueCat_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -9,7 +10,10 @@ class SubscriptionController extends GetxController {
   // ── State ──────────────────────────────────────────────────
   final selectedPlan = 'monthly'.obs;
   final isLoading    = false.obs;
-  final isProUser    = false.obs;
+
+  // ❌ নিজের isProUser সরিয়ে দাও
+  // ✅ সরাসরি global controller থেকে পড়ো
+  bool get isProUser => ProStatusController.to.isProUser.value;
 
   Package? _monthlyPackage;
   Package? _annuallyPackage;
@@ -23,20 +27,20 @@ class SubscriptionController extends GetxController {
 
   // ── Trial text getters ─────────────────────────────────────
   String get monthlyTrialText {
-    final days = _monthlyPackage
-        ?.storeProduct.introductoryPrice?.periodNumberOfUnits;
+    final days =
+        _monthlyPackage?.storeProduct.introductoryPrice?.periodNumberOfUnits;
     return days != null ? '$days-day free trial' : '3-day free trial';
   }
 
   String get annuallyTrialText {
-    final days = _annuallyPackage
-        ?.storeProduct.introductoryPrice?.periodNumberOfUnits;
-    return days != null ? '$days-day free trial' : '7-day free trial';
+    final days =
+        _annuallyPackage?.storeProduct.introductoryPrice?.periodNumberOfUnits;
+    return days != null ? '$days-week free trial' : '1-week free trial';
   }
 
   // ── Button text ────────────────────────────────────────────
   String get continueButtonText {
-    if (isProUser.value) return 'Already Subscribed';
+    if (isProUser) return 'Already Subscribed';
     return selectedPlan.value == 'monthly'
         ? 'Start $monthlyTrialText'
         : 'Start $annuallyTrialText';
@@ -54,7 +58,7 @@ class SubscriptionController extends GetxController {
   void onInit() {
     super.onInit();
     _loadOfferings();
-    _checkProStatus();
+    // ❌ _checkProStatus() সরিয়ে দাও — ProStatusController এটা handle করে
   }
 
   Future<void> _loadOfferings() async {
@@ -63,19 +67,18 @@ class SubscriptionController extends GetxController {
       final list = await RevenueCatService.instance.getOfferings();
 
       for (final pkg in list) {
-        // ✅ packageType দিয়ে match — $rc_monthly/$rc_annual এর সাথে কাজ করে
         if (pkg.packageType == PackageType.monthly) {
           _monthlyPackage = pkg;
-          debugPrint('[RC] ✅ Monthly found: ${pkg.storeProduct.priceString}');
+          debugPrint('[RC] ✅ Monthly: ${pkg.storeProduct.priceString}');
         }
         if (pkg.packageType == PackageType.annual) {
           _annuallyPackage = pkg;
-          debugPrint('[RC] ✅ Annual found: ${pkg.storeProduct.priceString}');
+          debugPrint('[RC] ✅ Annual: ${pkg.storeProduct.priceString}');
         }
       }
 
       if (_monthlyPackage == null && _annuallyPackage == null) {
-        debugPrint('[RC] ⚠️ No packages found! Check RevenueCat dashboard.');
+        debugPrint('[RC] ⚠️ No packages found!');
       }
     } catch (e) {
       debugPrint('[RC] _loadOfferings error: $e');
@@ -84,22 +87,18 @@ class SubscriptionController extends GetxController {
     }
   }
 
-  Future<void> _checkProStatus() async {
-    isProUser.value = await RevenueCatService.instance.isProUser();
-  }
-
   // ── Continue ───────────────────────────────────────────────
   void onContinuePressed() {
-    if (isProUser.value) {
+    if (isProUser) {
       Get.snackbar('Already Pro 🐝', 'You have an active subscription.',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
       return;
     }
 
     final pkg = selectedPackage;
     if (pkg == null) {
       Get.snackbar('Error', 'Product not found. Please try again.',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
       return;
     }
 
@@ -111,11 +110,12 @@ class SubscriptionController extends GetxController {
     try {
       final success = await RevenueCatService.instance.purchase(package);
       if (success) {
-        isProUser.value = true;
+        // ✅ শুধু global controller update করো — local isProUser নেই
+        ProStatusController.to.isProUser.value = true;
         _showSuccessSheet();
       } else {
         Get.snackbar('Cancelled', 'Purchase was cancelled.',
-            snackPosition: SnackPosition.BOTTOM);
+            snackPosition: SnackPosition.TOP);
       }
     } finally {
       isLoading.value = false;
@@ -128,13 +128,14 @@ class SubscriptionController extends GetxController {
     try {
       final restored = await RevenueCatService.instance.restorePurchases();
       if (restored) {
-        isProUser.value = true;
+        // ✅ শুধু global controller update করো
+        ProStatusController.to.isProUser.value = true;
         Get.snackbar('Restored! 🐝', 'Your subscription has been restored.',
-            snackPosition: SnackPosition.BOTTOM,
+            snackPosition: SnackPosition.TOP,
             backgroundColor: Colors.green.shade100);
       } else {
         Get.snackbar('Not found', 'No active subscription to restore.',
-            snackPosition: SnackPosition.BOTTOM);
+            snackPosition: SnackPosition.TOP);
       }
     } finally {
       isLoading.value = false;
@@ -169,21 +170,17 @@ class SubscriptionController extends GetxController {
                   ),
                 ),
                 const SizedBox(height: 20),
-                Text(
-                  'payment_success'.tr,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.nunito(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black),
-                ),
+                Text('payment_success'.tr,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.nunito(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black)),
                 const SizedBox(height: 10),
-                Text(
-                  'payment_success_desc'.tr,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.nunito(
-                      fontSize: 14, color: Colors.grey[600], height: 1.5),
-                ),
+                Text('payment_success_desc'.tr,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.nunito(
+                        fontSize: 14, color: Colors.grey[600], height: 1.5)),
                 const SizedBox(height: 28),
                 SizedBox(
                   width: double.infinity,
@@ -200,11 +197,9 @@ class SubscriptionController extends GetxController {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: Text(
-                      'done'.tr,
-                      style: GoogleFonts.nunito(
-                          fontSize: 16, fontWeight: FontWeight.w700),
-                    ),
+                    child: Text('done'.tr,
+                        style: GoogleFonts.nunito(
+                            fontSize: 16, fontWeight: FontWeight.w700)),
                   ),
                 ),
               ],

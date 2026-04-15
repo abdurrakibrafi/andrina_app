@@ -6,6 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'app/my_app.dart';
+import 'feature/Profile/controller/pro_status_controller.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -33,6 +34,9 @@ void main() async {
     print('💰 Step 5: RevenueCat init...');
     await RevenueCatService.instance.init();
     print('✅ Step 5: RevenueCat done');
+
+    // ✅ permanent: true → app বন্ধ না হওয়া পর্যন্ত alive থাকবে
+    Get.put(ProStatusController(), permanent: true);
 
     print('✅ App initialized successfully');
     runApp(const MyApp());
