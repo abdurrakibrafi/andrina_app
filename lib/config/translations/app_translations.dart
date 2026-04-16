@@ -272,6 +272,10 @@ class AppTranslations extends Translations {
       'select_first': 'Select first',
       'tap_quick_speak_first': 'Please tap a Quick Speak card first',
       'speak': 'Speak',
+
+      'see_all'            : 'See All',
+      'search_categories'  : 'Search categories...',
+      'no_results_found'   : 'No results found'
     },
 
     'ar_SA': {

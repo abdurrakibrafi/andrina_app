@@ -67,6 +67,9 @@ import 'package:chatter_bee/feature/home_screen/caregiver/view/caregiver_sub_cat
 import 'package:chatter_bee/feature/home_screen/communicator/buinding/communicator_home_binding.dart';
 import 'package:chatter_bee/feature/home_screen/communicator/buinding/communicator_item_binding.dart';
 import 'package:chatter_bee/feature/home_screen/communicator/buinding/communicator_sub_category_binding.dart';
+import 'package:chatter_bee/feature/home_screen/communicator/contoller/communicator_home_controller.dart';
+import 'package:chatter_bee/feature/home_screen/communicator/view/communicator_all_categories_screen.dart';
+import 'package:chatter_bee/feature/home_screen/communicator/view/communicator_all_quick_speaks_screen.dart';
 import 'package:chatter_bee/feature/home_screen/communicator/view/communicator_home_screen.dart';
 import 'package:chatter_bee/feature/home_screen/communicator/view/communicator_item_screen.dart';
 import 'package:chatter_bee/feature/home_screen/communicator/view/communicator_sub_category_screen.dart';
@@ -306,6 +309,30 @@ final List<GetPage> routes = [
     page: () => const EditActivityScreen(),
     binding: EditActivityBuinding(),
   ),
+
+
+  GetPage(
+  name: AppRoutes.COMMUNICATOR_ALL_QUICK_SPEAKS,
+  page: () => const CommunicatorAllQuickSpeaksScreen(),
+  // NOTE: CommunicatorHomeController ইতিমধ্যে registered থাকবে
+  //       (home screen থেকে navigate হয়), তাই আলাদা binding লাগবে না।
+  //       তবে যদি deep-link দরকার হয় তাহলে নিচের binding দাও:
+  binding: BindingsBuilder(() {
+    if (!Get.isRegistered<CommunicatorHomeController>()) {
+      Get.put(CommunicatorHomeController());
+    }
+  }),
+),
+
+GetPage(
+  name: AppRoutes.COMMUNICATOR_ALL_CATEGORIES,
+  page: () => const CommunicatorAllCategoriesScreen(),
+  binding: BindingsBuilder(() {
+    if (!Get.isRegistered<CommunicatorHomeController>()) {
+      Get.put(CommunicatorHomeController());
+    }
+  }),
+),
 ];
 
 class AppRoutes {
@@ -360,4 +387,8 @@ class AppRoutes {
   //===============Communicator Routes===============
   static const String COMMUNICATOR_SUB_CATEGORY = '/communicator-sub-category';
   static const String COMMUNICATOR_ITEM = '/communicator-item';
+
+
+  static const COMMUNICATOR_ALL_QUICK_SPEAKS = '/communicator-all-quick-speaks';
+  static const COMMUNICATOR_ALL_CATEGORIES   = '/communicator-all-categories';
 }
