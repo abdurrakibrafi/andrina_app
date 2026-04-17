@@ -99,7 +99,7 @@ class AuthRepository {
   // ==================== RESEND OTP ====================
   Future<ApiResponse<Map<String, dynamic>>> resendOtp({required String email}) async {
     try {
-      final response = await _apiClient.post<Map<String, dynamic>>(AppUrl.resendOtp, data: {'email': email});
+      final response = await _apiClient.post<Map<String, dynamic>>(AppUrl.resendOtp, data: {'email': email, "purpose": "verification"});
       if (response.isSuccess) {
         return ApiResponse.success(data: response.data ?? {}, statusCode: response.statusCode, message: response.message);
       }
