@@ -62,6 +62,9 @@ import 'package:chatter_bee/feature/communicator/sub_category/meals/meals_screen
 import 'package:chatter_bee/feature/communicator/sub_category/snacks/snacks_binding.dart';
 import 'package:chatter_bee/feature/communicator/sub_category/snacks/snacks_screen.dart';
 import 'package:chatter_bee/feature/home_screen/caregiver/buinding/caregiver_item_buinding.dart';
+import 'package:chatter_bee/feature/home_screen/caregiver/controller/caregiver_home_controller.dart';
+import 'package:chatter_bee/feature/home_screen/caregiver/view/caregiver_all_categories_screen.dart';
+import 'package:chatter_bee/feature/home_screen/caregiver/view/caregiver_all_quick_speaks_screen.dart';
 import 'package:chatter_bee/feature/home_screen/caregiver/view/caregiver_item_screen.dart';
 import 'package:chatter_bee/feature/home_screen/caregiver/view/caregiver_sub_catagory_screen.dart';
 import 'package:chatter_bee/feature/home_screen/communicator/buinding/communicator_home_binding.dart';
@@ -333,6 +336,28 @@ GetPage(
     }
   }),
 ),
+
+
+  GetPage(
+  name: AppRoutes.CAREGIVER_ALL_QUICK_SPEAKS,
+  page: () => const CaregiverAllQuickSpeaksScreen(),
+  // CaregiverHomeController already registered from home screen
+  binding: BindingsBuilder(() {
+    if (!Get.isRegistered<CaregiverHomeController>()) {
+      Get.lazyPut(() => CaregiverHomeController());
+    }
+  }),
+),
+
+GetPage(
+  name: AppRoutes.CAREGIVER_ALL_CATEGORIES,
+  page: () => const CaregiverAllCategoriesScreen(),
+  binding: BindingsBuilder(() {
+    if (!Get.isRegistered<CaregiverHomeController>()) {
+      Get.lazyPut(() => CaregiverHomeController());
+    }
+  }),
+),
 ];
 
 class AppRoutes {
@@ -391,4 +416,8 @@ class AppRoutes {
 
   static const COMMUNICATOR_ALL_QUICK_SPEAKS = '/communicator-all-quick-speaks';
   static const COMMUNICATOR_ALL_CATEGORIES   = '/communicator-all-categories';
+
+  static const CAREGIVER_ALL_QUICK_SPEAKS = '/caregiver-all-quick-speaks';
+  static const CAREGIVER_ALL_CATEGORIES   = '/caregiver-all-categories';
+
 }

@@ -9,15 +9,32 @@ import 'package:chatter_bee/models/caregiver_models/caregiver_content_model.dart
 import 'package:chatter_bee/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-import '../../communicator/view/communicator_home_screen.dart';
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+Color _parseColor(String hex, Color fallback) {
+  try {
+    return Color(int.parse('FF${hex.replaceAll('#', '')}', radix: 16));
+  } catch (_) {
+    return fallback;
+  }
+}
+
+int _crossAxisCount(BuildContext context) {
+  final w = MediaQuery.of(context).size.width;
+  if (w >= 900) return 6;
+  if (w >= 600) return 4;
+  return 3;
+}
+
+const int _kMaxHome = 8;
 
 class _ExploreItem {
-  final String labelKey; // translation key
+  final String labelKey;
   final IconData icon;
   final Color color;
   final String route;
-
   const _ExploreItem({
     required this.labelKey,
     required this.icon,
@@ -25,6 +42,10 @@ class _ExploreItem {
     required this.route,
   });
 }
+
+// ════════════════════════════════════════════════════════════════════════════
+//  CAREGIVER HOME SCREEN
+// ════════════════════════════════════════════════════════════════════════════
 
 class CaregiverHomeScreen extends StatelessWidget {
   const CaregiverHomeScreen({super.key});
@@ -42,437 +63,319 @@ class CaregiverHomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.find<CaregiverHomeController>();
     final profileController = Get.put(ProfileController());
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       body: SafeArea(
         child: Obx(() {
           if (controller.isLoading.value) {
             return const Center(
-              child:
-              CircularProgressIndicator(color: Color(0xFFFFC857)),
+              child: CircularProgressIndicator(color: Color(0xFFFFC857)),
             );
           }
-          return RefreshIndicator(
-            onRefresh: controller.refresh,
-            color: const Color(0xFFFFC857),
-            child: CustomScrollView(
-              slivers: [
-                // ── Header ────────────────────────────────────────
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Image.asset(ImagesLink.logo, height: 47),
-                        GestureDetector(
-                          onTap: () => Get.toNamed(AppRoutes.PROFILE),
-                          child: CustomPaint(
-                            size: const Size(48, 48),
-                            painter: DashedCirclePainter(
-                              color: const Color(0xFFB5CFD1),
-                              strokeWidth: 1.0,
-                              dashWidth: 4.0,
-                              dashSpace: 3.1,
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(3.0),
-                              child:
-                              Obx(() => CircleAvatar(
-                                radius: 22,
-                                backgroundColor: Colors.grey.shade200,
-                                backgroundImage: profileController.avatarUrl.value.isNotEmpty
-                                    ? CachedNetworkImageProvider(profileController.avatarUrl.value)
-                                    : null,
-                                child: profileController.avatarUrl.value.isEmpty
-                                    ? const Icon(Icons.person, size: 26, color: Colors.grey)
-                                    : null,
-                              )),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
 
-                // ── Quick Speak Header ─────────────────────────────
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _SectionHeader(title: 'quick_speak'.tr),
-                        Obx(() => Row(
-                          children: [
-                            GestureDetector(
-                              onTap: controller.toggleQsEditMode,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: controller.isQsEditMode.value
-                                      ? const Color(0xFFFFC857)
-                                      : Colors.white,
-                                  borderRadius:
-                                  BorderRadius.circular(20),
-                                  border: Border.all(
-                                      color:
-                                      const Color(0xFFFFC857)),
-                                ),
-                                child: Text(
-                                  controller.isQsEditMode.value
-                                      ? 'done'.tr
-                                      : 'edit'.tr,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color:
-                                    controller.isQsEditMode.value
-                                        ? Colors.black
-                                        : const Color(0xFFFFC857),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            if (!controller.isQsEditMode.value) ...[
-                              const SizedBox(width: 8),
-                              GestureDetector(
-                                onTap: controller
-                                    .showAddQuickSpeakSheet,
-                                child: Container(
-                                  padding:
-                                  const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFFFC857),
-                                    borderRadius:
-                                    BorderRadius.circular(20),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.add,
-                                          size: 14,
-                                          color: Colors.black),
-                                      const SizedBox(width: 4),
-                                      Text('add'.tr,
-                                          style: const TextStyle(
-                                              fontSize: 12,
-                                              fontWeight:
-                                              FontWeight.w600,
-                                              color: Colors.black)),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        )),
-                      ],
-                    ),
-                  ),
-                ),
+          return OrientationBuilder(builder: (context, _) {
+            final cols = _crossAxisCount(context);
 
-                // ── Quick Speak Cards ──────────────────────────────
-                if (controller.quickSpeaks.isNotEmpty)
-                  SliverToBoxAdapter(
-                    child: SizedBox(
-                      height: 130,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12),
-                        scrollDirection: Axis.horizontal,
-                        itemCount: controller.quickSpeaks.length,
-                        itemBuilder: (_, i) {
-                          final qs = controller.quickSpeaks[i];
-                          return Obx(
-                                () => _QuickSpeakCard(
-                              qs: qs,
-                              isEditMode:
-                              controller.isQsEditMode.value,
-                              onTap: () =>
-                                  _onQsTap(context, controller, qs),
-                              onEditTap: () => controller
-                                  .showEditQuickSpeakSheet(qs),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  )
-                else
+            return RefreshIndicator(
+              onRefresh: controller.refresh,
+              color: const Color(0xFFFFC857),
+              child: CustomScrollView(
+                slivers: [
+                  // ── Header ─────────────────────────────────────────────
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 8),
-                      child: Text(
-                        'no_quick_speaks_hint'.tr,
-                        style: TextStyle(
-                            color: Colors.grey[500], fontSize: 13),
-                      ),
-                    ),
-                  ),
-
-                // ── Tap to Talk Header ─────────────────────────────
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding:
-                    const EdgeInsets.fromLTRB(20, 20, 20, 10),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _SectionHeader(title: 'tap_to_talk'.tr),
-                        Obx(
-                              () => Row(
-                            children: [
-                              _EditToggleBtn(controller: controller),
-                              const SizedBox(width: 8),
-                              if (!controller.isEditMode.value)
-                                _AddCategoryBtn(
-                                    controller: controller),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // ── Categories Grid ────────────────────────────────
-                controller.categories.isEmpty
-                    ? SliverToBoxAdapter(
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(40),
-                      child: Column(
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Icon(Icons.category_outlined,
-                              size: 60,
-                              color: Colors.grey[300]),
-                          const SizedBox(height: 12),
-                          Text('no_categories_yet'.tr,
-                              style: TextStyle(
-                                  color: Colors.grey[500])),
-                          const SizedBox(height: 8),
-                          ElevatedButton(
-                            onPressed:
-                            controller.showAddCategorySheet,
-                            style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                const Color(0xFFFFC857)),
-                            child: Text('add_category'.tr,
-                                style: const TextStyle(
-                                    color: Colors.black)),
+                          Image.asset(ImagesLink.logo, height: 47),
+                          GestureDetector(
+                            onTap: () => Get.toNamed(AppRoutes.PROFILE),
+                            child: CustomPaint(
+                              size: const Size(48, 48),
+                              painter: CgDashedCirclePainter(
+                                color: const Color(0xFFB5CFD1),
+                                strokeWidth: 1.0,
+                                dashWidth: 4.0,
+                                dashSpace: 3.1,
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(3),
+                                child: Obx(() => CircleAvatar(
+                                  radius: 22,
+                                  backgroundColor: Colors.grey.shade200,
+                                  backgroundImage: profileController
+                                      .avatarUrl.value.isNotEmpty
+                                      ? CachedNetworkImageProvider(
+                                      profileController.avatarUrl.value)
+                                      : null,
+                                  child: profileController
+                                      .avatarUrl.value.isEmpty
+                                      ? const Icon(Icons.person,
+                                      size: 26, color: Colors.grey)
+                                      : null,
+                                )),
+                              ),
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ),
-                )
-                    : SliverPadding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 4),
-                  sliver: SliverGrid(
-                    delegate: SliverChildBuilderDelegate(
-                          (_, i) {
-                        final cat = controller.categories[i];
-                        return Obx(() {
-                          final isSelected = controller
-                              .selectedCategoryIds
-                              .contains(cat.id);
-                          return _CategoryCard(
-                            category: cat,
-                            isEditMode:
-                            controller.isEditMode.value,
-                            isSelected: isSelected,
-                            onTap: () =>
-                                controller.onCategoryTap(cat),
-                            onEditTap: () => controller
-                                .showEditCategorySheet(cat),
+
+                  // ── Quick Speak Header ──────────────────────────────────
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          CgSectionHeader(title: 'quick_speak'.tr),
+                          Obx(() => Row(children: [
+                            _EditToggleBtn(
+                              isEdit: controller.isQsEditMode.value,
+                              onTap: controller.toggleQsEditMode,
+                            ),
+                            if (!controller.isQsEditMode.value) ...[
+                              const SizedBox(width: 8),
+                              _AddBtn(
+                                  onTap: controller.showAddQuickSpeakSheet),
+                            ],
+                          ])),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // ── Quick Speak Grid (max 8 + See All) ─────────────────
+                  Obx(() {
+                    if (controller.quickSpeaks.isEmpty) {
+                      return SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 8),
+                          child: Text('no_quick_speaks_hint'.tr,
+                              style: TextStyle(
+                                  color: Colors.grey[500], fontSize: 13)),
+                        ),
+                      );
+                    }
+
+                    final hasMore =
+                        controller.quickSpeaks.length > _kMaxHome;
+                    final showCount =
+                    hasMore ? _kMaxHome : controller.quickSpeaks.length;
+                    final cellCount = showCount + (hasMore ? 1 : 0);
+
+                    return SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                      sliver: SliverGrid(
+                        delegate: SliverChildBuilderDelegate(
+                              (_, i) {
+                            if (hasMore && i == _kMaxHome) {
+                              return CgSeeAllCard(
+                                onTap: () => Get.toNamed(
+                                    AppRoutes.CAREGIVER_ALL_QUICK_SPEAKS),
+                              );
+                            }
+                            final qs = controller.quickSpeaks[i];
+                            return Obx(() => CgFolderCard(
+                              imageUrl: AppUrl.mediaUrl(qs.imageIcon),
+                              label: qs.word ?? '',
+                              bgColor: _parseColor(
+                                  qs.color, const Color(0xFFFFD700)),
+                              isSelected: false,
+                              showEditBtn: controller.isQsEditMode.value,
+                              onTap: () {
+                                if (!controller.isQsEditMode.value) {
+                                  showCgCardLiftDialog(
+                                    context: context,
+                                    imageUrl: AppUrl.mediaUrl(qs.imageIcon),
+                                    label: qs.word ?? '',
+                                    color: _parseColor(qs.color,
+                                        const Color(0xFFFFD700)),
+                                    hasAudio: qs.speak != null,
+                                    onPlayAudio: () =>
+                                        controller.playQuickSpeak(qs),
+                                  );
+                                }
+                              },
+                              onEditTap: () => controller
+                                  .showEditQuickSpeakSheet(qs),
+                            ));
+                          },
+                          childCount: cellCount,
+                        ),
+                        gridDelegate:
+                        SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: cols,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.82,
+                        ),
+                      ),
+                    );
+                  }),
+
+                  // ── Tap to Talk Header ──────────────────────────────────
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          CgSectionHeader(title: 'tap_to_talk'.tr),
+                          Obx(() => Row(children: [
+                            _EditToggleBtn(
+                              isEdit: controller.isEditMode.value,
+                              onTap: controller.toggleEditMode,
+                            ),
+                            if (!controller.isEditMode.value) ...[
+                              const SizedBox(width: 8),
+                              _AddBtn(
+                                  onTap:
+                                  controller.showAddCategorySheet),
+                            ],
+                          ])),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // ── Category Grid (max 8 + See All) ────────────────────
+                  Obx(() {
+                    if (controller.categories.isEmpty) {
+                      return SliverToBoxAdapter(
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(40),
+                            child: Column(
+                              children: [
+                                Icon(Icons.category_outlined,
+                                    size: 60, color: Colors.grey[300]),
+                                const SizedBox(height: 12),
+                                Text('no_categories_yet'.tr,
+                                    style:
+                                    TextStyle(color: Colors.grey[500])),
+                                const SizedBox(height: 8),
+                                ElevatedButton(
+                                  onPressed: controller.showAddCategorySheet,
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor:
+                                      const Color(0xFFFFC857)),
+                                  child: Text('add_category'.tr,
+                                      style: const TextStyle(
+                                          color: Colors.black)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+
+                    final hasMore =
+                        controller.categories.length > _kMaxHome;
+                    final showCount =
+                    hasMore ? _kMaxHome : controller.categories.length;
+                    final cellCount = showCount + (hasMore ? 1 : 0);
+
+                    return SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                      sliver: SliverGrid(
+                        delegate: SliverChildBuilderDelegate(
+                              (_, i) {
+                            if (hasMore && i == _kMaxHome) {
+                              return CgSeeAllCard(
+                                onTap: () => Get.toNamed(
+                                    AppRoutes.CAREGIVER_ALL_CATEGORIES),
+                              );
+                            }
+                            final cat = controller.categories[i];
+                            return Obx(() {
+                              final isSelected = controller
+                                  .selectedCategoryIds
+                                  .contains(cat.id);
+                              return CgFolderCard(
+                                imageUrl: AppUrl.mediaUrl(cat.imageIcon),
+                                label: cat.name,
+                                subLabel: cat.subCategories.isNotEmpty
+                                    ? '${cat.subCategories.length} ${'sub_count_suffix'.tr}'
+                                    : null,
+                                bgColor: _parseColor(
+                                    cat.color, const Color(0xFFB5CFD1)),
+                                isSelected: isSelected,
+                                showEditBtn: controller.isEditMode.value,
+                                onTap: () => controller.onCategoryTap(cat),
+                                onEditTap: () =>
+                                    controller.showEditCategorySheet(cat),
+                              );
+                            });
+                          },
+                          childCount: cellCount,
+                        ),
+                        gridDelegate:
+                        SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: cols,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.82,
+                        ),
+                      ),
+                    );
+                  }),
+
+                  // ── Explore More ────────────────────────────────────────
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
+                      child: CgSectionHeader(title: 'explore_more'.tr),
+                    ),
+                  ),
+
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                    sliver: SliverGrid(
+                      delegate: SliverChildBuilderDelegate(
+                            (_, i) {
+                          final item = _exploreItems[i];
+                          return CgFolderCard(
+                            label: item.labelKey.tr,
+                            bgColor: item.color,
+                            icon: item.icon,
+                            isSelected: false,
+                            showEditBtn: false,
+                            onTap: () => Get.toNamed(item.route),
                           );
-                        });
-                      },
-                      childCount: controller.categories.length,
-                    ),
-                    gridDelegate:
-                    const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
-                      childAspectRatio: 0.82,
-                    ),
-                  ),
-                ),
-
-                // ── Explore More Header ────────────────────────────
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding:
-                    const EdgeInsets.fromLTRB(20, 24, 20, 12),
-                    child: _SectionHeader(title: 'explore_more'.tr),
-                  ),
-                ),
-
-                // ── Explore More Grid ──────────────────────────────
-                SliverPadding(
-                  padding:
-                  const EdgeInsets.fromLTRB(16, 0, 16, 4),
-                  sliver: SliverGrid(
-                    delegate: SliverChildBuilderDelegate(
-                          (_, i) =>
-                          _ExploreCard(item: _exploreItems[i]),
-                      childCount: _exploreItems.length,
-                    ),
-                    gridDelegate:
-                    const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
-                      childAspectRatio: 0.82,
+                        },
+                        childCount: _exploreItems.length,
+                      ),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: cols,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 0.82,
+                      ),
                     ),
                   ),
-                ),
 
-                const SliverToBoxAdapter(
-                    child: SizedBox(height: 80)),
-              ],
-            ),
-          );
+                  const SliverToBoxAdapter(child: SizedBox(height: 80)),
+                ],
+              ),
+            );
+          });
         }),
       ),
     );
   }
-
-  void _onQsTap(
-      BuildContext context,
-      CaregiverHomeController controller,
-      QuickSpeakModel qs,
-      ) {
-    if (controller.isQsEditMode.value) return;
-    _showCardLiftDialog(
-      context: context,
-      imageUrl: AppUrl.mediaUrl(qs.imageIcon),
-      label: qs.word ?? '',
-      color: _parseColor(qs.color, const Color(0xFFFFD700)),
-      hasAudio: qs.speak != null,
-      onPlayAudio: () => controller.playQuickSpeak(qs),
-    );
-  }
 }
 
-// ════════════════════════════════════════════════════════════════
-//  EXPLORE MORE CARD
-// ════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
+//  CARD LIFT DIALOG  (caregiver tap behaviour — audio plays from dialog)
+// ════════════════════════════════════════════════════════════════════════════
 
-class _ExploreCard extends StatelessWidget {
-  final _ExploreItem item;
-  const _ExploreCard({required this.item});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Get.toNamed(item.route),
-      child: LayoutBuilder(builder: (context, constraints) {
-        final tabH = constraints.maxHeight * 0.10;
-        final contentTopPad = tabH + 6;
-
-        return CustomPaint(
-          painter: FolderShapePainter(
-            cardColor: Colors.white,
-            tabColor: item.color,
-          ),
-          child: Stack(
-            children: [
-              Positioned.fill(
-                top: contentTopPad,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: item.color.withOpacity(0.25),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        item.icon,
-                        color: _darken(item.color, 30),
-                        size: 30,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Padding(
-                      padding:
-                      const EdgeInsets.symmetric(horizontal: 4),
-                      child: Text(
-                        item.labelKey.tr,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF1A1A1A),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      }),
-    );
-  }
-
-  Color _darken(Color color, int percent) {
-    final f = 1 - percent / 100;
-    return Color.fromARGB(
-      color.alpha,
-      (color.red * f).round(),
-      (color.green * f).round(),
-      (color.blue * f).round(),
-    );
-  }
-}
-
-// ════════════════════════════════════════════════════════════════
-//  SECTION HEADER
-// ════════════════════════════════════════════════════════════════
-
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  const _SectionHeader({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 4,
-          height: 18,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(2),
-            color: const Color(0xFFFFC857),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(title,
-            style: const TextStyle(
-                fontSize: 16, fontWeight: FontWeight.w700)),
-      ],
-    );
-  }
-}
-
-// ── Card-lift dialog ──────────────────────────────────────────────────────
-void _showCardLiftDialog({
+void showCgCardLiftDialog({
   required BuildContext context,
   required String? imageUrl,
   required String label,
@@ -505,8 +408,8 @@ void _showCardLiftDialog({
                   decoration: BoxDecoration(
                     color: color.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                        color: color.withOpacity(0.4), width: 2),
+                    border:
+                    Border.all(color: color.withOpacity(0.4), width: 2),
                     boxShadow: [
                       BoxShadow(
                           color: color.withOpacity(0.3),
@@ -535,18 +438,16 @@ void _showCardLiftDialog({
                                 size: 48),
                           ),
                         )
-                            : Icon(
-                            Icons.record_voice_over_outlined,
-                            color: color,
-                            size: 48),
+                            : Icon(Icons.record_voice_over_outlined,
+                            color: color, size: 48),
                       ),
                       const SizedBox(height: 16),
                       Text(label,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: GoogleFonts.nunito(
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF1A1A1A))),
+                              color: const Color(0xFF1A1A1A))),
                       if (hasAudio && onPlayAudio != null) ...[
                         const SizedBox(height: 16),
                         GestureDetector(
@@ -573,8 +474,7 @@ void _showCardLiftDialog({
                         const SizedBox(height: 8),
                         Text('tap_to_speak'.tr,
                             style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[500])),
+                                fontSize: 12, color: Colors.grey[500])),
                       ],
                     ],
                   ),
@@ -588,26 +488,285 @@ void _showCardLiftDialog({
   );
 }
 
-Color _parseColor(String hex, Color fallback) {
-  try {
-    return Color(
-        int.parse('FF${hex.replaceAll('#', '')}', radix: 16));
-  } catch (_) {
-    return fallback;
+// ════════════════════════════════════════════════════════════════════════════
+//  SHARED WIDGETS  (exported — used by all caregiver screens)
+// ════════════════════════════════════════════════════════════════════════════
+
+/// Uniform folder card — no audio icon, optional edit pencil badge
+class CgFolderCard extends StatelessWidget {
+  final String? imageUrl;
+  final String label;
+  final String? subLabel;
+  final Color bgColor;
+  final IconData? icon;
+  final bool isSelected;
+  final bool showEditBtn;
+  final VoidCallback onTap;
+  final VoidCallback? onEditTap;
+
+  const CgFolderCard({
+    super.key,
+    this.imageUrl,
+    required this.label,
+    this.subLabel,
+    required this.bgColor,
+    this.icon,
+    required this.isSelected,
+    required this.showEditBtn,
+    required this.onTap,
+    this.onEditTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: LayoutBuilder(builder: (context, constraints) {
+        final tabH = constraints.maxHeight * 0.10;
+        final topPad = tabH + 6;
+        final imgSize = constraints.maxWidth * 0.52;
+
+        return CustomPaint(
+          painter: CgFolderPainter(
+            cardColor:
+            isSelected ? bgColor.withOpacity(0.15) : Colors.white,
+            tabColor: bgColor,
+            isSelected: isSelected,
+            selectedBorderColor: bgColor,
+          ),
+          child: Stack(children: [
+            Positioned.fill(
+              top: topPad,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: imgSize,
+                    height: imgSize,
+                    decoration: BoxDecoration(
+                        color: bgColor,
+                        borderRadius: BorderRadius.circular(10)),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: imageUrl != null && imageUrl!.isNotEmpty
+                          ? CachedNetworkImage(
+                        imageUrl: imageUrl!,
+                        fit: BoxFit.cover,
+                        errorWidget: (_, __, ___) => Icon(
+                            Icons.image_outlined,
+                            color: Colors.white,
+                            size: imgSize * 0.45),
+                      )
+                          : Icon(
+                        icon ?? Icons.image_outlined,
+                        color: icon != null
+                            ? bgColor._darken(30)
+                            : Colors.white,
+                        size: imgSize * 0.50,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Text(label,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.nunito(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF1A1A1A))),
+                  ),
+                  if (subLabel != null)
+                    Text(subLabel!,
+                        style: TextStyle(
+                            fontSize: 9, color: Colors.grey[400])),
+                ],
+              ),
+            ),
+            // Edit pencil badge
+            if (showEditBtn)
+              Positioned(
+                top: tabH - 9,
+                right: 5,
+                child: GestureDetector(
+                  onTap: onEditTap,
+                  child: Container(
+                    width: 22,
+                    height: 22,
+                    decoration: const BoxDecoration(
+                        color: Color(0xFFFFC857), shape: BoxShape.circle),
+                    child:
+                    const Icon(Icons.edit, size: 12, color: Colors.black),
+                  ),
+                ),
+              ),
+            // Selection checkmark
+            if (isSelected)
+              Positioned(
+                top: tabH - 9,
+                left: 5,
+                child: Container(
+                  width: 20,
+                  height: 20,
+                  decoration:
+                  BoxDecoration(color: bgColor, shape: BoxShape.circle),
+                  child:
+                  const Icon(Icons.check, color: Colors.white, size: 13),
+                ),
+              ),
+          ]),
+        );
+      }),
+    );
   }
 }
 
-// ════════════════════════════════════════════════════════════════
-//  FOLDER SHAPE PAINTER
-// ════════════════════════════════════════════════════════════════
+/// "See All" folder card
+class CgSeeAllCard extends StatelessWidget {
+  final VoidCallback onTap;
+  const CgSeeAllCard({super.key, required this.onTap});
 
-class FolderShapePainter extends CustomPainter {
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: LayoutBuilder(builder: (context, constraints) {
+        final tabH = constraints.maxHeight * 0.10;
+        final topPad = tabH + 6;
+        final imgSize = constraints.maxWidth * 0.52;
+
+        return CustomPaint(
+          painter: const CgFolderPainter(
+            cardColor: Color(0xFFEDF7F9),
+            tabColor: Color(0xFF7BC5D3),
+          ),
+          child: Stack(children: [
+            Positioned.fill(
+              top: topPad,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: imgSize,
+                    height: imgSize,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF7BC5D3).withOpacity(0.18),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(Icons.grid_view_rounded,
+                        color: const Color(0xFF7BC5D3), size: imgSize * 0.52),
+                  ),
+                  const SizedBox(height: 6),
+                  Text('see_all'.tr,
+                      style: GoogleFonts.nunito(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF7BC5D3))),
+                ],
+              ),
+            ),
+          ]),
+        );
+      }),
+    );
+  }
+}
+
+/// Section header
+class CgSectionHeader extends StatelessWidget {
+  final String title;
+  const CgSectionHeader({super.key, required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(mainAxisSize: MainAxisSize.min, children: [
+      Container(
+        width: 4,
+        height: 18,
+        decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(2),
+            color: const Color(0xFFFFC857)),
+      ),
+      const SizedBox(width: 8),
+      Text(title,
+          style: GoogleFonts.nunito(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87)),
+    ]);
+  }
+}
+
+/// Edit / Done toggle button
+class _EditToggleBtn extends StatelessWidget {
+  final bool isEdit;
+  final VoidCallback onTap;
+  const _EditToggleBtn({required this.isEdit, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isEdit ? const Color(0xFFFFC857) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFFFC857)),
+        ),
+        child: Text(isEdit ? 'done'.tr : 'edit'.tr,
+            style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isEdit ? Colors.black : const Color(0xFFFFC857))),
+      ),
+    );
+  }
+}
+
+/// Add (+) button
+class _AddBtn extends StatelessWidget {
+  final VoidCallback onTap;
+  const _AddBtn({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+            color: const Color(0xFFFFC857),
+            borderRadius: BorderRadius.circular(20)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.add, size: 14, color: Colors.black),
+          const SizedBox(width: 4),
+          Text('add'.tr,
+              style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black)),
+        ]),
+      ),
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  FOLDER PAINTER
+// ════════════════════════════════════════════════════════════════════════════
+
+class CgFolderPainter extends CustomPainter {
   final Color cardColor;
   final Color tabColor;
   final bool isSelected;
   final Color selectedBorderColor;
 
-  const FolderShapePainter({
+  const CgFolderPainter({
     required this.cardColor,
     required this.tabColor,
     this.isSelected = false,
@@ -616,43 +775,42 @@ class FolderShapePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final radius = 16.0;
-    final topRightRadius = 8.0;
+    const radius = 16.0;
+    const topRightRadius = 8.0;
     final tabWidth = size.width * 0.55;
     final tabHeight = size.height * 0.10;
     final tabSlantWidth = tabHeight * 0.5;
 
-    final path = Path();
-    path.moveTo(0, size.height - radius);
-    path.quadraticBezierTo(0, size.height, radius, size.height);
-    path.lineTo(size.width - radius, size.height);
-    path.quadraticBezierTo(
-        size.width, size.height, size.width, size.height - radius);
-    path.lineTo(size.width, topRightRadius);
-    path.quadraticBezierTo(
-        size.width, 0, size.width - topRightRadius, 0);
-    path.lineTo(tabWidth + tabSlantWidth + radius, 0);
-    path.quadraticBezierTo(tabWidth + tabSlantWidth, 0,
-        tabWidth + tabSlantWidth, radius * 0.3);
-    path.lineTo(tabWidth, tabHeight);
-    path.lineTo(radius, tabHeight);
-    path.quadraticBezierTo(0, tabHeight, 0, tabHeight + radius);
-    path.lineTo(0, size.height - radius);
-    path.close();
+    final path = Path()
+      ..moveTo(0, size.height - radius)
+      ..quadraticBezierTo(0, size.height, radius, size.height)
+      ..lineTo(size.width - radius, size.height)
+      ..quadraticBezierTo(
+          size.width, size.height, size.width, size.height - radius)
+      ..lineTo(size.width, topRightRadius)
+      ..quadraticBezierTo(size.width, 0, size.width - topRightRadius, 0)
+      ..lineTo(tabWidth + tabSlantWidth + radius, 0)
+      ..quadraticBezierTo(tabWidth + tabSlantWidth, 0,
+          tabWidth + tabSlantWidth, radius * 0.3)
+      ..lineTo(tabWidth, tabHeight)
+      ..lineTo(radius, tabHeight)
+      ..quadraticBezierTo(0, tabHeight, 0, tabHeight + radius)
+      ..lineTo(0, size.height - radius)
+      ..close();
 
     canvas.drawShadow(path, Colors.black.withOpacity(0.10), 6.0, false);
     canvas.drawPath(path, Paint()
       ..color = cardColor
       ..style = PaintingStyle.fill);
 
-    final tabPath = Path();
-    tabPath.moveTo(0, 0);
-    tabPath.lineTo(tabWidth + tabSlantWidth + radius, 0);
-    tabPath.quadraticBezierTo(tabWidth + tabSlantWidth, 0,
-        tabWidth + tabSlantWidth, radius * 0.3);
-    tabPath.lineTo(tabWidth, tabHeight);
-    tabPath.lineTo(0, tabHeight);
-    tabPath.close();
+    final tabPath = Path()
+      ..moveTo(0, 0)
+      ..lineTo(tabWidth + tabSlantWidth + radius, 0)
+      ..quadraticBezierTo(tabWidth + tabSlantWidth, 0,
+          tabWidth + tabSlantWidth, radius * 0.3)
+      ..lineTo(tabWidth, tabHeight)
+      ..lineTo(0, tabHeight)
+      ..close();
 
     canvas.save();
     canvas.clipPath(path);
@@ -662,374 +820,72 @@ class FolderShapePainter extends CustomPainter {
     canvas.restore();
 
     if (isSelected) {
-      canvas.drawPath(path, Paint()
-        ..color = selectedBorderColor
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.0);
+      canvas.drawPath(
+          path,
+          Paint()
+            ..color = selectedBorderColor
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2.0);
     }
   }
 
   @override
-  bool shouldRepaint(FolderShapePainter old) =>
+  bool shouldRepaint(CgFolderPainter old) =>
       old.cardColor != cardColor ||
           old.tabColor != tabColor ||
           old.isSelected != isSelected;
 }
 
-// ════════════════════════════════════════════════════════════════
-//  HEADER WIDGETS
-// ════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
+//  DASHED CIRCLE PAINTER
+// ════════════════════════════════════════════════════════════════════════════
 
-class _EditToggleBtn extends StatelessWidget {
-  final CaregiverHomeController controller;
-  const _EditToggleBtn({required this.controller});
+class CgDashedCirclePainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double dashWidth;
+  final double dashSpace;
 
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: controller.toggleEditMode,
-      child: Container(
-        padding:
-        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: controller.isEditMode.value
-              ? const Color(0xFFFFC857)
-              : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFFFC857)),
-        ),
-        child: Text(
-          controller.isEditMode.value ? 'done'.tr : 'edit'.tr,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            color: controller.isEditMode.value
-                ? Colors.black
-                : const Color(0xFFFFC857),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _AddCategoryBtn extends StatelessWidget {
-  final CaregiverHomeController controller;
-  const _AddCategoryBtn({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: controller.showAddCategorySheet,
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFC857),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: const Icon(Icons.add, color: Colors.black, size: 20),
-      ),
-    );
-  }
-}
-
-// ════════════════════════════════════════════════════════════════
-//  QUICK SPEAK CARD
-// ════════════════════════════════════════════════════════════════
-
-class _QuickSpeakCard extends StatelessWidget {
-  final QuickSpeakModel qs;
-  final bool isEditMode;
-  final VoidCallback onTap;
-  final VoidCallback onEditTap;
-
-  const _QuickSpeakCard({
-    required this.qs,
-    required this.isEditMode,
-    required this.onTap,
-    required this.onEditTap,
+  CgDashedCirclePainter({
+    required this.color,
+    required this.strokeWidth,
+    required this.dashWidth,
+    required this.dashSpace,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final imageUrl = AppUrl.mediaUrl(qs.imageIcon);
-    final bgColor = _parseColor(qs.color, const Color(0xFFFFD700));
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Padding(
-        padding:
-        const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
-        child: SizedBox(
-          width: 90,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final tabH = constraints.maxHeight * 0.10;
-              final contentTopPad = tabH + 8;
-
-              return CustomPaint(
-                painter: FolderShapePainter(
-                  cardColor: Colors.white,
-                  tabColor: bgColor,
-                ),
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      top: contentTopPad,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: bgColor,
-                              borderRadius:
-                              BorderRadius.circular(10),
-                            ),
-                            child: ClipRRect(
-                              borderRadius:
-                              BorderRadius.circular(10),
-                              child: imageUrl != null &&
-                                  imageUrl.isNotEmpty
-                                  ? CachedNetworkImage(
-                                imageUrl: imageUrl,
-                                fit: BoxFit.cover,
-                                errorWidget: (_, __, ___) =>
-                                const Icon(
-                                    Icons
-                                        .record_voice_over_outlined,
-                                    color: Colors.white,
-                                    size: 26),
-                              )
-                                  : const Icon(
-                                Icons
-                                    .record_voice_over_outlined,
-                                color: Colors.white,
-                                size: 26,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 6),
-                            child: Text(
-                              qs.word ?? '',
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF1A1A1A),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (isEditMode)
-                      Positioned(
-                        top: tabH - 8,
-                        right: 5,
-                        child: GestureDetector(
-                          onTap: onEditTap,
-                          child: Container(
-                            width: 22,
-                            height: 22,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFFFC857),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.edit,
-                                size: 11, color: Colors.black),
-                          ),
-                        ),
-                      ),
-                    if (qs.speak != null && !isEditMode)
-                      Positioned(
-                        bottom: 6,
-                        right: 6,
-                        child: Container(
-                          width: 14,
-                          height: 14,
-                          decoration: BoxDecoration(
-                              color: bgColor,
-                              shape: BoxShape.circle),
-                          child: const Icon(Icons.volume_up,
-                              color: Colors.white, size: 9),
-                        ),
-                      ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-      ),
-    );
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+    final radius = size.width / 2;
+    final center = Offset(size.width / 2, size.height / 2);
+    final circumference = 2 * 3.14159 * radius;
+    final dashCount = (circumference / (dashWidth + dashSpace)).floor();
+    for (int i = 0; i < dashCount; i++) {
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        i * (dashWidth + dashSpace) / radius,
+        dashWidth / radius,
+        false,
+        paint,
+      );
+    }
   }
-}
-
-// ════════════════════════════════════════════════════════════════
-//  CATEGORY CARD
-// ════════════════════════════════════════════════════════════════
-
-class _CategoryCard extends StatelessWidget {
-  final CategoryModel category;
-  final bool isEditMode;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final VoidCallback onEditTap;
-
-  const _CategoryCard({
-    required this.category,
-    required this.isEditMode,
-    required this.isSelected,
-    required this.onTap,
-    required this.onEditTap,
-  });
 
   @override
-  Widget build(BuildContext context) {
-    final imageUrl = AppUrl.mediaUrl(category.imageIcon);
-    final bgColor =
-    _parseColor(category.color, const Color(0xFFB5CFD1));
-
-    return GestureDetector(
-      onTap: onTap,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final tabH = constraints.maxHeight * 0.10;
-          final contentTopPad = tabH + 6;
-
-          return CustomPaint(
-            painter: FolderShapePainter(
-              cardColor: isSelected
-                  ? bgColor.withOpacity(0.12)
-                  : Colors.white,
-              tabColor: bgColor,
-              isSelected: isSelected,
-              selectedBorderColor: bgColor,
-            ),
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  top: contentTopPad,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      _CardImage(
-                        imageUrl: imageUrl,
-                        size: 56,
-                        bgColor: bgColor,
-                      ),
-                      const SizedBox(height: 6),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 4),
-                        child: Text(
-                          category.name,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF1A1A1A),
-                          ),
-                        ),
-                      ),
-                      if (category.subCategories.isNotEmpty)
-                        Text(
-                          '${category.subCategories.length} ${'sub_count_suffix'.tr}',
-                          style: TextStyle(
-                              fontSize: 9,
-                              color: Colors.grey[400]),
-                        ),
-                    ],
-                  ),
-                ),
-                if (isEditMode)
-                  Positioned(
-                    top: tabH - 8,
-                    right: 5,
-                    child: GestureDetector(
-                      onTap: onEditTap,
-                      child: Container(
-                        width: 24,
-                        height: 24,
-                        decoration: const BoxDecoration(
-                            color: Color(0xFFFFC857),
-                            shape: BoxShape.circle),
-                        child: const Icon(Icons.edit,
-                            size: 12, color: Colors.black),
-                      ),
-                    ),
-                  ),
-                if (isSelected)
-                  Positioned(
-                    top: tabH - 8,
-                    left: 5,
-                    child: Container(
-                      width: 20,
-                      height: 20,
-                      decoration: BoxDecoration(
-                          color: bgColor, shape: BoxShape.circle),
-                      child: const Icon(Icons.check,
-                          color: Colors.white, size: 13),
-                    ),
-                  ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
+  bool shouldRepaint(CgDashedCirclePainter old) =>
+      old.color != color ||
+          old.strokeWidth != strokeWidth ||
+          old.dashWidth != dashWidth ||
+          old.dashSpace != dashSpace;
 }
 
-// ════════════════════════════════════════════════════════════════
-//  CARD IMAGE WIDGET
-// ════════════════════════════════════════════════════════════════
-
-class _CardImage extends StatelessWidget {
-  final String? imageUrl;
-  final double size;
-  final Color bgColor;
-
-  const _CardImage(
-      {this.imageUrl, required this.size, required this.bgColor});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: imageUrl != null && imageUrl!.isNotEmpty
-            ? CachedNetworkImage(
-          imageUrl: imageUrl!,
-          fit: BoxFit.cover,
-          errorWidget: (_, __, ___) => Icon(
-            Icons.image_outlined,
-            color: Colors.white,
-            size: size * 0.45,
-          ),
-        )
-            : Icon(
-          Icons.image_outlined,
-          color: Colors.white,
-          size: size * 0.45,
-        ),
-      ),
-    );
+extension _ColorX on Color {
+  Color _darken(int percent) {
+    final f = 1 - percent / 100;
+    return Color.fromARGB(
+        alpha, (red * f).round(), (green * f).round(), (blue * f).round());
   }
 }

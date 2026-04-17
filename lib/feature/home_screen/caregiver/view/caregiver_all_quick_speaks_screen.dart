@@ -1,9 +1,9 @@
-// lib/feature/home_screen/caregiver/view/caregiver_sub_category_screen.dart
+// lib/feature/home_screen/caregiver/view/caregiver_all_quick_speaks_screen.dart
 
 import 'package:chatter_bee/config/app_url.dart';
-import 'package:chatter_bee/feature/home_screen/caregiver/controller/caregiver_sub_catagory_controller.dart';
+import 'package:chatter_bee/feature/home_screen/caregiver/controller/caregiver_home_controller.dart';
 import 'package:chatter_bee/feature/home_screen/caregiver/view/caregiver_home_screen.dart'
-    show CgFolderCard;
+    show CgFolderCard, CgSectionHeader, CgFolderPainter, showCgCardLiftDialog;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -24,16 +24,16 @@ int _crossAxisCount(BuildContext context) {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-//  CAREGIVER SUB-CATEGORY SCREEN
-//  — Folder cards, responsive grid, edit mode, add button
+//  ALL QUICK SPEAKS SCREEN
+//  — Full grid, card-lift dialog on tap, edit mode preserved
 // ════════════════════════════════════════════════════════════════════════════
 
-class CaregiverSubCategoryScreen extends StatelessWidget {
-  const CaregiverSubCategoryScreen({super.key});
+class CaregiverAllQuickSpeaksScreen extends StatelessWidget {
+  const CaregiverAllQuickSpeaksScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<CaregiverSubCategoryController>();
+    final controller = Get.find<CaregiverHomeController>();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
@@ -45,35 +45,33 @@ class CaregiverSubCategoryScreen extends StatelessWidget {
               size: 18, color: Color(0xFF1A1A1A)),
           onPressed: () => Get.back(),
         ),
-        title: Text(
-          controller.parentCategory.name,
-          style: GoogleFonts.nunito(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF1A1A1A)),
-        ),
+        title: Text('quick_speak'.tr,
+            style: GoogleFonts.nunito(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF1A1A1A))),
         actions: [
-          // Edit / Done
+          // Edit / Done toggle
           Obx(() => Padding(
             padding: const EdgeInsets.only(right: 8),
             child: GestureDetector(
-              onTap: controller.toggleEditMode,
+              onTap: controller.toggleQsEditMode,
               child: Container(
                 padding: const EdgeInsets.symmetric(
                     horizontal: 14, vertical: 7),
                 decoration: BoxDecoration(
-                  color: controller.isEditMode.value
+                  color: controller.isQsEditMode.value
                       ? const Color(0xFFFFC857)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: const Color(0xFFFFC857)),
                 ),
                 child: Text(
-                  controller.isEditMode.value ? 'done'.tr : 'edit'.tr,
+                  controller.isQsEditMode.value ? 'done'.tr : 'edit'.tr,
                   style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
-                      color: controller.isEditMode.value
+                      color: controller.isQsEditMode.value
                           ? Colors.black
                           : const Color(0xFFFFC857)),
                 ),
@@ -81,11 +79,11 @@ class CaregiverSubCategoryScreen extends StatelessWidget {
             ),
           )),
           // Add button
-          Obx(() => !controller.isEditMode.value
+          Obx(() => !controller.isQsEditMode.value
               ? Padding(
             padding: const EdgeInsets.only(right: 12),
             child: GestureDetector(
-              onTap: controller.showAddSheet,
+              onTap: controller.showAddQuickSpeakSheet,
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
@@ -100,28 +98,22 @@ class CaregiverSubCategoryScreen extends StatelessWidget {
         ],
       ),
       body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(
-              child:
-              CircularProgressIndicator(color: Color(0xFFFFC857)));
-        }
-
-        if (controller.subCategories.isEmpty) {
+        if (controller.quickSpeaks.isEmpty) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.folder_open_outlined,
-                    size: 64, color: Colors.grey[300]),
+                Icon(Icons.record_voice_over_outlined,
+                    size: 60, color: Colors.grey[300]),
                 const SizedBox(height: 12),
-                Text('no_sub_categories_yet'.tr,
-                    style: TextStyle(
-                        color: Colors.grey[500], fontSize: 15)),
+                Text('no_quick_speaks_hint'.tr,
+                    style:
+                    TextStyle(color: Colors.grey[500], fontSize: 15)),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
-                  onPressed: controller.showAddSheet,
+                  onPressed: controller.showAddQuickSpeakSheet,
                   icon: const Icon(Icons.add, color: Colors.black),
-                  label: Text('add_sub_category'.tr,
+                  label: Text('add'.tr,
                       style: const TextStyle(color: Colors.black)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFFFC857),
@@ -140,33 +132,40 @@ class CaregiverSubCategoryScreen extends StatelessWidget {
             onRefresh: controller.refresh,
             color: const Color(0xFFFFC857),
             child: GridView.builder(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: cols,
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
                 childAspectRatio: 0.82,
               ),
-              itemCount: controller.subCategories.length,
+              itemCount: controller.quickSpeaks.length,
               itemBuilder: (_, i) {
-                final sub = controller.subCategories[i];
-                return Obx(() {
-                  final isSelected =
-                  controller.selectedIds.contains(sub.id);
-                  return CgFolderCard(
-                    imageUrl: AppUrl.mediaUrl(sub.imageIcon),
-                    label: sub.name,
-                    subLabel: sub.items.isNotEmpty
-                        ? '${sub.items.length} ${'items_count_suffix'.tr}'
-                        : null,
-                    bgColor: _parseColor(
-                        sub.color, const Color(0xFFB5CFD1)),
-                    isSelected: isSelected,
-                    showEditBtn: controller.isEditMode.value,
-                    onTap: () => controller.onSubCategoryTap(sub),
-                    onEditTap: () => controller.showEditSheet(sub),
-                  );
-                });
+                final qs = controller.quickSpeaks[i];
+                return Obx(() => CgFolderCard(
+                  imageUrl: AppUrl.mediaUrl(qs.imageIcon),
+                  label: qs.word ?? '',
+                  bgColor:
+                  _parseColor(qs.color, const Color(0xFFFFD700)),
+                  isSelected: false,
+                  showEditBtn: controller.isQsEditMode.value,
+                  onTap: () {
+                    if (!controller.isQsEditMode.value) {
+                      showCgCardLiftDialog(
+                        context: context,
+                        imageUrl: AppUrl.mediaUrl(qs.imageIcon),
+                        label: qs.word ?? '',
+                        color: _parseColor(
+                            qs.color, const Color(0xFFFFD700)),
+                        hasAudio: qs.speak != null,
+                        onPlayAudio: () =>
+                            controller.playQuickSpeak(qs),
+                      );
+                    }
+                  },
+                  onEditTap: () =>
+                      controller.showEditQuickSpeakSheet(qs),
+                ));
               },
             ),
           );

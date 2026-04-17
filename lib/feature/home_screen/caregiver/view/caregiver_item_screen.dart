@@ -3,9 +3,32 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chatter_bee/config/app_url.dart';
 import 'package:chatter_bee/feature/home_screen/caregiver/controller/caregiver_item_controller.dart';
+import 'package:chatter_bee/feature/home_screen/caregiver/view/caregiver_home_screen.dart'
+    show CgFolderCard, CgFolderPainter;
 import 'package:chatter_bee/models/caregiver_models/caregiver_content_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+Color _parseColor(String hex, Color fallback) {
+  try {
+    return Color(int.parse('FF${hex.replaceAll('#', '')}', radix: 16));
+  } catch (_) {
+    return fallback;
+  }
+}
+
+int _crossAxisCount(BuildContext context) {
+  final w = MediaQuery.of(context).size.width;
+  if (w >= 900) return 6;
+  if (w >= 600) return 4;
+  return 3;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  CAREGIVER ITEM SCREEN
+//  — Folder cards, tap → card-lift dialog, edit mode, add button
+// ════════════════════════════════════════════════════════════════════════════
 
 class CaregiverItemScreen extends StatelessWidget {
   const CaregiverItemScreen({super.key});
@@ -26,12 +49,13 @@ class CaregiverItemScreen extends StatelessWidget {
         ),
         title: Text(
           controller.parentSubCategory.name,
-          style: const TextStyle(
+          style: GoogleFonts.nunito(
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF1A1A1A)),
+              color: const Color(0xFF1A1A1A)),
         ),
         actions: [
+          // Edit / Done
           Obx(() => Padding(
             padding: const EdgeInsets.only(right: 8),
             child: GestureDetector(
@@ -47,20 +71,18 @@ class CaregiverItemScreen extends StatelessWidget {
                   border: Border.all(color: const Color(0xFFFFC857)),
                 ),
                 child: Text(
-                  controller.isEditMode.value
-                      ? 'done'.tr
-                      : 'edit'.tr,
+                  controller.isEditMode.value ? 'done'.tr : 'edit'.tr,
                   style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                    color: controller.isEditMode.value
-                        ? Colors.black
-                        : const Color(0xFFFFC857),
-                  ),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      color: controller.isEditMode.value
+                          ? Colors.black
+                          : const Color(0xFFFFC857)),
                 ),
               ),
             ),
           )),
+          // Add button
           Obx(() => !controller.isEditMode.value
               ? Padding(
             padding: const EdgeInsets.only(right: 12),
@@ -69,9 +91,8 @@ class CaregiverItemScreen extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFC857),
-                  borderRadius: BorderRadius.circular(10),
-                ),
+                    color: const Color(0xFFFFC857),
+                    borderRadius: BorderRadius.circular(10)),
                 child: const Icon(Icons.add,
                     color: Colors.black, size: 20),
               ),
@@ -83,8 +104,8 @@ class CaregiverItemScreen extends StatelessWidget {
       body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(
-              child: CircularProgressIndicator(
-                  color: Color(0xFFFFC857)));
+              child:
+              CircularProgressIndicator(color: Color(0xFFFFC857)));
         }
 
         if (controller.items.isEmpty) {
@@ -95,11 +116,9 @@ class CaregiverItemScreen extends StatelessWidget {
                 Icon(Icons.touch_app_outlined,
                     size: 64, color: Colors.grey[300]),
                 const SizedBox(height: 12),
-                Text(
-                  'no_items_yet'.tr,
-                  style: TextStyle(
-                      color: Colors.grey[500], fontSize: 15),
-                ),
+                Text('no_items_yet'.tr,
+                    style: TextStyle(
+                        color: Colors.grey[500], fontSize: 15)),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   onPressed: controller.showAddSheet,
@@ -117,61 +136,61 @@ class CaregiverItemScreen extends StatelessWidget {
           );
         }
 
-        return RefreshIndicator(
-          onRefresh: controller.refresh,
-          color: const Color(0xFFFFC857),
-          child: GridView.builder(
-            padding: const EdgeInsets.all(16),
-            gridDelegate:
-            const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 0.85,
+        return OrientationBuilder(builder: (context, _) {
+          final cols = _crossAxisCount(context);
+          return RefreshIndicator(
+            onRefresh: controller.refresh,
+            color: const Color(0xFFFFC857),
+            child: GridView.builder(
+              padding: const EdgeInsets.all(16),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: cols,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 0.82,
+              ),
+              itemCount: controller.items.length,
+              itemBuilder: (_, i) {
+                final item = controller.items[i];
+                return Obx(() {
+                  final isSelected =
+                  controller.selectedIds.contains(item.id);
+                  return CgFolderCard(
+                    imageUrl: AppUrl.mediaUrl(item.imageIcon),
+                    label: item.word ?? '',
+                    bgColor: _parseColor(
+                        item.color, const Color(0xFFFFD700)),
+                    isSelected: isSelected,
+                    showEditBtn: controller.isEditMode.value,
+                    onTap: () {
+                      if (controller.isEditMode.value) {
+                        controller.toggleSelection(item.id);
+                      } else {
+                        _showItemDialog(context, controller, item);
+                      }
+                    },
+                    onEditTap: () => controller.showEditSheet(item),
+                  );
+                });
+              },
             ),
-            itemCount: controller.items.length,
-            itemBuilder: (_, i) {
-              final item = controller.items[i];
-              return Obx(() {
-                final isSelected =
-                controller.selectedIds.contains(item.id);
-                final isPlaying =
-                    controller.playingItemId.value == item.id;
-                return _ItemCard(
-                  item: item,
-                  isEditMode: controller.isEditMode.value,
-                  isSelected: isSelected,
-                  isPlaying: isPlaying,
-                  onTap: () {
-                    if (controller.isEditMode.value) {
-                      controller.toggleSelection(item.id);
-                    } else {
-                      _showItemDialog(context, controller, item);
-                    }
-                  },
-                  onEditTap: () => controller.showEditSheet(item),
-                );
-              });
-            },
-          ),
-        );
+          );
+        });
       }),
     );
   }
 }
 
-// ── Show "card lift" dialog for item ─────────────────────────────────────────
-void _showItemDialog(BuildContext context,
-    CaregiverItemController controller, ItemModel item) {
-  Color bgColor;
-  try {
-    bgColor = Color(int.parse(
-        'FF${item.color.replaceAll('#', '')}',
-        radix: 16));
-  } catch (_) {
-    bgColor = const Color(0xFFFFD700);
-  }
+// ════════════════════════════════════════════════════════════════════════════
+//  ITEM CARD-LIFT DIALOG
+// ════════════════════════════════════════════════════════════════════════════
 
+void _showItemDialog(
+    BuildContext context,
+    CaregiverItemController controller,
+    ItemModel item,
+    ) {
+  final bgColor = _parseColor(item.color, const Color(0xFFFFD700));
   final imageUrl = AppUrl.mediaUrl(item.imageIcon);
   final hasAudio = item.speak != null;
 
@@ -213,6 +232,7 @@ void _showItemDialog(BuildContext context,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // Image circle
                       Container(
                         width: 100,
                         height: 100,
@@ -235,24 +255,21 @@ void _showItemDialog(BuildContext context,
                             color: bgColor, size: 48),
                       ),
                       const SizedBox(height: 16),
-                      Text(
-                        item.word ?? '',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF1A1A1A)),
-                      ),
+                      Text(item.word ?? '',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.nunito(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1A1A1A))),
                       const SizedBox(height: 20),
+                      // Speak / No-audio button
                       GestureDetector(
                         onTap: () async {
                           if (!hasAudio) {
                             Navigator.of(ctx).pop();
-                            Get.snackbar(
-                              'no_audio_title'.tr,
-                              'item_has_no_audio'.tr,
-                              snackPosition: SnackPosition.BOTTOM,
-                            );
+                            Get.snackbar('no_audio_title'.tr,
+                                'item_has_no_audio'.tr,
+                                snackPosition: SnackPosition.BOTTOM);
                             return;
                           }
                           await controller.playItemAudio(item);
@@ -287,9 +304,7 @@ void _showItemDialog(BuildContext context,
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        hasAudio
-                            ? 'tap_to_speak'.tr
-                            : 'no_audio'.tr,
+                        hasAudio ? 'tap_to_speak'.tr : 'no_audio'.tr,
                         style: TextStyle(
                             fontSize: 12, color: Colors.grey[500]),
                       ),
@@ -302,185 +317,5 @@ void _showItemDialog(BuildContext context,
         ),
       );
     },
-  );
-}
-
-// ════════════════════════════════════════════════════════════════
-//  ITEM CARD
-// ════════════════════════════════════════════════════════════════
-
-class _ItemCard extends StatelessWidget {
-  final ItemModel item;
-  final bool isEditMode;
-  final bool isSelected;
-  final bool isPlaying;
-  final VoidCallback onTap;
-  final VoidCallback onEditTap;
-
-  const _ItemCard({
-    required this.item,
-    required this.isEditMode,
-    required this.isSelected,
-    required this.isPlaying,
-    required this.onTap,
-    required this.onEditTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final imageUrl = AppUrl.mediaUrl(item.imageIcon);
-    Color bgColor;
-    try {
-      bgColor = Color(int.parse(
-          'FF${item.color.replaceAll('#', '')}',
-          radix: 16));
-    } catch (_) {
-      bgColor = const Color(0xFFFFD700);
-    }
-
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        transform: isPlaying
-            ? (Matrix4.identity()..scale(0.96))
-            : Matrix4.identity(),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? bgColor.withOpacity(0.3)
-              : bgColor.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: isSelected || isPlaying
-                ? bgColor
-                : bgColor.withOpacity(0.3),
-            width: isSelected || isPlaying ? 2 : 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isPlaying
-                  ? bgColor.withOpacity(0.4)
-                  : Colors.black.withOpacity(0.05),
-              blurRadius: isPlaying ? 16 : 6,
-              offset: const Offset(0, 2),
-            )
-          ],
-        ),
-        child: Stack(children: [
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 4),
-              Center(
-                child: isPlaying && !isEditMode
-                    ? Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: bgColor.withOpacity(0.3),
-                  ),
-                  child: Icon(Icons.volume_up,
-                      color: bgColor, size: 30),
-                )
-                    : _buildImage(imageUrl, bgColor),
-              ),
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: Text(
-                  item.word ?? '',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[800],
-                  ),
-                ),
-              ),
-              if (item.speak != null && !isEditMode)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: isPlaying
-                          ? bgColor
-                          : bgColor.withOpacity(0.5),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          if (isEditMode)
-            Positioned(
-              top: 6,
-              right: 6,
-              child: GestureDetector(
-                onTap: onEditTap,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                      color: Color(0xFFFFC857),
-                      shape: BoxShape.circle),
-                  child: const Icon(Icons.edit,
-                      size: 12, color: Colors.black),
-                ),
-              ),
-            ),
-          if (isSelected)
-            const Positioned(
-              top: 6,
-              left: 6,
-              child: Icon(Icons.check_circle,
-                  size: 18, color: Color(0xFFFFC857)),
-            ),
-        ]),
-      ),
-    );
-  }
-
-  Widget _buildImage(String? imageUrl, Color bgColor) {
-    const size = 60.0;
-    if (imageUrl != null && imageUrl.isNotEmpty) {
-      return CachedNetworkImage(
-        imageUrl: imageUrl,
-        width: size,
-        height: size,
-        imageBuilder: (_, img) => Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              image:
-              DecorationImage(image: img, fit: BoxFit.cover)),
-        ),
-        placeholder: (_, __) => Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: bgColor.withOpacity(0.2)),
-        ),
-        errorWidget: (_, __, ___) => _placeholder(size, bgColor),
-      );
-    }
-    return _placeholder(size, bgColor);
-  }
-
-  Widget _placeholder(double size, Color color) => Container(
-    width: size,
-    height: size,
-    decoration: BoxDecoration(
-      shape: BoxShape.circle,
-      color: color.withOpacity(0.25),
-    ),
-    child: Icon(Icons.record_voice_over_outlined,
-        color: color, size: size * 0.45),
   );
 }
