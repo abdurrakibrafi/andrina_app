@@ -102,7 +102,7 @@ class NotificationScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(NotificationController());
+    final controller = Get.put(NotificationControllerdamo());
 
     return Scaffold(
       backgroundColor: AppColors.bgColor,
@@ -152,7 +152,7 @@ class NotificationScreen extends StatelessWidget {
   }
 
   // Notification Content
-  Widget _buildNotificationContent(NotificationController controller) {
+  Widget _buildNotificationContent(NotificationControllerdamo controller) {
     if (controller.notifications.isEmpty) {
       return Center(
         child: Column(
@@ -261,7 +261,7 @@ class NotificationScreen extends StatelessWidget {
   }
 
   // Alert Settings Content
-  Widget _buildAlertSettingsContent(NotificationController controller) {
+  Widget _buildAlertSettingsContent(NotificationControllerdamo controller) {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [

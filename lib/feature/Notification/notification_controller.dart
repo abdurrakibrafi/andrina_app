@@ -62,8 +62,8 @@ class NotificationModel {
   }
 }
 
-// Notification Controller
-class NotificationController extends GetxController {
+// Notification Controllerdamo
+class NotificationControllerdamo extends GetxController {
   // Observable variables for alert settings
   var buttonAlerts = true.obs;
   var sentenceBuilderAlerts = true.obs;

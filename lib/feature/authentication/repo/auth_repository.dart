@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:chatter_bee/feature/authentication/model/auth_model.dart';
+import 'package:chatter_bee/services/notification_controller.dart';
 import 'package:chatter_bee/services/storage/data_storage.dart';
 import 'package:chatter_bee/services/storage/secure_storage.dart';
 import 'package:chatter_bee/config/app_url.dart';
@@ -75,6 +76,9 @@ class AuthRepository {
       if (response.isSuccess && response.data != null) {
         final loginResponse = LoginResponse.fromJson(response.data!);
         await _saveAuthData(loginResponse);
+        // ✅ Register FCM Token
+        final isRegistered = await NotificationController.to.registerFcmToken();
+        print('FCM registered: $isRegistered');
         return ApiResponse.success(data: loginResponse, statusCode: response.statusCode, message: response.message);
       }
       return ApiResponse.error(statusCode: response.statusCode, message: response.message, errors: response.errors);
@@ -275,6 +279,8 @@ class AuthRepository {
       if (refreshToken != null && refreshToken.isNotEmpty) {
         await _apiClient.post<Map<String, dynamic>>(AppUrl.logout, data: {'refresh': refreshToken});
       }
+      // ✅ Delete FCM Token from backend
+      await NotificationController.to.deleteFcmToken();
       await _clearAuthData();
       return ApiResponse.success(data: null, statusCode: 200, message: 'Logged out successfully');
     } catch (e) {
@@ -286,6 +292,8 @@ class AuthRepository {
   // ==================== AUTO LOGOUT ====================
   Future<void> handleUnauthorized() async {
     try {
+      // ✅ Delete FCM Token from backend
+      await NotificationController.to.deleteFcmToken();
       await _clearAuthData();
       Get.offAllNamed(AppRoutes.SIGNINSCREEN);
       Get.snackbar('Session Expired', 'Please login again', snackPosition: SnackPosition.TOP);

@@ -1,4 +1,6 @@
+
 import 'package:chatter_bee/services/communicator_session_service.dart';
+import 'package:chatter_bee/services/notification_controller.dart';
 import 'package:chatter_bee/services/notification_services.dart';
 import 'package:chatter_bee/services/revenueCat_services.dart';
 import 'package:chatter_bee/services/storage/data_storage.dart';
@@ -27,15 +29,18 @@ void main() async {
     await Get.putAsync(() async => CommunicatorSessionService());
     print('✅ Step 3: CommunicatorSession done');
 
-    print('🔔 Step 4: Notification init...');
+    print('🔔 Step 4: NotificationService init...');
     await Get.putAsync(() async => await NotificationService().init());
-    print('✅ Step 4: Notification done');
+    print('✅ Step 4: NotificationService done');
 
-    print('💰 Step 5: RevenueCat init...');
+    print('🎮 Step 5: NotificationController init...');
+    Get.put(NotificationController()); // ✅ শুধু put করুন, init না
+    print('✅ Step 5: NotificationController done');
+
+    print('💰 Step 6: RevenueCat init...');
     await RevenueCatService.instance.init();
-    print('✅ Step 5: RevenueCat done');
+    print('✅ Step 6: RevenueCat done');
 
-    // ✅ permanent: true → app বন্ধ না হওয়া পর্যন্ত alive থাকবে
     Get.put(ProStatusController(), permanent: true);
 
     print('✅ App initialized successfully');
