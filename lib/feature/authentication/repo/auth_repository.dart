@@ -77,7 +77,7 @@ class AuthRepository {
         final loginResponse = LoginResponse.fromJson(response.data!);
         await _saveAuthData(loginResponse);
         // ✅ Register FCM Token
-        final isRegistered = await NotificationController.to.registerFcmToken();
+        final isRegistered = await NotificationControllerFCM.to.registerFcmToken();
         print('FCM registered: $isRegistered');
         return ApiResponse.success(data: loginResponse, statusCode: response.statusCode, message: response.message);
       }
@@ -280,7 +280,7 @@ class AuthRepository {
         await _apiClient.post<Map<String, dynamic>>(AppUrl.logout, data: {'refresh': refreshToken});
       }
       // ✅ Delete FCM Token from backend
-      await NotificationController.to.deleteFcmToken();
+      await NotificationControllerFCM.to.deleteFcmToken();
       await _clearAuthData();
       return ApiResponse.success(data: null, statusCode: 200, message: 'Logged out successfully');
     } catch (e) {
@@ -293,7 +293,7 @@ class AuthRepository {
   Future<void> handleUnauthorized() async {
     try {
       // ✅ Delete FCM Token from backend
-      await NotificationController.to.deleteFcmToken();
+      await NotificationControllerFCM.to.deleteFcmToken();
       await _clearAuthData();
       Get.offAllNamed(AppRoutes.SIGNINSCREEN);
       Get.snackbar('Session Expired', 'Please login again', snackPosition: SnackPosition.TOP);

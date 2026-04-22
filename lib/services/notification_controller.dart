@@ -6,8 +6,8 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:chatter_bee/services/storage/secure_storage.dart';
 
-class NotificationController extends GetxController {
-  static NotificationController get to => Get.find();
+class NotificationControllerFCM extends GetxController {
+  static NotificationControllerFCM get to => Get.find();
 
   final FcmTokenRepository _fcmRepo = FcmTokenRepository();
   final SecureStorageService _secureStorage = SecureStorageService();

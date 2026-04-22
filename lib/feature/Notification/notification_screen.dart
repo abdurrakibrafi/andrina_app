@@ -1,20 +1,19 @@
+// notification_screen.dart
 import 'package:chatter_bee/config/app_colors.dart';
+import 'package:chatter_bee/feature/Profile/controller/pro_status_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'notification_controller.dart';
 
-// Custom Switch Widget
+// ---------------------------------------------------------------------------
+// Custom animated switch (unchanged)
+// ---------------------------------------------------------------------------
 class CustomSwitch extends StatefulWidget {
   final bool value;
   final ValueChanged<bool> onChanged;
-
-  const CustomSwitch({
-    Key? key,
-    required this.value,
-    required this.onChanged,
-  }) : super(key: key);
-
+  const CustomSwitch({Key? key, required this.value, required this.onChanged})
+      : super(key: key);
   @override
   State<CustomSwitch> createState() => _CustomSwitchState();
 }
@@ -32,18 +31,13 @@ class _CustomSwitchState extends State<CustomSwitch>
       duration: const Duration(milliseconds: 200),
       value: widget.value ? 1.0 : 0.0,
     );
-
     _animation = _controller.drive(CurveTween(curve: Curves.easeInOut));
   }
 
   @override
-  void didUpdateWidget(covariant CustomSwitch oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.value) {
-      _controller.forward();
-    } else {
-      _controller.reverse();
-    }
+  void didUpdateWidget(covariant CustomSwitch old) {
+    super.didUpdateWidget(old);
+    widget.value ? _controller.forward() : _controller.reverse();
   }
 
   @override
@@ -58,45 +52,42 @@ class _CustomSwitchState extends State<CustomSwitch>
       onTap: () => widget.onChanged(!widget.value),
       child: AnimatedBuilder(
         animation: _animation,
-        builder: (context, child) {
-          return Container(
-            width: 40,
-            height: 22,
-            padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 3),
-            decoration: BoxDecoration(
-              color: widget.value ? AppColors.primaryColor : Colors.grey[300],
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Stack(
-              children: [
-                Align(
-                  alignment: Alignment.lerp(
-                      Alignment.centerLeft, Alignment.centerRight, _animation.value)!,
-                  child: Container(
-                    width: 20,
-                    height: 22,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 4,
-                          offset: const Offset(1, 2),
-                        )
-                      ],
-                    ),
-                  ),
+        builder: (_, __) => Container(
+          width: 40,
+          height: 22,
+          padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 3),
+          decoration: BoxDecoration(
+            color: widget.value ? AppColors.primaryColor : Colors.grey[300],
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Stack(children: [
+            Align(
+              alignment: Alignment.lerp(
+                  Alignment.centerLeft, Alignment.centerRight, _animation.value)!,
+              child: Container(
+                width: 20, height: 22,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 4,
+                        offset: const Offset(1, 2))
+                  ],
                 ),
-              ],
+              ),
             ),
-          );
-        },
+          ]),
+        ),
       ),
     );
   }
 }
 
+// ---------------------------------------------------------------------------
+// Screen
+// ---------------------------------------------------------------------------
 class NotificationScreen extends StatelessWidget {
   const NotificationScreen({super.key});
 
@@ -106,373 +97,301 @@ class NotificationScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.bgColor,
-      body: Container(
-        color: AppColors.bgColor,
-        child: Column(
-          children: [
-            SizedBox(height: 45,),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: Obx(() => Row(
-                children: [
-                  Expanded(
-                    child: _buildTab(
-                      'Notification',
-                      controller.selectedTab.value == 0,
-                          () => controller.changeTab(0),
-                    ),
-                  ),
-                  Expanded(
-                    child: _buildTab(
-                      'Alert Settings',
-                      controller.selectedTab.value == 1,
-                          () => controller.changeTab(1),
-                    ),
-                  ),
-                ],
-              )),
-            ),
-            // Content Area
-            Expanded(
-              child: Obx(() {
-                // Show Notification Tab Content
-                if (controller.selectedTab.value == 0) {
-                  return _buildNotificationContent(controller);
-                }
-                // Show Alert Settings Tab Content
-                else {
-                  return _buildAlertSettingsContent(controller);
-                }
-              }),
-            ),
+      body: Column(
+        children: [
+          const SizedBox(height: 45),
+          // ── Tab bar ────────────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: Obx(() => Row(children: [
+              Expanded(
+                child: _buildTab('Notification',
+                    controller.selectedTab.value == 0,
+                        () => controller.changeTab(0)),
+              ),
+              Expanded(
+                child: _buildTab('Alert Settings',
+                    controller.selectedTab.value == 1,
+                        () => controller.changeTab(1)),
+              ),
+            ])),
+          ),
+          // ── Content ────────────────────────────────────────────────────────
+          Expanded(
+            child: Obx(() {
+              if (controller.isLoading.value) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              return controller.selectedTab.value == 0
+                  ? _buildNotificationContent(controller)
+                  : _buildAlertSettingsContent(controller);
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Tab widget ─────────────────────────────────────────────────────────────
+  Widget _buildTab(String text, bool isActive, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Text(text,
+            style: GoogleFonts.roboto(
+              fontSize: 16,
+              fontWeight: isActive ? FontWeight.w500 : FontWeight.normal,
+              color: isActive ? AppColors.primaryColor : Colors.grey[600],
+            )),
+        const SizedBox(height: 12),
+        Container(
+          height: 2,
+          width: double.infinity,
+          color: isActive ? AppColors.primaryColor : Colors.grey[300],
+        ),
+      ]),
+    );
+  }
+
+  // ── Notification list ──────────────────────────────────────────────────────
+  Widget _buildNotificationContent(NotificationControllerdamo controller) {
+    if (controller.notifications.isEmpty) {
+      return Center(
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Icon(Icons.notifications_off_outlined,
+              size: 64, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          Text('No notifications yet',
+              style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+        ]),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: controller.refreshNotifications,
+      child: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          if (controller.todayNotifications.isNotEmpty) ...[
+            _sectionHeader('Today'),
+            ...controller.todayNotifications
+                .map((n) => _notificationItem(n, controller)),
+            const SizedBox(height: 20),
           ],
+          if (controller.yesterdayNotifications.isNotEmpty) ...[
+            _sectionHeader('Yesterday'),
+            ...controller.yesterdayNotifications
+                .map((n) => _notificationItem(n, controller)),
+            const SizedBox(height: 20),
+          ],
+          if (controller.olderNotifications.isNotEmpty) ...[
+            _sectionHeader('Older'),
+            ...controller.olderNotifications
+                .map((n) => _notificationItem(n, controller)),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionHeader(String label) => Padding(
+    padding: const EdgeInsets.only(bottom: 15),
+    child: Text(label,
+        style: GoogleFonts.nunito(
+            fontSize: 18, fontWeight: FontWeight.w600)),
+  );
+
+  Widget _notificationItem(
+      NotificationModel n, NotificationControllerdamo controller) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Dismissible(
+        key: Key('notif_${n.id}'),
+        direction: DismissDirection.endToStart,
+        onDismissed: (_) => controller.deleteNotification(n),
+        background: Container(
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 20),
+          decoration: BoxDecoration(
+            color: Colors.red.shade100,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Icon(Icons.delete_outline, color: Colors.red),
+        ),
+        child: InkWell(
+          onTap: () => controller.onNotificationTap(n),
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              // Unread = slightly tinted background
+              color: n.isRead ? Colors.white : const Color(0xFFFFFBEE),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2))
+              ],
+            ),
+            child: Row(children: [
+              // Icon circle
+              Container(
+                width: 48, height: 48,
+                decoration: BoxDecoration(
+                    color: n.iconBg, shape: BoxShape.circle),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Image.asset(n.imagePath,
+                      width: 28, height: 28, fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Icon(
+                          Icons.notifications,
+                          color: n.iconColor, size: 22)),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(n.title,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: n.isRead
+                                ? FontWeight.w400
+                                : FontWeight.w600,
+                            color: Colors.black87,
+                          )),
+                      const SizedBox(height: 4),
+                      Text(n.timeString,
+                          style: TextStyle(
+                              fontSize: 13, color: Colors.grey[600])),
+                    ]),
+              ),
+              // Unread dot
+              if (!n.isRead)
+                Container(
+                  width: 10, height: 10,
+                  decoration: const BoxDecoration(
+                      color: Color(0xFFFDD268),
+                      shape: BoxShape.circle),
+                ),
+            ]),
+          ),
         ),
       ),
     );
   }
 
-  // Notification Content
-  Widget _buildNotificationContent(NotificationControllerdamo controller) {
-    if (controller.notifications.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.notifications_off_outlined,
-              size: 64,
-              color: Colors.grey[400],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No notifications yet',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        // Today Section
-        if (controller.todayNotifications.isNotEmpty) ...[
-          Text(
-            'Today',
-            style: GoogleFonts.nunito(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 15),
-          ...controller.todayNotifications.map((notification) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _buildNotificationItem(
-                imagePath: notification.imagePath,
-                title: notification.title,
-                time: notification.time,
-                iconBg: notification.iconBg,
-                iconColor: notification.iconColor,
-                onTap: () => controller.onNotificationTap(notification),
-                onDismiss: () => controller.deleteNotification(notification),
-              ),
-            );
-          }).toList(),
-          const SizedBox(height: 20),
-        ],
-        // Yesterday Section
-        if (controller.yesterdayNotifications.isNotEmpty) ...[
-          Text(
-            'Yesterday',
-            style: GoogleFonts.nunito(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 15),
-          ...controller.yesterdayNotifications.map((notification) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _buildNotificationItem(
-                imagePath: notification.imagePath,
-                title: notification.title,
-                time: notification.time,
-                iconBg: notification.iconBg,
-                iconColor: notification.iconColor,
-                onTap: () => controller.onNotificationTap(notification),
-                onDismiss: () => controller.deleteNotification(notification),
-              ),
-            );
-          }).toList(),
-        ],
-        // Older Section
-        if (controller.olderNotifications.isNotEmpty) ...[
-          const SizedBox(height: 20),
-          Text(
-            'Older',
-            style: GoogleFonts.nunito(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 15),
-          ...controller.olderNotifications.map((notification) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _buildNotificationItem(
-                imagePath: notification.imagePath,
-                title: notification.title,
-                time: notification.time,
-                iconBg: notification.iconBg,
-                iconColor: notification.iconColor,
-                onTap: () => controller.onNotificationTap(notification),
-                onDismiss: () => controller.deleteNotification(notification),
-              ),
-            );
-          }).toList(),
-        ],
-      ],
-    );
-  }
-
-  // Alert Settings Content
+  // ── Alert Settings ─────────────────────────────────────────────────────────
   Widget _buildAlertSettingsContent(NotificationControllerdamo controller) {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
+        // Pro banner if not subscribed
+        Obx(() {
+          final isPro = ProStatusController.to.isProUser.value;
+          if (isPro) return const SizedBox.shrink();
+          return Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.amber.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.amber.shade200),
+            ),
+            child: Row(children: [
+              const Icon(Icons.workspace_premium, color: Colors.amber, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Upgrade to Pro to customize alert settings.',
+                  style: GoogleFonts.nunito(
+                      fontSize: 13, color: Colors.amber.shade900),
+                ),
+              ),
+            ]),
+          );
+        }),
+
         Container(
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2))
             ],
           ),
-          child: Column(
-            children: [
-              Obx(() => _buildSettingItem(
-                title: 'Button Alerts',
-                subtitle: 'Receive alerts when buttons are tapped',
-                value: controller.buttonAlerts.value,
-                onChanged: (val) => controller.toggleButtonAlerts(val),
-              )),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Divider(height: 1, color: Colors.grey[100]),
-              ),
-              Obx(() => _buildSettingItem(
-                title: 'Sentence Builder Alerts',
-                subtitle: 'Receive alerts when sentences are built',
-                value: controller.sentenceBuilderAlerts.value,
-                onChanged: (val) =>
-                    controller.toggleSentenceBuilderAlerts(val),
-              )),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Divider(height: 1, color: Colors.grey[100]),
-              ),
-              Obx(() => _buildSettingItem(
-                title: 'My Schedule Alerts',
-                subtitle: 'Receive alerts for Schedule activities',
-                value: controller.myScheduleAlerts.value,
-                onChanged: (val) =>
-                    controller.toggleMyScheduleAlerts(val),
-              )),
-            ],
-          ),
+          child: Column(children: [
+            Obx(() => _settingItem(
+              title: 'Button Alerts',
+              subtitle: 'Receive alerts when buttons are tapped',
+              value: controller.buttonAlerts.value,
+              onChanged: controller.toggleButtonAlerts,
+            )),
+            _divider(),
+            Obx(() => _settingItem(
+              title: 'Sentence Builder Alerts',
+              subtitle: 'Receive alerts when sentences are built',
+              value: controller.sentenceBuilderAlerts.value,
+              onChanged: controller.toggleSentenceBuilderAlerts,
+            )),
+            _divider(),
+            Obx(() => _settingItem(
+              title: 'My Schedule Alerts',
+              subtitle: 'Receive alerts for schedule activities',
+              value: controller.myScheduleAlerts.value,
+              onChanged: controller.toggleMyScheduleAlerts,
+            )),
+          ]),
         ),
       ],
     );
   }
 
-  Widget _buildTab(String text, bool isActive, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        alignment: Alignment.center,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              text,
-              style: GoogleFonts.roboto(
-                fontSize: 16,
-                fontWeight: isActive ? FontWeight.w500 : FontWeight.normal,
-                color: isActive ? AppColors.primaryColor : Colors.grey[600],
-              ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              height: 2,
-              width: double.infinity,
-              color: isActive ? AppColors.primaryColor : Colors.grey[300],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget _divider() => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    child: Divider(height: 1, color: Colors.grey[100]),
+  );
 
-  Widget _buildNotificationItem({
-    required String imagePath,
-    required String title,
-    required String time,
-    required Color iconBg,
-    Color? iconColor,
-    VoidCallback? onTap,
-    VoidCallback? onDismiss,
-  }) {
-    return Dismissible(
-      key: Key(title + time),
-      direction: DismissDirection.endToStart,
-      onDismissed: (direction) {
-        if (onDismiss != null) onDismiss();
-      },
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: iconBg,
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Image.asset(
-                      imagePath,
-                      width: 32,
-                      height: 32,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        // Fallback if image not found
-                        return Icon(
-                          Icons.notifications,
-                          color: iconColor ?? Colors.grey,
-                          size: 24,
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      time,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSettingItem({
+  Widget _settingItem({
     required String title,
     required String subtitle,
     required bool value,
     required Function(bool) onChanged,
   }) {
-    return Row(
-      children: [
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
+    final isPro = ProStatusController.to.isProUser.value;
+    return Row(children: [
+      Expanded(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Text(title,
                   style: GoogleFonts.nunito(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: GoogleFonts.nunito(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
-                ),
+                      fontSize: 14, fontWeight: FontWeight.w600)),
+              if (!isPro) ...[
+                const SizedBox(width: 6),
+                const Icon(Icons.lock_outline,
+                    size: 14, color: Colors.amber),
               ],
-            ),
-          ),
+            ]),
+            Text(subtitle,
+                style: GoogleFonts.nunito(
+                    fontSize: 12, color: Colors.grey[600])),
+          ]),
         ),
-        Padding(
-          padding: const EdgeInsets.only(right: 16.0),
-          child: CustomSwitch(
-            value: value,
-            onChanged: onChanged,
-          ),
+      ),
+      Padding(
+        padding: const EdgeInsets.only(right: 16),
+        child: Opacity(
+          opacity: isPro ? 1.0 : 0.4,
+          child: CustomSwitch(value: value, onChanged: onChanged),
         ),
-      ],
-    );
+      ),
+    ]);
   }
 }

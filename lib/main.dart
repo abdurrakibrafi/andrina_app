@@ -34,7 +34,7 @@ void main() async {
     print('✅ Step 4: NotificationService done');
 
     print('🎮 Step 5: NotificationController init...');
-    Get.put(NotificationController()); // ✅ শুধু put করুন, init না
+    Get.put(NotificationControllerFCM()); // ✅ শুধু put করুন, init না
     print('✅ Step 5: NotificationController done');
 
     print('💰 Step 6: RevenueCat init...');
