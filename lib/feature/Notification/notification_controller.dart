@@ -195,7 +195,7 @@ class NotificationControllerdamo extends GetxController {
   }
 
   // ---------------------------------------------------------------------------
-  // MARK AS READ  POST /api/notifications/{id}/mark_read/
+  // MARK AS READ
   // ---------------------------------------------------------------------------
   Future<void> markAsRead(NotificationModel notification) async {
     try {

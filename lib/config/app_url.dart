@@ -83,4 +83,6 @@ class AppUrl {
     if (path.startsWith('http')) return path;
     return '$baseUrl$path';
   }
+
+  static const String pressContent = '/api/communicator/content/pressed/';
 }

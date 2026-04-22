@@ -54,7 +54,7 @@ class CommunicatorAllQuickSpeaksScreen
       ),
       body: Column(
         children: [
-          // ── Speak Bar ────────────────────────────────────────────────────
+          // ── Speak Bar (with cooldown support) ────────────────────────────
           Obx(() => Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
             child: CommSpeakBar(
@@ -62,6 +62,8 @@ class CommunicatorAllQuickSpeaksScreen
               hint: 'select_quick_speak_hint'.tr,
               onSpeak: controller.speakQuickSpeak,
               onClear: controller.clearQuickSpeak,
+              isCooldown: controller.isSpeakCooldown.value,
+              cooldownCount: controller.cooldownCount.value,
             ),
           )),
 

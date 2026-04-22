@@ -1,5 +1,7 @@
 // lib/feature/home_screen/communicator/contoller/communicator_item_controller.dart
 
+import 'dart:async';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:chatter_bee/Repository/communicator_repository/communicator_repository.dart';
 import 'package:chatter_bee/config/app_url.dart';
@@ -21,6 +23,12 @@ class CommunicatorItemController extends GetxController {
   // ── Quick speak bar ───────────────────────────────────────────
   final RxString selectedWord = ''.obs;
   final RxInt selectedItemId = (-1).obs;
+
+  // ── Speak button cooldown ─────────────────────────────────────
+  final RxBool isSpeakCooldown = false.obs;
+  final RxInt cooldownCount = 5.obs;
+
+  Timer? _cooldownTimer;
 
   @override
   void onInit() {
@@ -84,36 +92,68 @@ class CommunicatorItemController extends GetxController {
   }
 
   // ── Speak button ───────────────────────────────────────────────
+  /// Plays audio + calls pressed API + starts 2-second cooldown
   void speakSelected() {
+    // Cooldown চলাকালীন click ignore করো
+    if (isSpeakCooldown.value) return;
     if (selectedWord.value.isEmpty) return;
+
     final item = items.firstWhereOrNull((i) => i.id == selectedItemId.value);
-    if (item?.speak != null) {
-      playAudio(item!.id, item.speak);
-    } else {
-      Get.snackbar(
-        'speak'.tr,
-        selectedWord.value,
-        snackPosition: SnackPosition.BOTTOM,
-        duration: const Duration(seconds: 2),
-      );
+    if (item == null) return;
+
+    // 1️⃣ Audio play করো
+    if (item.speak != null) {
+      _playAudioInternal(item.id, item.speak);
     }
+
+    // 2️⃣ Pressed API hit করো (fire-and-forget)
+    _repo.pressContent(contentType: 'item', contentId: item.id);
+
+    // 3️⃣ Cooldown start করো
+    _startCooldown();
   }
 
   void clearSelection() {
+    // Audio বন্ধ করো
+    _stopAudio();
+
     selectedItemId.value = -1;
     selectedWord.value = '';
+
+    // চলমান cooldown বাতিল করো
+    _cancelCooldown();
+  }
+
+  // ── Cooldown helpers ───────────────────────────────────────────
+  void _startCooldown() {
+    _cancelCooldown();
+
+    cooldownCount.value = 5;
+    isSpeakCooldown.value = true;
+
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (cooldownCount.value > 0) {
+        cooldownCount.value--;
+      } else {
+        timer.cancel();
+        isSpeakCooldown.value = false;
+        cooldownCount.value = 5;
+      }
+    });
+  }
+
+  void _cancelCooldown() {
+    _cooldownTimer?.cancel();
+    _cooldownTimer = null;
+    isSpeakCooldown.value = false;
+    cooldownCount.value = 5;
   }
 
   // ── Audio ──────────────────────────────────────────────────────
-  Future<void> playAudio(int id, String? audioPath) async {
+  Future<void> _playAudioInternal(int id, String? audioPath) async {
     final url = AppUrl.mediaUrl(audioPath);
     if (url == null) return;
 
-    if (playingId.value == id) {
-      await _audioPlayer.stop();
-      playingId.value = -1;
-      return;
-    }
     try {
       playingId.value = id;
       await _audioPlayer.play(UrlSource(url));
@@ -126,8 +166,25 @@ class CommunicatorItemController extends GetxController {
     }
   }
 
+  Future<void> _stopAudio() async {
+    try {
+      await _audioPlayer.stop();
+    } catch (_) {}
+    playingId.value = -1;
+  }
+
+  /// Public legacy — kept for compatibility
+  Future<void> playAudio(int id, String? audioPath) async {
+    if (playingId.value == id) {
+      await _stopAudio();
+      return;
+    }
+    await _playAudioInternal(id, audioPath);
+  }
+
   @override
   void onClose() {
+    _cancelCooldown();
     _audioPlayer.dispose();
     super.onClose();
   }

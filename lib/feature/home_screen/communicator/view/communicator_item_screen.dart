@@ -65,6 +65,8 @@ class CommunicatorItemScreen extends GetView<CommunicatorItemController> {
               hint: 'tap_an_item'.tr,
               onSpeak: controller.speakSelected,
               onClear: controller.clearSelection,
+              isCooldown: controller.isSpeakCooldown.value,
+              cooldownCount: controller.cooldownCount.value,
             ),
           )),
 
@@ -236,7 +238,10 @@ class _ItemCard extends StatelessWidget {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-//  SHARED — SPEAK BAR
+//  SPEAK BAR — local to item screen
+//
+//  isCooldown    → disables speak btn, shows countdown badge
+//  cooldownCount → number in badge: 2 → 1 → 0
 // ════════════════════════════════════════════════════════════════════════════
 
 class _SpeakBar extends StatelessWidget {
@@ -244,12 +249,16 @@ class _SpeakBar extends StatelessWidget {
   final String hint;
   final VoidCallback onSpeak;
   final VoidCallback onClear;
+  final bool isCooldown;
+  final int cooldownCount;
 
   const _SpeakBar({
     required this.text,
     required this.hint,
     required this.onSpeak,
     required this.onClear,
+    this.isCooldown = false,
+    this.cooldownCount = 2,
   });
 
   @override
@@ -258,6 +267,7 @@ class _SpeakBar extends StatelessWidget {
 
     return Row(
       children: [
+        // ── Text display ──────────────────────────────────────────
         Expanded(
           child: Container(
             height: 52,
@@ -287,25 +297,117 @@ class _SpeakBar extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 10),
-        _BarBtn(
-          color: const Color(0xFF7BC5D3),
-          onTap: onSpeak,
-          child: SvgPicture.asset(
-            ImagesLink.speakIcon,
-            width: 22,
-            height: 22,
-            colorFilter:
-            const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-          ),
+
+        // ── Speak button with cooldown overlay ────────────────────
+        _SpeakBtn(
+          isCooldown: isCooldown,
+          cooldownCount: cooldownCount,
+          onTap: isCooldown ? null : onSpeak,
         ),
         const SizedBox(width: 10),
+
+        // ── Clear button — always active, stops audio too ─────────
         _BarBtn(
           color: const Color(0xFFE57373),
           onTap: onClear,
-          child: SvgPicture.asset(
-              ImagesLink.cancelIcon, width: 22, height: 22),
+          child: SvgPicture.asset(ImagesLink.cancelIcon, width: 22, height: 22),
         ),
       ],
+    );
+  }
+}
+
+// ── Speak button with countdown badge ────────────────────────────────────────
+
+class _SpeakBtn extends StatelessWidget {
+  final bool isCooldown;
+  final int cooldownCount;
+  final VoidCallback? onTap;
+
+  const _SpeakBtn({
+    required this.isCooldown,
+    required this.cooldownCount,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Base button
+          Container(
+            height: 46,
+            width: 46,
+            decoration: BoxDecoration(
+              color: isCooldown
+                  ? const Color(0xFF7BC5D3).withOpacity(0.45)
+                  : const Color(0xFF7BC5D3),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4)),
+              ],
+            ),
+            child: Center(
+              child: SvgPicture.asset(
+                ImagesLink.speakIcon,
+                width: 22,
+                height: 22,
+                colorFilter: ColorFilter.mode(
+                  isCooldown ? Colors.white.withOpacity(0.55) : Colors.white,
+                  BlendMode.srcIn,
+                ),
+              ),
+            ),
+          ),
+
+          // Countdown badge — shown only during cooldown
+          if (isCooldown)
+            Positioned(
+              top: -8,
+              right: -8,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                transitionBuilder: (child, animation) => ScaleTransition(
+                  scale: animation,
+                  child: child,
+                ),
+                child: Container(
+                  key: ValueKey(cooldownCount),
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF6B6B),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black.withOpacity(0.15),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2))
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      '$cooldownCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        height: 1,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

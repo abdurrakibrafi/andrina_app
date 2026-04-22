@@ -10,18 +10,42 @@ class CommunicatorRepository {
 
   // ── Normal mode content ───────────────────────────────────────────────────
   /// GET /api/communicator/content/?lang={lang}
-  Future<ApiResponse<CommunicatorContentModel>> getContent({String lang = 'en'}) async {
+  Future<ApiResponse<CommunicatorContentModel>> getContent(
+      {String lang = 'en'}) async {
     return _fetchContent(AppUrl.getCommunicatorContent(lang: lang), lang: lang);
   }
 
   // ── Buddy mode content ────────────────────────────────────────────────────
   /// GET /api/communicator/content/buddy-mode/?lang={lang}
-  Future<ApiResponse<CommunicatorContentModel>> getBuddyModeContent({String lang = 'en'}) async {
-    return _fetchContent(AppUrl.getCommunicatorBuddyModeContent(lang: lang), lang: lang);
+  Future<ApiResponse<CommunicatorContentModel>> getBuddyModeContent(
+      {String lang = 'en'}) async {
+    return _fetchContent(AppUrl.getCommunicatorBuddyModeContent(lang: lang),
+        lang: lang);
+  }
+
+  // ── Press / tap tracking ──────────────────────────────────────────────────
+  /// POST /api/communicator/content/pressed/
+  /// body: { "content_type": "item" | "quickspeak", "content_id": id }
+  Future<void> pressContent({
+    required String contentType, // "item" or "quickspeak"
+    required int contentId,
+  }) async {
+    try {
+      await _client.post<Map<String, dynamic>>(
+        AppUrl.pressContent, // add this constant to AppUrl
+        data: {
+          'content_type': contentType,
+          'content_id': contentId,
+        },
+      );
+    } catch (e) {
+      debugPrint('CommunicatorRepository.pressContent error: $e');
+    }
   }
 
   // ── Shared fetch logic ────────────────────────────────────────────────────
-  Future<ApiResponse<CommunicatorContentModel>> _fetchContent(String url, {String lang = 'en'}) async {
+  Future<ApiResponse<CommunicatorContentModel>> _fetchContent(String url,
+      {String lang = 'en'}) async {
     try {
       final response = await _client.get<Map<String, dynamic>>(url);
 

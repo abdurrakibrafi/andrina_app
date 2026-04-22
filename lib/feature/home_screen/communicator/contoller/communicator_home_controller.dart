@@ -1,5 +1,7 @@
 // lib/feature/home_screen/communicator/contoller/communicator_home_controller.dart
 
+import 'dart:async';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:chatter_bee/Repository/communicator_repository/communicator_repository.dart';
 import 'package:chatter_bee/config/app_url.dart';
@@ -29,6 +31,15 @@ class CommunicatorHomeController extends GetxController {
 
   // ── Audio ─────────────────────────────────────────────────────────────────
   final RxInt playingId = (-1).obs;
+
+  // ── Speak button cooldown ─────────────────────────────────────────────────
+  /// true while the 2-second cooldown is running (button disabled)
+  final RxBool isSpeakCooldown = false.obs;
+
+  /// countdown display value: 5 → 4 → 3 → 2 → 1 → 0
+  final RxInt cooldownCount = 5.obs;
+
+  Timer? _cooldownTimer;
 
   @override
   void onInit() {
@@ -98,38 +109,74 @@ class CommunicatorHomeController extends GetxController {
   }
 
   // ── Speak button ───────────────────────────────────────────────────────────
+  /// Plays audio + calls pressed API + starts 2-second cooldown
   void speakQuickSpeak() {
+    // Cooldown চলাকালীন click ignore করো
+    if (isSpeakCooldown.value) return;
+
     if (quickSpeakText.value.isEmpty) {
       Get.snackbar('select_first'.tr, 'tap_quick_speak_first'.tr,
           snackPosition: SnackPosition.BOTTOM);
       return;
     }
+
     final selected =
     quickSpeaks.firstWhereOrNull((q) => q.id == selectedQsId.value);
-    if (selected?.speak != null) {
-      playAudio(selected!.id, selected.speak);
-    } else {
-      Get.snackbar('speak'.tr, quickSpeakText.value,
-          snackPosition: SnackPosition.BOTTOM,
-          duration: const Duration(seconds: 2));
+    if (selected == null) return;
+
+    // 1️⃣ Audio play করো
+    if (selected.speak != null) {
+      _playAudioInternal(selected.id, selected.speak);
     }
+
+    // 2️⃣ Pressed API hit করো (fire-and-forget)
+    _repo.pressContent(contentType: 'quickspeak', contentId: selected.id);
+
+    // 3️⃣ Cooldown start করো
+    _startCooldown();
   }
 
   void clearQuickSpeak() {
+    // Audio বন্ধ করো
+    _stopAudio();
+
     selectedQsId.value = -1;
     quickSpeakText.value = '';
+
+    // চলমান cooldown বাতিল করো
+    _cancelCooldown();
+  }
+
+  // ── Cooldown helpers ───────────────────────────────────────────────────────
+  void _startCooldown() {
+    _cancelCooldown(); // আগের timer থাকলে বাতিল করো
+
+    cooldownCount.value = 5;
+    isSpeakCooldown.value = true;
+
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (cooldownCount.value > 0) {
+        cooldownCount.value--;
+      } else {
+        timer.cancel();
+        isSpeakCooldown.value = false;
+        cooldownCount.value = 5; // reset for next use
+      }
+    });
+  }
+
+  void _cancelCooldown() {
+    _cooldownTimer?.cancel();
+    _cooldownTimer = null;
+    isSpeakCooldown.value = false;
+    cooldownCount.value = 5;
   }
 
   // ── Audio ──────────────────────────────────────────────────────────────────
-  Future<void> playAudio(int id, String? audioPath) async {
+  Future<void> _playAudioInternal(int id, String? audioPath) async {
     final url = AppUrl.mediaUrl(audioPath);
     if (url == null) return;
 
-    if (playingId.value == id) {
-      await _audioPlayer.stop();
-      playingId.value = -1;
-      return;
-    }
     try {
       playingId.value = id;
       await _audioPlayer.play(UrlSource(url));
@@ -142,6 +189,25 @@ class CommunicatorHomeController extends GetxController {
     }
   }
 
+  Future<void> _stopAudio() async {
+    try {
+      await _audioPlayer.stop();
+    } catch (_) {}
+    playingId.value = -1;
+  }
+
+  /// Public — sub-screens may call this if they share the same AudioPlayer
+  Future<void> playAudio(int id, String? audioPath) async {
+    final url = AppUrl.mediaUrl(audioPath);
+    if (url == null) return;
+
+    if (playingId.value == id) {
+      await _stopAudio();
+      return;
+    }
+    await _playAudioInternal(id, audioPath);
+  }
+
   // ── Navigation ─────────────────────────────────────────────────────────────
   void onCategoryTap(CommCategoryModel category) {
     Get.toNamed(AppRoutes.COMMUNICATOR_SUB_CATEGORY, arguments: category);
@@ -149,6 +215,7 @@ class CommunicatorHomeController extends GetxController {
 
   @override
   void onClose() {
+    _cancelCooldown();
     _audioPlayer.dispose();
     super.onClose();
   }
