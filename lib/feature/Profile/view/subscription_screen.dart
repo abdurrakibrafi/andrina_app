@@ -7,6 +7,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'dart:io';
 
 class SubscriptionScreen extends GetView<SubscriptionController> {
   const SubscriptionScreen({super.key});
@@ -242,7 +243,8 @@ class SubscriptionScreen extends GetView<SubscriptionController> {
 // Auto-renewal disclaimer
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Text(
+                      child: Platform.isIOS  // ← .ios না, .isIOS লিখতে হবে
+                          ? Text(
                         'Payment will be charged to your Apple ID account at confirmation of purchase. '
                             'Subscription automatically renews unless canceled at least 24 hours before '
                             'the end of the current period. You can manage or cancel your subscription in '
@@ -253,13 +255,14 @@ class SubscriptionScreen extends GetView<SubscriptionController> {
                           color: Colors.grey[500],
                           height: 1.5,
                         ),
-                      ),
+                      )
+                          : const SizedBox.shrink(), // Android-এ কিছুই দেখাবে না
                     ),
 
                     const SizedBox(height: 12),
 
 // Terms of Use + Privacy Policy links
-                    Row(
+                   Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         GestureDetector(
