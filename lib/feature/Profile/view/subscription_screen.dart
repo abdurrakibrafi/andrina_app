@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SubscriptionScreen extends GetView<SubscriptionController> {
   const SubscriptionScreen({super.key});
@@ -233,6 +234,73 @@ class SubscriptionScreen extends GetView<SubscriptionController> {
                         ),
                       ),
                     ),
+
+
+                    // ── Legal Footer ────────────────────────────
+                    const SizedBox(height: 8),
+
+// Auto-renewal disclaimer
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Text(
+                        'Payment will be charged to your Apple ID account at confirmation of purchase. '
+                            'Subscription automatically renews unless canceled at least 24 hours before '
+                            'the end of the current period. You can manage or cancel your subscription in '
+                            'your App Store account settings.',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.nunito(
+                          fontSize: 11,
+                          color: Colors.grey[500],
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+// Terms of Use + Privacy Policy links
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        GestureDetector(
+                          onTap: () => launchUrl(
+                            Uri.parse('https://chatterbeeapp.com/sample-page/'),
+                            mode: LaunchMode.externalApplication,
+                          ),
+                          child: Text(
+                            'Terms of Use',
+                            style: GoogleFonts.nunito(
+                              fontSize: 12,
+                              color: const Color(0xFFFFC107),
+                              decoration: TextDecoration.underline,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '  |  ',
+                          style: GoogleFonts.nunito(fontSize: 12, color: Colors.grey[400]),
+                        ),
+                        GestureDetector(
+                          onTap: () => launchUrl(
+                            Uri.parse('https://chatterbeeapp.com/privacy-policy/'),
+                            mode: LaunchMode.externalApplication,
+                          ),
+                          child: Text(
+                            'Privacy Policy',
+                            style: GoogleFonts.nunito(
+                              fontSize: 12,
+                              color: const Color(0xFFFFC107),
+                              decoration: TextDecoration.underline,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+
                   ],
                 ),
               ),
