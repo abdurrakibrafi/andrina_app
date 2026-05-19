@@ -8,6 +8,7 @@ import 'package:chatter_bee/config/translations/language_controller.dart';
 import 'package:chatter_bee/feature/home_screen/caregiver/controller/caregiver_home_controller.dart';
 import 'package:chatter_bee/models/caregiver_models/caregiver_content_model.dart';
 import 'package:chatter_bee/services/communicator_session_service.dart';
+import 'package:chatter_bee/services/tts_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:get/get.dart';
@@ -130,21 +131,28 @@ class CaregiverItemController extends GetxController {
     }
   }
 
+
   Future<void> playItemAudio(ItemModel item) async {
-    final url = AppUrl.mediaUrl(item.speak);
-    if (url == null) return;
+    // ✅ TTS logic
+    if (item.speak != null && item.speak!.isNotEmpty) {
+      final url = AppUrl.mediaUrl(item.speak);
+      if (url == null) return;
 
-    if (playingItemId.value == item.id) {
-      await _audioPlayer.stop();
-      playingItemId.value = -1;
-      return;
+      if (playingItemId.value == item.id) {
+        await _audioPlayer.stop();
+        playingItemId.value = -1;
+        return;
+      }
+
+      playingItemId.value = item.id;
+      await _audioPlayer.play(UrlSource(url));
+      _audioPlayer.onPlayerComplete.listen((_) {
+        if (playingItemId.value == item.id) playingItemId.value = -1;
+      });
+    } else {
+      // Custom audio নেই → TTS
+      await TtsService.to.speak(item.word ?? '', lang: _currentLang);
     }
-
-    playingItemId.value = item.id;
-    await _audioPlayer.play(UrlSource(url));
-    _audioPlayer.onPlayerComplete.listen((_) {
-      if (playingItemId.value == item.id) playingItemId.value = -1;
-    });
   }
 
   void toggleEditMode() {

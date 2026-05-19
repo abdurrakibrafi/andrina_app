@@ -7,6 +7,7 @@ import 'package:chatter_bee/config/translations/language_controller.dart';
 import 'package:chatter_bee/feature/authentication/repo/auth_repository.dart';
 import 'package:chatter_bee/models/caregiver_models/caregiver_content_model.dart';
 import 'package:chatter_bee/services/communicator_session_service.dart';
+import 'package:chatter_bee/services/tts_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:get/get.dart';
@@ -157,17 +158,21 @@ class CaregiverHomeController extends GetxController {
     }
   }
 
+
   Future<void> playQuickSpeak(QuickSpeakModel qs) async {
-    final url = AppUrl.mediaUrl(qs.speak);
-    if (url == null) {
-      Get.snackbar('no_audio_title'.tr, 'qs_has_no_audio'.tr,
-          snackPosition: SnackPosition.BOTTOM);
-      return;
-    }
-    try {
-      await _audioPlayer.play(UrlSource(url));
-    } catch (e) {
-      debugPrint('Audio play error: $e');
+    // ✅ TTS logic
+    if (qs.speak != null && qs.speak!.isNotEmpty) {
+      final url = AppUrl.mediaUrl(qs.speak);
+      if (url != null) {
+        try {
+          await _audioPlayer.play(UrlSource(url));
+        } catch (e) {
+          debugPrint('Audio play error: $e');
+        }
+      }
+    } else {
+      // Custom audio নেই → TTS দিয়ে বলো
+      await TtsService.to.speak(qs.word ?? '', lang: _currentLang);
     }
   }
 

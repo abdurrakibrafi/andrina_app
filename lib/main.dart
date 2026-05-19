@@ -4,6 +4,7 @@ import 'package:chatter_bee/services/notification_controller.dart';
 import 'package:chatter_bee/services/notification_services.dart';
 import 'package:chatter_bee/services/revenueCat_services.dart';
 import 'package:chatter_bee/services/storage/data_storage.dart';
+import 'package:chatter_bee/services/tts_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -40,6 +41,10 @@ void main() async {
     print('💰 Step 6: RevenueCat init...');
     await RevenueCatService.instance.init();
     print('✅ Step 6: RevenueCat done');
+
+    print('💰 Step 7: TtsServices init...');
+    await Get.putAsync(() => TtsService().onInit().then((_) => TtsService()));
+    print('💰 Step 7: TtsServices done');
 
     Get.put(ProStatusController(), permanent: true);
 

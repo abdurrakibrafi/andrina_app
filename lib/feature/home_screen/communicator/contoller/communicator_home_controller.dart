@@ -9,6 +9,7 @@ import 'package:chatter_bee/config/translations/language_controller.dart';
 import 'package:chatter_bee/feature/authentication/repo/auth_repository.dart';
 import 'package:chatter_bee/models/communicator_models/communicator_content_model.dart';
 import 'package:chatter_bee/routes/app_routes.dart';
+import 'package:chatter_bee/services/tts_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -110,8 +111,8 @@ class CommunicatorHomeController extends GetxController {
 
   // ── Speak button ───────────────────────────────────────────────────────────
   /// Plays audio + calls pressed API + starts 2-second cooldown
+// speakQuickSpeak() — replace করো:
   void speakQuickSpeak() {
-    // Cooldown চলাকালীন click ignore করো
     if (isSpeakCooldown.value) return;
 
     if (quickSpeakText.value.isEmpty) {
@@ -124,29 +125,24 @@ class CommunicatorHomeController extends GetxController {
     quickSpeaks.firstWhereOrNull((q) => q.id == selectedQsId.value);
     if (selected == null) return;
 
-    // 1️⃣ Audio play করো
-    if (selected.speak != null) {
+    // ✅ TTS logic: custom audio থাকলে play, না থাকলে TTS
+    if (selected.speak != null && selected.speak!.isNotEmpty) {
       _playAudioInternal(selected.id, selected.speak);
+    } else {
+      TtsService.to.speak(selected.word ?? '', lang: _currentLang);
     }
 
-    // 2️⃣ Pressed API hit করো (fire-and-forget)
     _repo.pressContent(contentType: 'quickspeak', contentId: selected.id);
-
-    // 3️⃣ Cooldown start করো
     _startCooldown();
   }
 
   void clearQuickSpeak() {
-    // Audio বন্ধ করো
     _stopAudio();
-
+    TtsService.to.stop(); // TTS ও বন্ধ করো
     selectedQsId.value = -1;
     quickSpeakText.value = '';
-
-    // চলমান cooldown বাতিল করো
     _cancelCooldown();
   }
-
   // ── Cooldown helpers ───────────────────────────────────────────────────────
   void _startCooldown() {
     _cancelCooldown(); // আগের timer থাকলে বাতিল করো
