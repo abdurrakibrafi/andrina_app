@@ -206,7 +206,14 @@ class CommunicatorHomeController extends GetxController {
 
   // ── Navigation ─────────────────────────────────────────────────────────────
   void onCategoryTap(CommCategoryModel category) {
-    Get.toNamed(AppRoutes.COMMUNICATOR_SUB_CATEGORY, arguments: category);
+    if (category.subCategories.isEmpty) {
+      // Sub-category নেই — directly item screen এ যাবে না,
+      // কারণ communicator item screen CommSubCategoryModel চায়।
+      // তাই sub-category screen এ যাও, সেখানে empty state দেখাবে + add করতে পারবে।
+      Get.toNamed(AppRoutes.COMMUNICATOR_SUB_CATEGORY, arguments: category);
+    } else {
+      Get.toNamed(AppRoutes.COMMUNICATOR_SUB_CATEGORY, arguments: category);
+    }
   }
 
   @override

@@ -66,7 +66,12 @@ class CommunicatorSubCategoryController extends GetxController {
   }
 
   void onSubCategoryTap(CommSubCategoryModel sub) {
-    Get.toNamed(AppRoutes.COMMUNICATOR_ITEM, arguments: sub);
+    if (sub.items.isEmpty && sub.itemsCount == 0) {
+      // sub-category তে কিছু নেই — তবুও item screen এ যাও
+      Get.toNamed(AppRoutes.COMMUNICATOR_ITEM, arguments: sub);
+    } else {
+      Get.toNamed(AppRoutes.COMMUNICATOR_ITEM, arguments: sub);
+    }
   }
 
   Future<void> playAudio(int id, String? audioPath) async {
