@@ -17,7 +17,7 @@ class RevenueCatService {
 
     if (apiKey.isEmpty) {
       debugPrint('[RC] ❌ API key is empty! Use --dart-define to pass it.');
-      return; // crash না করে gracefully বের হও
+      return;
     }
     await Purchases.setLogLevel(
       kDebugMode ? LogLevel.debug : LogLevel.error,

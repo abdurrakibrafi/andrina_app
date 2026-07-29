@@ -16,39 +16,17 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    print('🔥 Step 1: Firebase init...');
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    print('✅ Step 1: Firebase done');
-
-    print('💾 Step 2: Storage init...');
     await StorageService().init();
-    print('✅ Step 2: Storage done');
-
-    print('📡 Step 3: CommunicatorSession init...');
     await Get.putAsync(() async => CommunicatorSessionService());
-    print('✅ Step 3: CommunicatorSession done');
-
-    print('🔔 Step 4: NotificationService init...');
     await Get.putAsync(() async => await NotificationService().init());
-    print('✅ Step 4: NotificationService done');
 
-    print('🎮 Step 5: NotificationController init...');
-    Get.put(NotificationControllerFCM()); // ✅ শুধু put করুন, init না
-    print('✅ Step 5: NotificationController done');
-
-    print('💰 Step 6: RevenueCat init...');
+    Get.put(NotificationControllerFCM());
     await RevenueCatService.instance.init();
-    print('✅ Step 6: RevenueCat done');
-
-    print('💰 Step 7: TtsServices init...');
     await Get.putAsync(() => TtsService().onInit().then((_) => TtsService()));
-    print('💰 Step 7: TtsServices done');
-
     Get.put(ProStatusController(), permanent: true);
-
-    print('✅ App initialized successfully');
     runApp(const MyApp());
   } catch (e, stack) {
     print('❌ ERROR: $e');

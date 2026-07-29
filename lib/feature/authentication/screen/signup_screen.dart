@@ -113,7 +113,7 @@ class SignUpScreen extends StatelessWidget {
                           controller: controller.emailController,
                           keyboardType: TextInputType.emailAddress,
                           decoration: InputDecoration(
-                            hintText: 'demo@gmail.com',
+                            hintText: 'name@example.com',
                             hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
                             prefixIcon: Padding(
                               padding: const EdgeInsets.all(12.0),

@@ -14,8 +14,8 @@ class TtsService extends GetxService {
   @override
   Future<void> onInit() async {
     super.onInit();
-    await _tts.setSharedInstance(true); // iOS audio session sharing
-    await _tts.setSpeechRate(0.5);      // শিশুদের জন্য ধীর গতি
+    await _tts.setSharedInstance(true);
+    await _tts.setSpeechRate(0.5);
     await _tts.setVolume(1.0);
     await _tts.setPitch(1.0);
 
@@ -24,11 +24,10 @@ class TtsService extends GetxService {
     _tts.setErrorHandler((_) => isSpeaking.value = false);
   }
 
-  /// ডিভাইসের ভাষা অনুযায়ী TTS language সেট করে বলবে
   Future<void> speak(String text, {String lang = 'en'}) async {
     if (text.trim().isEmpty) return;
 
-    await stop(); // আগের টা থামাও
+    await stop();
 
     final ttsLang = _mapLang(lang);
     await _tts.setLanguage(ttsLang);
