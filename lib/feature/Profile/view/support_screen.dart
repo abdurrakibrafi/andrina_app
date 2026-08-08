@@ -51,7 +51,7 @@ class SupportScreen extends GetView<SupportController> {
                         fontSize: 14, color: Colors.grey[600])),
                 const SizedBox(height: 12),
                 ElevatedButton(
-                  onPressed: controller.fetchFaqs,
+                  onPressed: controller.fetchSupport,
                   style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryColor),
                   child: Text('retry'.tr),  // ✅
@@ -61,38 +61,29 @@ class SupportScreen extends GetView<SupportController> {
           );
         }
 
-        // ── Empty ──
-        if (controller.faqList.isEmpty) {
-          return Center(
-            child: Text(
-              'no_faq_available'.tr,  // ✅
-              style: GoogleFonts.nunito(
-                  fontSize: 14, color: Colors.grey[600]),
-            ),
-          );
-        }
-
-        // ── FAQ List ──
         return SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(20.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ...controller.faqList.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final faq = entry.value;
-                  return Column(
-                    children: [
-                      _buildExpandableSection(
-                        title: faq.title,      // ← backend data, no .tr
-                        content: faq.content,  // ← backend data, no .tr
-                        isExpanded: index == 0, // প্রথমটা open থাকবে
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                  );
-                }),
+                Text(controller.title.value,
+                    style: GoogleFonts.nunito(fontSize: 24, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 16),
+                Text(controller.description.value,
+                    style: GoogleFonts.nunito(fontSize: 15, height: 1.6, color: const Color(0xFF636F85))),
+                const SizedBox(height: 24),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('Email us at:', style: GoogleFonts.nunito(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 6),
+                    SelectableText(controller.supportEmail.value,
+                        style: GoogleFonts.nunito(color: const Color(0xFF3178C6), fontWeight: FontWeight.w700)),
+                  ]),
+                ),
               ],
             ),
           ),

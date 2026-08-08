@@ -9,6 +9,7 @@ import 'package:chatter_bee/services/communicator_session_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:chatter_bee/services/pro_access_gate.dart';
 
 class CaregiverSubCategoryController extends GetxController {
   final CaregiverCustomizationRepository _repo =
@@ -127,6 +128,7 @@ class CaregiverSubCategoryController extends GetxController {
   }
 
   Future<void> pickImage() async {
+    if (!ProAccessGate.allowOrPrompt()) return;
     final picked = await _picker.pickImage(
         source: ImageSource.gallery,
         imageQuality: 80,

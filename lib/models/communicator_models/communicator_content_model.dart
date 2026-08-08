@@ -85,6 +85,7 @@ class CommCategoryModel {
   final bool isActive;
   final bool isDeleted;
   final List<CommSubCategoryModel> subCategories;
+  final List<CommItemModel> items;
   final int subCategoriesCount;
 
   CommCategoryModel({
@@ -97,6 +98,7 @@ class CommCategoryModel {
     required this.isActive,
     required this.isDeleted,
     required this.subCategories,
+    required this.items,
     required this.subCategoriesCount,
   });
 
@@ -114,6 +116,11 @@ class CommCategoryModel {
       subCategories: (json['sub_categories'] as List? ?? [])
           .map((e) => CommSubCategoryModel.fromJson(e, lang: lang))
           .where((s) => !s.isDeleted && s.isActive)
+          .toList(),
+      items: (json['items'] as List? ?? json['direct_items'] as List? ?? [])
+          .whereType<Map>()
+          .map((e) => CommItemModel.fromJson(Map<String, dynamic>.from(e), lang: lang))
+          .where((i) => !i.isDeleted && i.isActive)
           .toList(),
     );
   }

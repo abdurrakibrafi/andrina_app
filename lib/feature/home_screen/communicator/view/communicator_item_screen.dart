@@ -47,7 +47,7 @@ class CommunicatorItemScreen extends GetView<CommunicatorItemController> {
           onPressed: () => Get.back(),
         ),
         title: Text(
-          controller.parentSubCategory.name,
+          controller.parentTitle,
           style: GoogleFonts.nunito(
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -62,6 +62,9 @@ class CommunicatorItemScreen extends GetView<CommunicatorItemController> {
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
             child: _SpeakBar(
               text: controller.selectedWord.value,
+              imageUrl: AppUrl.mediaUrl(controller.selectedImage.value),
+              itemColor: _parseColor(controller.selectedColor.value,
+                  const Color(0xFFFFD700)),
               hint: 'tap_an_item'.tr,
               onSpeak: controller.speakSelected,
               onClear: controller.clearSelection,
@@ -246,6 +249,8 @@ class _ItemCard extends StatelessWidget {
 
 class _SpeakBar extends StatelessWidget {
   final String text;
+  final String? imageUrl;
+  final Color itemColor;
   final String hint;
   final VoidCallback onSpeak;
   final VoidCallback onClear;
@@ -254,6 +259,8 @@ class _SpeakBar extends StatelessWidget {
 
   const _SpeakBar({
     required this.text,
+    required this.imageUrl,
+    required this.itemColor,
     required this.hint,
     required this.onSpeak,
     required this.onClear,
@@ -286,13 +293,40 @@ class _SpeakBar extends StatelessWidget {
             ),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text(
-                hasText ? text : hint,
-                style: GoogleFonts.nunito(
-                  fontSize: 16,
-                  color: hasText ? Colors.black87 : Colors.grey[400],
-                ),
-              ),
+              child: hasText
+                  ? Row(children: [
+                      Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: itemColor,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: imageUrl != null && imageUrl!.isNotEmpty
+                            ? CachedNetworkImage(
+                                imageUrl: imageUrl!,
+                                fit: BoxFit.cover,
+                                errorWidget: (_, __, ___) => const Icon(
+                                    Icons.image_outlined,
+                                    color: Colors.white,
+                                    size: 20),
+                              )
+                            : const Icon(Icons.image_outlined,
+                                color: Colors.white, size: 20),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(text,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.nunito(
+                                fontSize: 16, color: Colors.black87)),
+                      ),
+                    ])
+                  : Text(hint,
+                      style: GoogleFonts.nunito(
+                          fontSize: 16, color: Colors.grey[400])),
             ),
           ),
         ),

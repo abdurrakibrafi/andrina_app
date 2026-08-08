@@ -20,18 +20,19 @@ class AuthRepository {
     required String email,
     required String password,
     required String password2,
-    required String fullName,
+    required String firstName,
+    required String lastName,
   }) async {
     try {
       LoggerUtils.logInfo('=== REGISTERING COMMUNICATOR ===');
       final response = await _apiClient.post<Map<String, dynamic>>(
         AppUrl.communicatorRegister,
-        data: {'email': email, 'password': password, 'password2': password2, 'full_name': fullName},
+        data: {'email': email.toLowerCase().trim(), 'password': password, 'password2': password2, 'first_name': firstName, 'last_name': lastName},
       );
       if (response.isSuccess && response.data != null) {
         final registerResponse = RegisterResponse.fromJson(response.data!);
         await _storage.saveUserRole('communicator');
-        await _storage.saveUserName(fullName);
+        await _storage.saveUserName('$firstName $lastName'.trim());
         return ApiResponse.success(data: registerResponse, statusCode: response.statusCode, message: response.message);
       }
       return ApiResponse.error(statusCode: response.statusCode, message: response.message, errors: response.errors);
@@ -45,18 +46,19 @@ class AuthRepository {
     required String email,
     required String password,
     required String password2,
-    required String fullName,
+    required String firstName,
+    required String lastName,
   }) async {
     try {
       LoggerUtils.logInfo('=== REGISTERING CAREGIVER ===');
       final response = await _apiClient.post<Map<String, dynamic>>(
         AppUrl.caregiverRegister,
-        data: {'email': email, 'password': password, 'password2': password2, 'full_name': fullName},
+        data: {'email': email.toLowerCase().trim(), 'password': password, 'password2': password2, 'first_name': firstName, 'last_name': lastName},
       );
       if (response.isSuccess && response.data != null) {
         final registerResponse = RegisterResponse.fromJson(response.data!);
         await _storage.saveUserRole('caregiver');
-        await _storage.saveUserName(fullName);
+        await _storage.saveUserName('$firstName $lastName'.trim());
         return ApiResponse.success(data: registerResponse, statusCode: response.statusCode, message: response.message);
       }
       return ApiResponse.error(statusCode: response.statusCode, message: response.message, errors: response.errors);
@@ -84,6 +86,27 @@ class AuthRepository {
       return ApiResponse.error(statusCode: response.statusCode, message: response.message, errors: response.errors);
     } catch (e) {
       return ApiResponse.error(statusCode: 500, message: 'Failed to login. Please try again.');
+    }
+  }
+
+  Future<ApiResponse<LoginResponse>> switchAccount({required int targetUserId}) async {
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        AppUrl.switchConnection,
+        data: {'target_user_id': targetUserId},
+      );
+      if (response.isSuccess && response.data != null) {
+        final switched = LoginResponse.fromJson(response.data!);
+        await _saveAuthData(switched);
+        return ApiResponse.success(
+          data: switched,
+          statusCode: response.statusCode,
+          message: response.message,
+        );
+      }
+      return ApiResponse.error(statusCode: response.statusCode, message: response.message, errors: response.errors);
+    } catch (_) {
+      return ApiResponse.error(statusCode: 500, message: 'Unable to switch account. Please try again.');
     }
   }
 
@@ -255,9 +278,9 @@ class AuthRepository {
   Future<ApiResponse<Map<String, dynamic>>> deleteAccount() async {
     try {
       LoggerUtils.logInfo('=== DELETE ACCOUNT ===');
-      final response = await _apiClient.delete<Map<String, dynamic>>(
+      final response = await _apiClient.post<Map<String, dynamic>>(
         AppUrl.deleteAccount,
-        data: {'confirm': 'True'},
+        data: {'confirm': true},
       );
       if (response.isSuccess) {
         await _clearAuthData();

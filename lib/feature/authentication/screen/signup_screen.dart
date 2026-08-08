@@ -52,9 +52,9 @@ class SignUpScreen extends StatelessWidget {
                   builder: (controller) => Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Full Name Field
+                      // First Name Field
                       Text(
-                        'Full Name',
+                        'First Name',
                         style: GoogleFonts.nunito(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
@@ -65,9 +65,11 @@ class SignUpScreen extends StatelessWidget {
                       SizedBox(
                         height: 48,
                         child: TextField(
-                          controller: controller.fullNameController,
+                          controller: controller.firstNameController,
+                          textInputAction: TextInputAction.next,
+                          autofillHints: const [AutofillHints.givenName],
                           decoration: InputDecoration(
-                            hintText: 'Enter your full name',
+                            hintText: 'Enter your first name',
                             hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
                             prefixIcon: Padding(
                               padding: const EdgeInsets.all(12.0),
@@ -97,6 +99,39 @@ class SignUpScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 20),
 
+                      Text(
+                        'Last Name',
+                        style: GoogleFonts.nunito(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      SizedBox(
+                        height: 48,
+                        child: TextField(
+                          controller: controller.lastNameController,
+                          textInputAction: TextInputAction.next,
+                          autofillHints: const [AutofillHints.familyName],
+                          decoration: InputDecoration(
+                            hintText: 'Enter your last name',
+                            hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+                            prefixIcon: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: SvgPicture.asset(ImagesLink.parsonIcon, width: 20, height: 20),
+                            ),
+                            filled: true,
+                            fillColor: Colors.white,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
+                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
+                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFFFC857), width: 1)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
                       // Email Field
                       Text(
                         'Email address',
@@ -112,6 +147,9 @@ class SignUpScreen extends StatelessWidget {
                         child: TextField(
                           controller: controller.emailController,
                           keyboardType: TextInputType.emailAddress,
+                          textCapitalization: TextCapitalization.none,
+                          autocorrect: false,
+                          autofillHints: const [AutofillHints.email],
                           decoration: InputDecoration(
                             hintText: 'name@example.com',
                             hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
@@ -141,6 +179,13 @@ class SignUpScreen extends StatelessWidget {
                           ),
                         ),
                       ),
+                      Obx(() => controller.emailError.value.isEmpty
+                          ? const SizedBox.shrink()
+                          : Padding(
+                              padding: const EdgeInsets.only(top: 6, left: 4),
+                              child: Text(controller.emailError.value,
+                                  style: const TextStyle(color: Colors.red, fontSize: 12)),
+                            )),
                       const SizedBox(height: 20),
 
                       // Password Field
@@ -158,6 +203,7 @@ class SignUpScreen extends StatelessWidget {
                         child: TextField(
                           controller: controller.passwordController,
                           obscureText: !controller.isPasswordVisible,
+                          autofillHints: const [AutofillHints.newPassword],
                           decoration: InputDecoration(
                             hintText: '••••••',
                             hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),

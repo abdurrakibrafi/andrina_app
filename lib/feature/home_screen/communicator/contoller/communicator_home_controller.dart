@@ -10,6 +10,8 @@ import 'package:chatter_bee/feature/authentication/repo/auth_repository.dart';
 import 'package:chatter_bee/models/communicator_models/communicator_content_model.dart';
 import 'package:chatter_bee/routes/app_routes.dart';
 import 'package:chatter_bee/services/tts_service.dart';
+import 'package:chatter_bee/feature/Profile/controller/pro_status_controller.dart';
+import 'package:chatter_bee/services/revenueCat_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -125,12 +127,8 @@ class CommunicatorHomeController extends GetxController {
     quickSpeaks.firstWhereOrNull((q) => q.id == selectedQsId.value);
     if (selected == null) return;
 
-    // ✅ TTS logic: custom audio থাকলে play, না থাকলে TTS
-    if (selected.speak != null && selected.speak!.isNotEmpty) {
-      _playAudioInternal(selected.id, selected.speak);
-    } else {
-      TtsService.to.speak(selected.word ?? '', lang: _currentLang);
-    }
+    // The sentence button must always use native TTS, never an uploaded sound.
+    TtsService.to.speak(quickSpeakText.value, lang: _currentLang);
 
     _repo.pressContent(contentType: 'quickspeak', contentId: selected.id);
     _startCooldown();
@@ -207,13 +205,90 @@ class CommunicatorHomeController extends GetxController {
   // ── Navigation ─────────────────────────────────────────────────────────────
   void onCategoryTap(CommCategoryModel category) {
     if (category.subCategories.isEmpty) {
-      // Sub-category নেই — directly item screen এ যাবে না,
-      // কারণ communicator item screen CommSubCategoryModel চায়।
-      // তাই sub-category screen এ যাও, সেখানে empty state দেখাবে + add করতে পারবে।
-      Get.toNamed(AppRoutes.COMMUNICATOR_SUB_CATEGORY, arguments: category);
+      Get.toNamed(AppRoutes.COMMUNICATOR_ITEM, arguments: category);
     } else {
       Get.toNamed(AppRoutes.COMMUNICATOR_SUB_CATEGORY, arguments: category);
     }
+  }
+
+  void openSchedule() {
+    final isPro = Get.isRegistered<ProStatusController>() &&
+        ProStatusController.to.isProUser.value;
+    if (isPro) {
+      Get.toNamed(AppRoutes.ACTIVITIES);
+      return;
+    }
+    _showProUpgradeDialog();
+  }
+
+  void _showProUpgradeDialog() {
+    const features = [
+      'Real-Time Notifications',
+      'Visual Routines',
+      'Advanced Customization',
+      'BuddyBee Encouragement',
+      'Linked Caregiver Accounts',
+    ];
+    Get.dialog(
+      Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: const BoxDecoration(color: Color(0xFFFFF4CF), shape: BoxShape.circle),
+              child: const Icon(Icons.workspace_premium_rounded, size: 40, color: Color(0xFFF4B400)),
+            ),
+            const SizedBox(height: 16),
+            const Text('Unlock ChatterBee Pro', textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 10),
+            const Text(
+              'Unlock powerful tools that help caregivers stay connected while creating a more personalized communication experience.',
+              textAlign: TextAlign.center,
+              style: TextStyle(height: 1.45, color: Color(0xFF636F85)),
+            ),
+            const SizedBox(height: 18),
+            ...features.map((feature) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 5),
+              child: Row(children: [
+                const Icon(Icons.check_circle_rounded, size: 20, color: Color(0xFFF4B400)),
+                const SizedBox(width: 10),
+                Expanded(child: Text(feature, style: const TextStyle(fontWeight: FontWeight.w600))),
+              ]),
+            )),
+            const SizedBox(height: 20),
+            SizedBox(width: double.infinity, child: ElevatedButton(
+              onPressed: () { Get.back(); Get.toNamed(AppRoutes.SUBSCRIPTION); },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFFC857),
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              child: const Text('Unlock ChatterBee Pro', style: TextStyle(fontWeight: FontWeight.w800)),
+            )),
+            TextButton(onPressed: Get.back, child: const Text('Maybe Later')),
+            TextButton(
+              onPressed: () async {
+                final restored = await RevenueCatService.instance.restorePurchases();
+                if (restored && Get.isRegistered<ProStatusController>()) {
+                  ProStatusController.to.isProUser.value = true;
+                  Get.back();
+                  Get.toNamed(AppRoutes.ACTIVITIES);
+                } else {
+                  Get.snackbar('Not found', 'No active subscription to restore.');
+                }
+              },
+              child: const Text('Already subscribed? Restore Purchase'),
+            ),
+          ]),
+        ),
+      ),
+    );
   }
 
   @override

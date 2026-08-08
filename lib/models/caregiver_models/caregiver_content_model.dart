@@ -79,6 +79,7 @@ class CategoryModel {
   final int order;
   final bool isActive;
   final List<SubCategoryModel> subCategories;
+  final List<ItemModel> items;
 
   CategoryModel({
     required this.id,
@@ -89,6 +90,7 @@ class CategoryModel {
     required this.order,
     required this.isActive,
     required this.subCategories,
+    required this.items,
   });
 
   factory CategoryModel.fromJson(Map<String, dynamic> json, {String lang = 'en'}) {
@@ -102,6 +104,10 @@ class CategoryModel {
       isActive: json['is_active'] ?? true,
       subCategories: (json['sub_categories'] as List? ?? [])
           .map((e) => SubCategoryModel.fromJson(e, lang: lang))
+          .toList(),
+      items: (json['items'] as List? ?? json['direct_items'] as List? ?? [])
+          .whereType<Map>()
+          .map((e) => ItemModel.fromJson(Map<String, dynamic>.from(e), lang: lang))
           .toList(),
     );
   }

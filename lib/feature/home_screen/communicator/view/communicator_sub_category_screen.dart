@@ -63,7 +63,7 @@ class CommunicatorSubCategoryScreen
                 size: 60, color: Colors.grey[300]),
             const SizedBox(height: 12),
             Text(
-              'no_sub_categories'.tr,
+              'no_sub_categories_available'.tr,
               style:
               TextStyle(color: Colors.grey[500], fontSize: 15),
             ),

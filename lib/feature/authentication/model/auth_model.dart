@@ -9,9 +9,10 @@ class RegisterResponse {
   });
 
   factory RegisterResponse.fromJson(Map<String, dynamic> json) {
+    final data = json['data'] ?? json;
     return RegisterResponse(
       message: json['message'] ?? 'Registration successful',
-      email: json['email'] ?? '',
+      email: data['email'] ?? '',
     );
   }
 }
@@ -47,6 +48,8 @@ class UserData {
   final String fullName;
   final String? role; // Nullable because API might return null
   final bool isVerified;
+  final bool isProfileCompleted;
+  final bool isPro;
 
   UserData({
     required this.id,
@@ -54,6 +57,8 @@ class UserData {
     this.fullName = '',
     this.role,
     this.isVerified = false,
+    this.isProfileCompleted = false,
+    this.isPro = false,
   });
 
   factory UserData.fromJson(Map<String, dynamic> json) {
@@ -63,6 +68,8 @@ class UserData {
       fullName: json['full_name'] ?? json['name'] ?? '',
       role: json['role'], // Can be null
       isVerified: json['is_verified'] ?? json['email_verified'] ?? false,
+      isProfileCompleted: json['is_profile_completed'] ?? false,
+      isPro: json['is_pro'] ?? false,
     );
   }
 
@@ -73,6 +80,8 @@ class UserData {
       'full_name': fullName,
       'role': role,
       'is_verified': isVerified,
+      'is_profile_completed': isProfileCompleted,
+      'is_pro': isPro,
     };
   }
 

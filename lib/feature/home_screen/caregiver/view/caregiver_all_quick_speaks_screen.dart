@@ -3,7 +3,7 @@
 import 'package:chatter_bee/config/app_url.dart';
 import 'package:chatter_bee/feature/home_screen/caregiver/controller/caregiver_home_controller.dart';
 import 'package:chatter_bee/feature/home_screen/caregiver/view/caregiver_home_screen.dart'
-    show CgFolderCard, CgSectionHeader, CgFolderPainter, showCgCardLiftDialog;
+    show CgFolderCard, CgQuickSpeakBar;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -128,11 +128,23 @@ class CaregiverAllQuickSpeaksScreen extends StatelessWidget {
 
         return OrientationBuilder(builder: (context, _) {
           final cols = _crossAxisCount(context);
-          return RefreshIndicator(
-            onRefresh: controller.refresh,
-            color: const Color(0xFFFFC857),
-            child: GridView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+          return Column(children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: CgQuickSpeakBar(
+                text: controller.selectedQuickSpeakText.value,
+                imageUrl: controller.selectedQuickSpeakImage.value,
+                color: _parseColor(controller.selectedQuickSpeakColor.value,
+                    const Color(0xFFFFD700)),
+                onSpeak: controller.speakSelectedQuickSpeak,
+                onClear: controller.clearQuickSpeak,
+              ),
+            ),
+            Expanded(child: RefreshIndicator(
+              onRefresh: controller.refresh,
+              color: const Color(0xFFFFC857),
+              child: GridView.builder(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: cols,
                 crossAxisSpacing: 12,
@@ -151,24 +163,16 @@ class CaregiverAllQuickSpeaksScreen extends StatelessWidget {
                   showEditBtn: controller.isQsEditMode.value,
                   onTap: () {
                     if (!controller.isQsEditMode.value) {
-                      showCgCardLiftDialog(
-                        context: context,
-                        imageUrl: AppUrl.mediaUrl(qs.imageIcon),
-                        label: qs.word ?? '',
-                        color: _parseColor(
-                            qs.color, const Color(0xFFFFD700)),
-                        hasAudio: qs.speak != null,
-                        onPlayAudio: () =>
-                            controller.playQuickSpeak(qs),
-                      );
+                      controller.selectQuickSpeak(qs);
                     }
                   },
                   onEditTap: () =>
                       controller.showEditQuickSpeakSheet(qs),
                 ));
               },
-            ),
-          );
+              ),
+            )),
+          ]);
         });
       }),
     );

@@ -9,7 +9,7 @@ class AppUrl {
   static const String tokenRefresh = '$baseUrl/api/auth/token/refresh/';
   static const String logout = '$baseUrl/api/auth/logout/';
   static const String changePassword = '$baseUrl/api/auth/password/change/';
-  static const String deleteAccount = '$baseUrl/api/auth/account/parmanent/delete/';
+  static const String deleteAccount = '$baseUrl/api/auth/account/delete/';
   static const String verifyEmail = '$baseUrl/api/auth/verify-email/';
   static const String resendOtp = '$baseUrl/api/auth/resend-otp/';
   static const String forgotPassword = '$baseUrl/api/auth/password/reset-request/';
@@ -17,7 +17,8 @@ class AppUrl {
   static const String resetPassword = '$baseUrl/api/auth/password/reset-confirm/';
   static const String communicatorRegister = '$baseUrl/api/auth/communicator/register/';
   static const String caregiverRegister = '$baseUrl/api/auth/caregiver/register/';
-  static const String privacyPolicy = '$baseUrl/api/settings/privacy-policy/';
+  static const String privacyPolicy = '$baseUrl/api/settings/privacy/';
+  static const String support = '$baseUrl/api/settings/support/';
 
   // ==================== INVITATIONS & CONNECTIONS ====================
   static const String sendInvitation = '$baseUrl/api/auth/invitations/send/';
@@ -27,6 +28,7 @@ class AppUrl {
   static const String listConnections = '$baseUrl/api/auth/connections/';
   static const String disconnectProfile = '$baseUrl/api/auth/connections/disconnect/';
   static const String connectionStats = '$baseUrl/api/auth/connections/stats/';
+  static const String switchConnection = '$baseUrl/api/auth/connections/switch/';
 
   // ==================== CAREGIVER CUSTOMIZATION ====================
   static const String copyDefaultContent = '$baseUrl/api/caregiver/customization/copy-defaults/';

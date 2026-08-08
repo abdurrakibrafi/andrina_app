@@ -9,13 +9,15 @@ class SignUpController extends GetxController {
   final AuthRepository _authRepository = AuthRepository();
 
   // Text editing controllers
-  late TextEditingController fullNameController;
+  late TextEditingController firstNameController;
+  late TextEditingController lastNameController;
   late TextEditingController emailController;
   late TextEditingController passwordController;
 
   // Observable variables
   bool _isPasswordVisible = false;
   bool _isLoading = false;
+  final RxString emailError = ''.obs;
 
   // Getters
   bool get isPasswordVisible => _isPasswordVisible;
@@ -29,7 +31,8 @@ class SignUpController extends GetxController {
   void onInit() {
     super.onInit();
     // Initialize text controllers
-    fullNameController = TextEditingController();
+    firstNameController = TextEditingController();
+    lastNameController = TextEditingController();
     emailController = TextEditingController();
     passwordController = TextEditingController();
 
@@ -48,7 +51,8 @@ class SignUpController extends GetxController {
 
   @override
   void onClose() {
-    fullNameController.dispose();
+    firstNameController.dispose();
+    lastNameController.dispose();
     emailController.dispose();
     passwordController.dispose();
     super.onClose();
@@ -62,8 +66,13 @@ class SignUpController extends GetxController {
 
   // Validate form inputs
   bool _validateInputs() {
-    if (fullNameController.text.trim().isEmpty) {
-      _showErrorSnackbar('Please enter your full name');
+    emailError.value = '';
+    if (firstNameController.text.trim().isEmpty) {
+      _showErrorSnackbar('Please enter your first name');
+      return false;
+    }
+    if (lastNameController.text.trim().isEmpty) {
+      _showErrorSnackbar('Please enter your last name');
       return false;
     }
 
@@ -148,11 +157,11 @@ class SignUpController extends GetxController {
     try {
       final email = emailController.text.trim();
       final password = passwordController.text;
-      final fullName = fullNameController.text.trim();
+      final firstName = firstNameController.text.trim();
+      final lastName = lastNameController.text.trim();
 
       print('=== CALLING ${_userRole.toUpperCase()} REGISTER API ===');
       print('Email: $email');
-      print('Full Name: $fullName');
 
       // Call appropriate register method based on role
       ApiResponse response;
@@ -162,14 +171,16 @@ class SignUpController extends GetxController {
           email: email,
           password: password,
           password2: password,
-          fullName: fullName,
+          firstName: firstName,
+          lastName: lastName,
         );
       } else {
         response = await _authRepository.registerCaregiver(
           email: email,
           password: password,
           password2: password,
-          fullName: fullName,
+          firstName: firstName,
+          lastName: lastName,
         );
       }
 
@@ -203,9 +214,16 @@ class SignUpController extends GetxController {
         print('Message: ${response.message}');
         print('Errors: ${response.errors}');
 
-        // Show validation errors if available
+        final emailErrors = response.errors?['email'];
+        if (emailErrors is List && emailErrors.isNotEmpty) {
+          emailError.value = emailErrors.first.toString();
+        } else if (emailErrors is String) {
+          emailError.value = emailErrors;
+        }
+        // Show non-email validation errors if available
         if (response.errors != null) {
-          _showValidationErrors(response.errors);
+          final otherErrors = Map<String, dynamic>.from(response.errors!)..remove('email');
+          _showValidationErrors(otherErrors);
         } else {
           _showErrorSnackbar(
             response.message.isNotEmpty
@@ -226,7 +244,8 @@ class SignUpController extends GetxController {
 
   // Clear form inputs
   void _clearForm() {
-    fullNameController.clear();
+    firstNameController.clear();
+    lastNameController.clear();
     emailController.clear();
     passwordController.clear();
     _isPasswordVisible = false;
@@ -239,7 +258,8 @@ class SignUpController extends GetxController {
 
   // Check if form is valid
   bool get isFormValid {
-    return fullNameController.text.trim().isNotEmpty &&
+    return firstNameController.text.trim().isNotEmpty &&
+        lastNameController.text.trim().isNotEmpty &&
         GetUtils.isEmail(emailController.text.trim()) &&
         passwordController.text.length >= 6;
   }

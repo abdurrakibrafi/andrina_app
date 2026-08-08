@@ -30,14 +30,37 @@ class SupportController extends GetxController {
   final RxList<FaqItem> faqList     = <FaqItem>[].obs;
   final RxBool isLoading            = false.obs;
   final RxString errorMessage       = ''.obs;
+  final RxString title = "Need Help? We're Here for You.".obs;
+  final RxString description = ''.obs;
+  final RxString supportEmail = 'support@chatterbeeapp.com'.obs;
 
   @override
   void onInit() {
     super.onInit();
-    fetchFaqs();
+    fetchSupport();
 
     // ✅ Re-fetch whenever language changes
-    ever(LanguageController.to.currentLocale, (_) => fetchFaqs());
+    ever(LanguageController.to.currentLocale, (_) => fetchSupport());
+  }
+
+  Future<void> fetchSupport() async {
+    try {
+      isLoading.value = true;
+      errorMessage.value = '';
+      final response = await _apiClient.get<Map<String, dynamic>>(AppUrl.support);
+      if (response.isSuccess && response.data != null) {
+        final data = response.data!['data'] ?? response.data!;
+        title.value = data['title'] ?? title.value;
+        description.value = data['description'] ?? '';
+        supportEmail.value = data['support_email'] ?? supportEmail.value;
+      } else {
+        errorMessage.value = response.message;
+      }
+    } catch (_) {
+      errorMessage.value = 'Unable to load support information.';
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   Future<void> fetchFaqs() async {

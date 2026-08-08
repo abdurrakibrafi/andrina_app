@@ -148,6 +148,22 @@ class CaregiverHomeScreen extends StatelessWidget {
                     ),
                   ),
 
+                  // Caregiver uses the same select-then-speak TTS flow as the
+                  // communicator. The selected image and text stay visible.
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                      child: Obx(() => CgQuickSpeakBar(
+                        text: controller.selectedQuickSpeakText.value,
+                        imageUrl: controller.selectedQuickSpeakImage.value,
+                        color: _parseColor(controller.selectedQuickSpeakColor.value,
+                            const Color(0xFFFFD700)),
+                        onSpeak: controller.speakSelectedQuickSpeak,
+                        onClear: controller.clearQuickSpeak,
+                      )),
+                    ),
+                  ),
+
                   // ── Quick Speak Grid (max 8 + See All) ─────────────────
                   Obx(() {
                     if (controller.quickSpeaks.isEmpty) {
@@ -189,16 +205,7 @@ class CaregiverHomeScreen extends StatelessWidget {
                               showEditBtn: controller.isQsEditMode.value,
                               onTap: () {
                                 if (!controller.isQsEditMode.value) {
-                                  showCgCardLiftDialog(
-                                    context: context,
-                                    imageUrl: AppUrl.mediaUrl(qs.imageIcon),
-                                    label: qs.word ?? '',
-                                    color: _parseColor(qs.color,
-                                        const Color(0xFFFFD700)),
-                                    hasAudio: qs.speak != null,
-                                    onPlayAudio: () =>
-                                        controller.playQuickSpeak(qs),
-                                  );
+                                  controller.selectQuickSpeak(qs);
                                 }
                               },
                               onEditTap: () => controller
@@ -369,6 +376,75 @@ class CaregiverHomeScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+class CgQuickSpeakBar extends StatelessWidget {
+  final String text;
+  final String imageUrl;
+  final Color color;
+  final VoidCallback onSpeak;
+  final VoidCallback onClear;
+
+  const CgQuickSpeakBar({super.key, required this.text, required this.imageUrl,
+    required this.color, required this.onSpeak, required this.onClear});
+
+  @override
+  Widget build(BuildContext context) {
+    final selected = text.isNotEmpty;
+    return LayoutBuilder(builder: (_, constraints) {
+      final compact = constraints.maxWidth < 340;
+      final buttonSize = compact ? 42.0 : 46.0;
+      return Row(children: [
+        Expanded(child: Container(
+          height: 54,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE3E3E9))),
+          child: selected ? Row(children: [
+            Container(width: 38, height: 38, clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(8)),
+              child: imageUrl.isNotEmpty
+                ? CachedNetworkImage(imageUrl: imageUrl, fit: BoxFit.cover,
+                    errorWidget: (_, __, ___) => const Icon(Icons.image_outlined, color: Colors.white))
+                : const Icon(Icons.image_outlined, color: Colors.white)),
+            const SizedBox(width: 9),
+            Expanded(child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.nunito(fontSize: 16))),
+          ]) : Align(alignment: Alignment.centerLeft,
+            child: Text('select_quick_speak_hint'.tr, maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.nunito(fontSize: 15, color: Colors.grey[400]))),
+        )),
+        SizedBox(width: compact ? 6 : 10),
+        _CgBarAction(size: buttonSize, color: const Color(0xFF7BC5D3),
+          enabled: selected, icon: Icons.volume_up_rounded, onTap: onSpeak),
+        SizedBox(width: compact ? 6 : 10),
+        _CgBarAction(size: buttonSize, color: const Color(0xFFE57373),
+          enabled: selected, icon: Icons.close_rounded, onTap: onClear),
+      ]);
+    });
+  }
+}
+
+class _CgBarAction extends StatelessWidget {
+  final double size;
+  final Color color;
+  final bool enabled;
+  final IconData icon;
+  final VoidCallback onTap;
+  const _CgBarAction({required this.size, required this.color, required this.enabled,
+    required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: enabled ? onTap : null,
+    borderRadius: BorderRadius.circular(12),
+    child: Container(width: size, height: size,
+      decoration: BoxDecoration(color: enabled ? color : color.withOpacity(.4),
+        borderRadius: BorderRadius.circular(12)),
+      child: Icon(icon, color: Colors.white, size: 22)),
+  );
 }
 
 // ════════════════════════════════════════════════════════════════════════════

@@ -32,14 +32,13 @@ class PrivacyPolicyController extends GetxController {
       );
 
       if (response.isSuccess && response.data != null) {
-        final data = response.data!['data'];
+        final data = response.data!['data'] ?? response.data!;
 
-        // ✅ API returns: data.translations.{lang}.title / .content
         final translations = data?['translations'] as Map<String, dynamic>?;
-        final langData = translations?[lang] as Map<String, dynamic>?;
-
-        policyTitle.value   = langData?['title']   ?? '';
-        policyContent.value = langData?['content'] ?? '';
+        final localized = translations?[lang] ?? translations?['en'];
+        final langData = localized is Map ? Map<String, dynamic>.from(localized) : <String, dynamic>{};
+        policyTitle.value = data?['title'] ?? langData['title'] ?? 'Privacy Policy';
+        policyContent.value = data?['content'] ?? langData['content'] ?? '';
 
         LoggerUtils.logSuccess('Privacy policy fetched successfully [$lang]');
       } else {

@@ -166,7 +166,7 @@ class SubscriptionScreen extends GetView<SubscriptionController> {
                     // ── Monthly Plan ───────────────────────
                     _buildPlanCard(
                       planType: 'monthly',
-                      title: 'Explorer Pro Monthly',
+                      title: 'ChatterBee Pro',
                       price: controller.monthlyPrice,
                       period: '/ month',
                       trialText: controller.monthlyTrialText,
@@ -186,7 +186,7 @@ class SubscriptionScreen extends GetView<SubscriptionController> {
                       children: [
                         _buildPlanCard(
                           planType: 'annually',
-                          title: 'Explorer Pro Annually',
+                          title: 'ChatterBee Pro',
                           price: controller.annuallyPrice,
                           period: '/ year',
                           trialText: controller.annuallyTrialText,

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:chatter_bee/feature/authentication/repo/auth_repository.dart';
 import 'package:chatter_bee/services/storage/secure_storage.dart';
 import 'package:dio/dio.dart';
@@ -10,6 +11,7 @@ class ApiClient {
 
   // Flag to prevent multiple logout calls
   bool _isLoggingOut = false;
+  Future<_RefreshResult>? _refreshInFlight;
 
   ApiClient() {
     _dio = Dio(
@@ -62,15 +64,17 @@ class ApiClient {
             final isAuthRequest = error.requestOptions.path.contains('login') ||
                 error.requestOptions.path.contains('token/refresh');
 
-            if (!isAuthRequest && !_isLoggingOut) {
+            final alreadyRetried = error.requestOptions.extra['authRetried'] == true;
+            if (!isAuthRequest && !alreadyRetried && !_isLoggingOut) {
               // Try token refresh first
-              final refreshed = await _refreshToken();
+              final refreshResult = await _refreshTokenSingleFlight();
 
-              if (refreshed) {
+              if (refreshResult == _RefreshResult.success) {
                 // Retry the request with new token
                 final options = error.requestOptions;
                 final token = await _secureStorage.getAccessToken();
                 options.headers['Authorization'] = 'Bearer $token';
+                options.extra['authRetried'] = true;
 
                 try {
                   final response = await _dio.request(
@@ -84,12 +88,12 @@ class ApiClient {
                   );
                   return handler.resolve(response);
                 } catch (e) {
-                  // If retry fails, proceed with auto logout
-                  await _handleAutoLogout();
+                  // A business/server/network failure after refresh must not
+                  // destroy a valid session.
                   return handler.next(error);
                 }
-              } else {
-                // Token refresh failed, auto logout
+              } else if (refreshResult == _RefreshResult.sessionExpired) {
+                // Logout only when the refresh token itself is rejected.
                 await _handleAutoLogout();
               }
             }
@@ -101,26 +105,58 @@ class ApiClient {
     );
   }
 
-  Future<bool> _refreshToken() async {
+  Future<_RefreshResult> _refreshTokenSingleFlight() {
+    final existing = _refreshInFlight;
+    if (existing != null) return existing;
+
+    final future = _refreshToken();
+    _refreshInFlight = future;
+    future.whenComplete(() {
+      if (identical(_refreshInFlight, future)) _refreshInFlight = null;
+    });
+    return future;
+  }
+
+  Future<_RefreshResult> _refreshToken() async {
     try {
       final refreshToken = await _secureStorage.getRefreshToken();
-      if (refreshToken == null) return false;
+      if (refreshToken == null || refreshToken.isEmpty) {
+        return _RefreshResult.sessionExpired;
+      }
 
-      final response = await _dio.post(
+      // Use an interceptor-free client so refresh never recursively refreshes.
+      final refreshDio = Dio(BaseOptions(
+        baseUrl: AppUrl.baseUrl,
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
+        headers: const {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      ));
+      final response = await refreshDio.post(
         AppUrl.tokenRefresh,
         data: {'refresh': refreshToken},
       );
 
       if (response.statusCode == 200) {
-        final newAccessToken = response.data['access'];
+        final body = response.data;
+        final payload = body is Map && body['data'] is Map ? body['data'] : body;
+        final newAccessToken = payload is Map ? payload['access'] : null;
+        if (newAccessToken is! String || newAccessToken.isEmpty) {
+          return _RefreshResult.temporaryFailure;
+        }
         await _secureStorage.saveAccessToken(newAccessToken);
         LoggerUtils.logSuccess('Token refreshed successfully');
-        return true;
+        return _RefreshResult.success;
       }
-      return false;
+      return _RefreshResult.temporaryFailure;
+    } on DioException catch (e) {
+      LoggerUtils.logError('Token refresh failed: $e');
+      final status = e.response?.statusCode;
+      return status == 401 || status == 403
+          ? _RefreshResult.sessionExpired
+          : _RefreshResult.temporaryFailure;
     } catch (e) {
       LoggerUtils.logError('Token refresh failed: $e');
-      return false;
+      return _RefreshResult.temporaryFailure;
     }
   }
 
@@ -385,6 +421,8 @@ class ApiClient {
     return ErrorType.unknown;
   }
 }
+
+enum _RefreshResult { success, sessionExpired, temporaryFailure }
 
 // ==================== API RESPONSE MODEL ====================
 class ApiResponse<T> {

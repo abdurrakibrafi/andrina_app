@@ -3,6 +3,7 @@ import 'package:chatter_bee/config/imagesUrl.dart';
 import 'package:chatter_bee/feature/Profile/controller/pro_status_controller.dart';
 import 'package:chatter_bee/feature/authentication/repo/auth_repository.dart';
 import 'package:chatter_bee/routes/app_routes.dart';
+import 'package:chatter_bee/services/pro_access_gate.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -77,41 +78,7 @@ class CaregiverProfileController extends GetxController {
 
   // ✅ Pro upgrade dialog
   void _showProUpgradeDialog(String featureName) {
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            const Icon(Icons.workspace_premium, color: Colors.amber),
-            const SizedBox(width: 8),
-            Text('pro_required'.tr,
-                style: const TextStyle(fontWeight: FontWeight.w700)),
-          ],
-        ),
-        content: Text(
-          '${'pro_feature_desc'.tr} "$featureName"',
-          style: const TextStyle(color: Color(0xFF636F85)),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text('cancel'.tr),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Get.back();
-              Get.toNamed(AppRoutes.SUBSCRIPTION); // ✅ তোমার subscription route
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.amber,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: Text('upgrade_to_pro'.tr,
-                style: const TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
+    ProAccessGate.show(featureName: featureName);
   }
 
   Future<void> pickImage() async {

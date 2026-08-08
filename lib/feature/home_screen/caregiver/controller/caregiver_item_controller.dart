@@ -9,6 +9,7 @@ import 'package:chatter_bee/feature/home_screen/caregiver/controller/caregiver_h
 import 'package:chatter_bee/models/caregiver_models/caregiver_content_model.dart';
 import 'package:chatter_bee/services/communicator_session_service.dart';
 import 'package:chatter_bee/services/tts_service.dart';
+import 'package:chatter_bee/services/pro_access_gate.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:get/get.dart';
@@ -22,13 +23,23 @@ class CaregiverItemController extends GetxController {
   final ImagePicker _picker = ImagePicker();
   final AudioPlayer _audioPlayer = AudioPlayer();
   bool _isRecorderInitialized = false;
-  late final SubCategoryModel parentSubCategory;
+  late final dynamic parent;
+  String get parentTitle => parent is SubCategoryModel
+      ? (parent as SubCategoryModel).name
+      : (parent as CategoryModel).name;
+  int get parentId => parent is SubCategoryModel
+      ? (parent as SubCategoryModel).id
+      : (parent as CategoryModel).id;
 
   final RxList<ItemModel> items = <ItemModel>[].obs;
   final RxBool isLoading = false.obs;
   final RxBool isEditMode = false.obs;
   final RxSet<int> selectedIds = <int>{}.obs;
   final RxInt playingItemId = (-1).obs;
+  final RxInt selectedItemId = (-1).obs;
+  final RxString selectedWord = ''.obs;
+  final RxString selectedImage = ''.obs;
+  final RxString selectedColor = '#FFD700'.obs;
 
   final RxString formColorHex = '#FFD700'.obs;
   final Rx<File?> formImageFile = Rx<File?>(null);
@@ -59,8 +70,14 @@ class CaregiverItemController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    parentSubCategory = Get.arguments as SubCategoryModel;
-    items.value = parentSubCategory.items;
+    parent = Get.arguments;
+    if (parent is SubCategoryModel) {
+      items.value = (parent as SubCategoryModel).items;
+    } else if (parent is CategoryModel) {
+      items.value = (parent as CategoryModel).items;
+    } else {
+      throw ArgumentError('Caregiver item screen requires a category or sub-category');
+    }
     _initAudio();
   }
 
@@ -118,11 +135,17 @@ class CaregiverItemController extends GetxController {
 
     if (response.isSuccess && response.data != null) {
       for (final cat in response.data!.categories) {
-        final sub = cat.subCategories
-            .firstWhereOrNull((s) => s.id == parentSubCategory.id);
-        if (sub != null) {
-          items.value = sub.items;
+        if (parent is CategoryModel && cat.id == (parent as CategoryModel).id) {
+          items.value = cat.items;
           break;
+        }
+        if (parent is SubCategoryModel) {
+          final sub = cat.subCategories.firstWhereOrNull(
+              (s) => s.id == (parent as SubCategoryModel).id);
+          if (sub != null) {
+            items.value = sub.items;
+            break;
+          }
         }
       }
       if (Get.isRegistered<CaregiverHomeController>()) {
@@ -153,6 +176,30 @@ class CaregiverItemController extends GetxController {
       // Custom audio নেই → TTS
       await TtsService.to.speak(item.word ?? '', lang: _currentLang);
     }
+  }
+
+  void onItemTap(ItemModel item) {
+    if (selectedItemId.value == item.id) {
+      clearSelectionBar();
+      return;
+    }
+    selectedItemId.value = item.id;
+    selectedWord.value = item.word ?? '';
+    selectedImage.value = item.imageIcon ?? '';
+    selectedColor.value = item.color;
+  }
+
+  Future<void> speakSelected() async {
+    if (selectedWord.value.trim().isEmpty) return;
+    // The sentence button always uses native TTS, never uploaded item audio.
+    await TtsService.to.speak(selectedWord.value, lang: _currentLang);
+  }
+
+  void clearSelectionBar() {
+    TtsService.to.stop();
+    selectedItemId.value = -1;
+    selectedWord.value = '';
+    selectedImage.value = '';
   }
 
   void toggleEditMode() {
@@ -235,7 +282,7 @@ class CaregiverItemController extends GetxController {
       final communicatorId =
           CommunicatorSessionService.to.communicatorId.value;
       final response = await _repo.createItem(
-        categoryId: parentSubCategory.id,
+        categoryId: parentId,
         word: word.trim(),
         color: formColorHex.value,
         communicatorId: communicatorId,
@@ -271,6 +318,7 @@ class CaregiverItemController extends GetxController {
   }
 
   Future<void> pickImage() async {
+    if (!ProAccessGate.allowOrPrompt()) return;
     final picked = await _picker.pickImage(
         source: ImageSource.gallery,
         imageQuality: 80,

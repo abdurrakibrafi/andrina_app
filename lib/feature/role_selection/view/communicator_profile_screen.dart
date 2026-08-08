@@ -191,6 +191,8 @@ class CommunicatorProfileScreen extends GetView<CommunicatorProfileController> {
                 }),
                 const SizedBox(height: 20),
 
+                // Voice Type was retired by the release-readiness contract.
+                if (false) ...[
                 // ── Voice Type Grid ──
                 Text('voice_type'.tr, style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 12),
@@ -232,6 +234,7 @@ class CommunicatorProfileScreen extends GetView<CommunicatorProfileController> {
                   },
                 ),
                 const SizedBox(height: 20),
+                ],
 
 
                 // ── Continue Button ──

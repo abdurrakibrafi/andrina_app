@@ -294,7 +294,9 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
                             bgColor: item.color,
                             icon: item.icon,
                             isSelected: false,
-                            onTap: () => Get.toNamed(item.route),
+                            onTap: item.route == AppRoutes.ACTIVITIES
+                                ? controller.openSchedule
+                                : () => Get.toNamed(item.route),
                           );
                         },
                         childCount: _exploreItems.length,

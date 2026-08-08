@@ -4,6 +4,7 @@ import 'package:chatter_bee/feature/authentication/repo/auth_repository.dart';
 import 'package:chatter_bee/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginController extends GetxController {
   final AuthRepository _authRepository = AuthRepository();
@@ -26,7 +27,7 @@ class LoginController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    emailController.text = '';
+    _restoreRememberedEmail();
   }
 
   @override
@@ -46,6 +47,24 @@ class LoginController extends GetxController {
   // Toggle remember me
   void toggleRememberMe() {
     rememberMe.value = !rememberMe.value;
+  }
+
+  Future<void> _restoreRememberedEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString('remembered_email') ?? '';
+    if (saved.isNotEmpty) {
+      emailController.text = saved;
+      rememberMe.value = true;
+    }
+  }
+
+  Future<void> _persistRememberedEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (rememberMe.value) {
+      await prefs.setString('remembered_email', emailController.text.trim().toLowerCase());
+    } else {
+      await prefs.remove('remembered_email');
+    }
   }
 
   // Validate email
@@ -101,6 +120,7 @@ class LoginController extends GetxController {
       );
 
       if (response.isSuccess && response.data != null) {
+        await _persistRememberedEmail();
         final userData = response.data!.user;
 
         // Show success message
@@ -114,7 +134,7 @@ class LoginController extends GetxController {
         );
 
         // Navigate based on role
-        _navigateBasedOnRole(userData.getRoleSafe());
+        _navigateBasedOnProfile(userData);
       } else {
         // Handle specific error codes
         if (response.statusCode == 403) {
@@ -160,7 +180,13 @@ class LoginController extends GetxController {
   }
 
   // Navigate based on user role
-  void _navigateBasedOnRole(String role) {
+  void _navigateBasedOnProfile(dynamic user) {
+    final role = user.getRoleSafe();
+    final isComplete = user.isProfileCompleted == true;
+    if (isComplete) {
+      Get.offAllNamed(AppRoutes.NAVIGATIONBAR);
+      return;
+    }
     switch (role.toLowerCase()) {
       case 'communicator':
       // Navigate to Communicator Profile Screen

@@ -76,8 +76,8 @@ class ProfileScreen extends GetView<ProfileController> {
                 _buildSubscription(context),
                 const SizedBox(height: 16),
 
-                // ── Switch User ──
-                Container(
+                // ── Switch User (caregiver only) ──
+                if (controller.canSwitchUser) Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
                   child: Column(
@@ -86,33 +86,22 @@ class ProfileScreen extends GetView<ProfileController> {
                       Text('switch_user'.tr,  // ✅
                           style: GoogleFonts.nunito(fontSize: 20, fontWeight: FontWeight.w500, color: Colors.black)),
                       const SizedBox(height: 12),
-                      Obx(() => Column(
-                        children: [
-                          _buildRoleCard(
-                            icon: SvgPicture.asset(ImagesLink.simplificationCare),
-                            title: 'communicator'.tr,  // ✅
-                            role: 'communicator',
-                            isSelected: controller.selectedRole.value == 'Communicator',
-                            onTap: () {
-                              controller.logout();
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          _buildRoleCard(
-                            icon: SvgPicture.asset(ImagesLink.simplification),
-                            title: 'caregiver'.tr,  // ✅
-                            role: 'caregiver',
-                            isSelected: controller.selectedRole.value == 'Caregiver',
-                            onTap: (){
-                              controller.logout();
-                            },
-                          ),
-                        ],
-                      )),
+                      Obx(() => controller.switchableUsers.isEmpty
+                          ? Text('No linked communicator accounts', style: GoogleFonts.nunito(color: Colors.grey[600]))
+                          : Column(children: controller.switchableUsers.map((user) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _buildRoleCard(
+                                icon: SvgPicture.asset(ImagesLink.simplificationCare),
+                                title: (user['full_name'] ?? user['email'] ?? 'Communicator').toString(),
+                                role: 'communicator',
+                                isSelected: false,
+                                onTap: () => controller.switchToUser(user),
+                              ),
+                            )).toList())),
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                if (controller.canSwitchUser) const SizedBox(height: 16),
 
                 // ── Personal Information ──
                 Container(
@@ -148,11 +137,6 @@ class ProfileScreen extends GetView<ProfileController> {
                           _buildInfoTile(
                             icon: SvgPicture.asset(ImagesLink.child, color: const Color(0xFF211F2F)),
                             label: controller.userType.value.isEmpty ? '—' : controller.userType.value,
-                          ),
-                          const SizedBox(height: 8),
-                          _buildInfoTile(
-                            icon: SvgPicture.asset(ImagesLink.speak),
-                            label: controller.voiceType.value.isEmpty ? '—' : controller.voiceType.value,
                           ),
                         ],
                       )),
@@ -200,16 +184,16 @@ class ProfileScreen extends GetView<ProfileController> {
                       ),
                       const SizedBox(height: 8),
                       _buildMenuTile(
-                        icon: SvgPicture.asset(ImagesLink.delete),
-                        title: 'delete_account'.tr,  // ✅
-                        onTap: controller.onDeleteAccountTap,
+                        icon: SvgPicture.asset(ImagesLink.logout),
+                        title: 'logout'.tr,  // ✅
+                        onTap: controller.onLogoutTap,
                         textColor: Colors.red,
                       ),
                       const SizedBox(height: 8),
                       _buildMenuTile(
-                        icon: SvgPicture.asset(ImagesLink.logout),
-                        title: 'logout'.tr,  // ✅
-                        onTap: controller.onLogoutTap,
+                        icon: SvgPicture.asset(ImagesLink.delete),
+                        title: 'delete_account'.tr,
+                        onTap: controller.onDeleteAccountTap,
                         textColor: Colors.red,
                       ),
                     ],

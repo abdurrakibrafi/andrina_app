@@ -8,6 +8,7 @@ import 'package:chatter_bee/feature/authentication/repo/auth_repository.dart';
 import 'package:chatter_bee/models/caregiver_models/caregiver_content_model.dart';
 import 'package:chatter_bee/services/communicator_session_service.dart';
 import 'package:chatter_bee/services/tts_service.dart';
+import 'package:chatter_bee/services/pro_access_gate.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:get/get.dart';
@@ -42,6 +43,10 @@ class CaregiverHomeController extends GetxController {
 
   final RxList<CategoryModel> categories = <CategoryModel>[].obs;
   final RxList<QuickSpeakModel> quickSpeaks = <QuickSpeakModel>[].obs;
+  final RxInt selectedQuickSpeakId = (-1).obs;
+  final RxString selectedQuickSpeakText = ''.obs;
+  final RxString selectedQuickSpeakImage = ''.obs;
+  final RxString selectedQuickSpeakColor = '#FFD700'.obs;
 
   List<CategoryModel> get apiCategories => categories;
 
@@ -153,27 +158,36 @@ class CaregiverHomeController extends GetxController {
   void onCategoryTap(CategoryModel category) {
     if (isEditMode.value) {
       toggleCategorySelection(category.id);
+    } else if (category.subCategories.isEmpty) {
+      Get.toNamed('/item-screen', arguments: category);
     } else {
       Get.toNamed('/sub-category', arguments: category);
     }
   }
 
 
+  void selectQuickSpeak(QuickSpeakModel qs) {
+    selectedQuickSpeakId.value = qs.id;
+    selectedQuickSpeakText.value = qs.word ?? '';
+    selectedQuickSpeakImage.value = AppUrl.mediaUrl(qs.imageIcon) ?? '';
+    selectedQuickSpeakColor.value = qs.color;
+  }
+
+  void clearQuickSpeak() {
+    TtsService.to.stop();
+    selectedQuickSpeakId.value = -1;
+    selectedQuickSpeakText.value = '';
+    selectedQuickSpeakImage.value = '';
+  }
+
+  Future<void> speakSelectedQuickSpeak() async {
+    if (selectedQuickSpeakText.value.isEmpty) return;
+    await TtsService.to.speak(selectedQuickSpeakText.value, lang: _currentLang);
+  }
+
   Future<void> playQuickSpeak(QuickSpeakModel qs) async {
-    // ✅ TTS logic
-    if (qs.speak != null && qs.speak!.isNotEmpty) {
-      final url = AppUrl.mediaUrl(qs.speak);
-      if (url != null) {
-        try {
-          await _audioPlayer.play(UrlSource(url));
-        } catch (e) {
-          debugPrint('Audio play error: $e');
-        }
-      }
-    } else {
-      // Custom audio নেই → TTS দিয়ে বলো
-      await TtsService.to.speak(qs.word ?? '', lang: _currentLang);
-    }
+    selectQuickSpeak(qs);
+    await speakSelectedQuickSpeak();
   }
 
   void showAddCategorySheet() {
@@ -191,6 +205,7 @@ class CaregiverHomeController extends GetxController {
   }
 
   Future<void> pickCatImage() async {
+    if (!ProAccessGate.allowOrPrompt()) return;
     final picked = await _picker.pickImage(
         source: ImageSource.gallery,
         imageQuality: 80,
@@ -274,6 +289,7 @@ class CaregiverHomeController extends GetxController {
   }
 
   Future<void> pickQsImage() async {
+    if (!ProAccessGate.allowOrPrompt()) return;
     final picked = await _picker.pickImage(
         source: ImageSource.gallery,
         imageQuality: 80,
@@ -368,7 +384,7 @@ class CaregiverHomeController extends GetxController {
         word: word.trim(),
         color: qsColorHex.value,
         imageFile: qsImageFile.value,
-        audioFile: qsAudioFile.value,
+        audioFile: null,
         lang: lang,
       );
       qsFormLoading.value = false;
@@ -387,7 +403,7 @@ class CaregiverHomeController extends GetxController {
         color: qsColorHex.value,
         communicatorId: communicatorId,
         imageFile: qsImageFile.value,
-        audioFile: qsAudioFile.value,
+        audioFile: null,
         lang: lang,
       );
       qsFormLoading.value = false;
@@ -585,6 +601,9 @@ class _QuickSpeakSheetState extends State<_QuickSpeakSheet> {
           Obx(() => c.qsImageFile.value != null
               ? _ImagePreview(file: c.qsImageFile.value!, onRemove: c.removeQsImage)
               : _PickImageBtn(onTap: c.pickQsImage)),
+          // Quick Speak now uses native TTS only. Legacy record/upload controls
+          // stay out of the caregiver UI and no audio file is submitted.
+          if (false) ...[
           const SizedBox(height: 16),
           Text('voice_audio_speak'.tr,
               style: const TextStyle(fontWeight: FontWeight.w600)),
@@ -655,6 +674,7 @@ class _QuickSpeakSheetState extends State<_QuickSpeakSheet> {
               ],
             );
           }),
+          ],
           const SizedBox(height: 24),
           Obx(() => _SaveBtn(
             loading: c.qsFormLoading.value,

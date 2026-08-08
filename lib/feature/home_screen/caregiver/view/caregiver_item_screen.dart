@@ -2,11 +2,13 @@
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chatter_bee/config/app_url.dart';
+import 'package:chatter_bee/config/imagesUrl.dart';
 import 'package:chatter_bee/feature/home_screen/caregiver/controller/caregiver_item_controller.dart';
 import 'package:chatter_bee/feature/home_screen/caregiver/view/caregiver_home_screen.dart'
     show CgFolderCard, CgFolderPainter;
 import 'package:chatter_bee/models/caregiver_models/caregiver_content_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -48,7 +50,7 @@ class CaregiverItemScreen extends StatelessWidget {
           onPressed: () => Get.back(),
         ),
         title: Text(
-          controller.parentSubCategory.name,
+          controller.parentTitle,
           style: GoogleFonts.nunito(
               fontSize: 18,
               fontWeight: FontWeight.w700,
@@ -136,9 +138,21 @@ class CaregiverItemScreen extends StatelessWidget {
           );
         }
 
-        return OrientationBuilder(builder: (context, _) {
-          final cols = _crossAxisCount(context);
-          return RefreshIndicator(
+        return Column(children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+            child: _CaregiverSpeakBar(
+              text: controller.selectedWord.value,
+              imageUrl: AppUrl.mediaUrl(controller.selectedImage.value),
+              itemColor: _parseColor(controller.selectedColor.value,
+                  const Color(0xFFFFD700)),
+              onSpeak: controller.speakSelected,
+              onClear: controller.clearSelectionBar,
+            ),
+          ),
+          Expanded(child: OrientationBuilder(builder: (context, _) {
+            final cols = _crossAxisCount(context);
+            return RefreshIndicator(
             onRefresh: controller.refresh,
             color: const Color(0xFFFFC857),
             child: GridView.builder(
@@ -153,8 +167,9 @@ class CaregiverItemScreen extends StatelessWidget {
               itemBuilder: (_, i) {
                 final item = controller.items[i];
                 return Obx(() {
-                  final isSelected =
-                  controller.selectedIds.contains(item.id);
+                  final isSelected = controller.isEditMode.value
+                      ? controller.selectedIds.contains(item.id)
+                      : controller.selectedItemId.value == item.id;
                   return CgFolderCard(
                     imageUrl: AppUrl.mediaUrl(item.imageIcon),
                     label: item.word ?? '',
@@ -166,7 +181,7 @@ class CaregiverItemScreen extends StatelessWidget {
                       if (controller.isEditMode.value) {
                         controller.toggleSelection(item.id);
                       } else {
-                        _showItemDialog(context, controller, item);
+                        controller.onItemTap(item);
                       }
                     },
                     onEditTap: () => controller.showEditSheet(item),
@@ -174,11 +189,112 @@ class CaregiverItemScreen extends StatelessWidget {
                 });
               },
             ),
-          );
-        });
+            );
+          })),
+        ]);
       }),
     );
   }
+}
+
+class _CaregiverSpeakBar extends StatelessWidget {
+  final String text;
+  final String? imageUrl;
+  final Color itemColor;
+  final VoidCallback onSpeak;
+  final VoidCallback onClear;
+
+  const _CaregiverSpeakBar({
+    required this.text,
+    required this.imageUrl,
+    required this.itemColor,
+    required this.onSpeak,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasText = text.isNotEmpty;
+    return Row(children: [
+      Expanded(
+        child: Container(
+          height: 52,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE3E3E9)),
+          ),
+          child: hasText
+              ? Row(children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                        color: itemColor,
+                        borderRadius: BorderRadius.circular(8)),
+                    clipBehavior: Clip.antiAlias,
+                    child: imageUrl != null && imageUrl!.isNotEmpty
+                        ? CachedNetworkImage(
+                            imageUrl: imageUrl!,
+                            fit: BoxFit.cover,
+                            errorWidget: (_, __, ___) => const Icon(
+                                Icons.image_outlined,
+                                color: Colors.white,
+                                size: 20))
+                        : const Icon(Icons.image_outlined,
+                            color: Colors.white, size: 20),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(text,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.nunito(fontSize: 16)),
+                  ),
+                ])
+              : Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('tap_an_item'.tr,
+                      style: GoogleFonts.nunito(
+                          fontSize: 16, color: Colors.grey[400]))),
+        ),
+      ),
+      const SizedBox(width: 10),
+      _CaregiverBarButton(
+          color: const Color(0xFF7BC5D3),
+          onTap: hasText ? onSpeak : null,
+          child: SvgPicture.asset(ImagesLink.speakIcon,
+              width: 22, height: 22)),
+      const SizedBox(width: 10),
+      _CaregiverBarButton(
+          color: const Color(0xFFE57373),
+          onTap: onClear,
+          child: SvgPicture.asset(ImagesLink.cancelIcon,
+              width: 22, height: 22)),
+    ]);
+  }
+}
+
+class _CaregiverBarButton extends StatelessWidget {
+  final Color color;
+  final VoidCallback? onTap;
+  final Widget child;
+  const _CaregiverBarButton(
+      {required this.color, required this.onTap, required this.child});
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 46,
+          height: 46,
+          decoration: BoxDecoration(
+              color: onTap == null ? color.withOpacity(.45) : color,
+              borderRadius: BorderRadius.circular(12)),
+          child: Center(child: child),
+        ),
+      );
 }
 
 // ════════════════════════════════════════════════════════════════════════════

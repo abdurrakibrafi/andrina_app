@@ -16,7 +16,10 @@ class CommunicatorItemController extends GetxController {
   final CommunicatorRepository _repo = CommunicatorRepository();
   final AudioPlayer _audioPlayer = AudioPlayer();
 
-  late final CommSubCategoryModel parentSubCategory;
+  late final dynamic parent;
+  String get parentTitle => parent is CommSubCategoryModel
+      ? (parent as CommSubCategoryModel).name
+      : (parent as CommCategoryModel).name;
 
   final RxList<CommItemModel> items = <CommItemModel>[].obs;
   final RxInt playingId = (-1).obs;
@@ -24,6 +27,8 @@ class CommunicatorItemController extends GetxController {
   // ── Quick speak bar ───────────────────────────────────────────
   final RxString selectedWord = ''.obs;
   final RxInt selectedItemId = (-1).obs;
+  final RxString selectedImage = ''.obs;
+  final RxString selectedColor = '#FFD700'.obs;
 
   // ── Speak button cooldown ─────────────────────────────────────
   final RxBool isSpeakCooldown = false.obs;
@@ -34,8 +39,14 @@ class CommunicatorItemController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    parentSubCategory = Get.arguments as CommSubCategoryModel;
-    items.value = parentSubCategory.items;
+    parent = Get.arguments;
+    if (parent is CommSubCategoryModel) {
+      items.value = (parent as CommSubCategoryModel).items;
+    } else if (parent is CommCategoryModel) {
+      items.value = (parent as CommCategoryModel).items;
+    } else {
+      throw ArgumentError('Communicator item screen requires a category or sub-category');
+    }
   }
 
   // ── Current language ──────────────────────────────────────────
@@ -66,11 +77,17 @@ class CommunicatorItemController extends GetxController {
 
     if (res.isSuccess && res.data != null) {
       for (final cat in res.data!.categories) {
-        final sub = cat.subCategories
-            .firstWhereOrNull((s) => s.id == parentSubCategory.id);
-        if (sub != null) {
-          items.value = sub.items;
+        if (parent is CommCategoryModel && cat.id == (parent as CommCategoryModel).id) {
+          items.value = cat.items;
           break;
+        }
+        if (parent is CommSubCategoryModel) {
+          final sub = cat.subCategories.firstWhereOrNull(
+              (s) => s.id == (parent as CommSubCategoryModel).id);
+          if (sub != null) {
+            items.value = sub.items;
+            break;
+          }
         }
       }
 
@@ -86,9 +103,12 @@ class CommunicatorItemController extends GetxController {
     if (selectedItemId.value == item.id) {
       selectedItemId.value = -1;
       selectedWord.value = '';
+      selectedImage.value = '';
     } else {
       selectedItemId.value = item.id;
       selectedWord.value = item.word ?? '';
+      selectedImage.value = item.imageIcon ?? '';
+      selectedColor.value = item.color;
     }
   }
 
@@ -101,12 +121,8 @@ class CommunicatorItemController extends GetxController {
     final item = items.firstWhereOrNull((i) => i.id == selectedItemId.value);
     if (item == null) return;
 
-    // ✅ TTS logic
-    if (item.speak != null && item.speak!.isNotEmpty) {
-      _playAudioInternal(item.id, item.speak);
-    } else {
-      TtsService.to.speak(item.word ?? '', lang: _currentLang);
-    }
+    // The sentence button must always use native TTS.
+    TtsService.to.speak(selectedWord.value, lang: _currentLang);
 
     _repo.pressContent(contentType: 'item', contentId: item.id);
     _startCooldown();
@@ -118,6 +134,7 @@ class CommunicatorItemController extends GetxController {
     TtsService.to.stop();
     selectedItemId.value = -1;
     selectedWord.value = '';
+    selectedImage.value = '';
     _cancelCooldown();
   }
 

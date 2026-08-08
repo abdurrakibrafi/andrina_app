@@ -259,6 +259,8 @@ class CaregiverProfileScreen extends GetView<CaregiverProfileController> {
                 }),
                 const SizedBox(height: 20),
 
+                // Voice Type was retired by the release-readiness contract.
+                if (false) ...[
                 // ── Voice Type Grid ──
                 Text('voice_type'.tr, style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 12),
@@ -324,6 +326,7 @@ class CaregiverProfileScreen extends GetView<CaregiverProfileController> {
                   ),
                 ),
                 const SizedBox(height: 30),
+                ],
 
                 // ── Continue Button ──
                 Obx(() => SizedBox(

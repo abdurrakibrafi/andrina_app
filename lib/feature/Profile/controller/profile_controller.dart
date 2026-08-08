@@ -6,9 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:chatter_bee/Repository/profile_invitation_repo.dart';
+import 'package:chatter_bee/services/communicator_session_service.dart';
 
 class ProfileController extends GetxController {
   final AuthRepository _authRepository = AuthRepository();
+  final ProfileInvitationRepo _connectionRepository = ProfileInvitationRepo();
 
   final Rx<File?> profileImage = Rx<File?>(null);
   final RxString selectedRole = 'Communicator'.obs;
@@ -18,6 +21,7 @@ class ProfileController extends GetxController {
   final RxString voiceType = ''.obs;
   final RxString avatarUrl = ''.obs;
   final RxBool isLoading = false.obs;
+  final RxList<Map<String, dynamic>> switchableUsers = <Map<String, dynamic>>[].obs;
 
   final ImagePicker _picker = ImagePicker();
 
@@ -42,6 +46,11 @@ class ProfileController extends GetxController {
         avatarUrl.value = profileData['avatar'] ?? '';
         final role = profileData['role'] ?? '';
         selectedRole.value = _capitalizeRole(role);
+        if (role.toString().toLowerCase() == 'caregiver') {
+          await loadSwitchableUsers();
+        } else {
+          switchableUsers.clear();
+        }
       } else {
         Get.snackbar('error'.tr, response.message,   // ✅
             snackPosition: SnackPosition.BOTTOM);
@@ -57,6 +66,51 @@ class ProfileController extends GetxController {
   String _capitalizeRole(String role) {
     if (role.isEmpty) return 'Communicator';
     return role[0].toUpperCase() + role.substring(1).toLowerCase();
+  }
+
+  bool get canSwitchUser => selectedRole.value.toLowerCase() == 'caregiver';
+
+  Future<void> loadSwitchableUsers() async {
+    final response = await _connectionRepository.listConnections();
+    if (!response.isSuccess || response.data == null) return;
+    final root = response.data!['data'] ?? response.data!;
+    final raw = root is List
+        ? root
+        : (root['connections'] ?? root['results'] ?? const []);
+    if (raw is! List) return;
+    switchableUsers.assignAll(raw.whereType<Map>().map((entry) {
+      final map = Map<String, dynamic>.from(entry);
+      final user = map['communicator'] ?? map['user'] ?? map['linked_user'] ?? map;
+      if (user is! Map) return <String, dynamic>{};
+      final result = Map<String, dynamic>.from(user);
+      result['_connection_id'] = map['id'];
+      result['_communicator_id'] = map['communicator_id'] ??
+          map['target_user_id'] ?? result['id'];
+      return result;
+    }).where((user) =>
+        user['id'] != null || user['_communicator_id'] != null));
+  }
+
+  Future<void> switchToUser(Map<String, dynamic> user) async {
+    final id = int.tryParse(
+        (user['_communicator_id'] ?? user['id']).toString());
+    if (id == null) return;
+    Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
+    final response = await _authRepository.switchAccount(targetUserId: id);
+    if (Get.isDialogOpen ?? false) Get.back();
+    if (response.isSuccess) {
+      Get.offAllNamed(AppRoutes.NAVIGATIONBAR);
+    } else if (response.statusCode == 404) {
+      // Older production backends may not expose token switching yet.
+      // Keep the caregiver authenticated and switch the active communicator
+      // session so content/settings can still be managed without logout.
+      final name = (user['full_name'] ?? user['email'] ?? 'Communicator')
+          .toString();
+      await CommunicatorSessionService.to.setSelected(id, name);
+      Get.offAllNamed(AppRoutes.NAVIGATIONBAR);
+    } else {
+      Get.snackbar('error'.tr, response.message, snackPosition: SnackPosition.BOTTOM);
+    }
   }
 
   // ==================== PICK PROFILE IMAGE ====================
