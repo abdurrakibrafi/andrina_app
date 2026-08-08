@@ -8,6 +8,7 @@ import 'package:chatter_bee/feature/home_screen/caregiver/controller/caregiver_h
 import 'package:chatter_bee/models/caregiver_models/caregiver_content_model.dart';
 import 'package:chatter_bee/routes/app_routes.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -417,11 +418,25 @@ class CgQuickSpeakBar extends StatelessWidget {
               style: GoogleFonts.nunito(fontSize: 15, color: Colors.grey[400]))),
         )),
         SizedBox(width: compact ? 6 : 10),
-        _CgBarAction(size: buttonSize, color: const Color(0xFF7BC5D3),
-          enabled: selected, icon: Icons.volume_up_rounded, onTap: onSpeak),
+        // _CgBarAction(size: buttonSize, color: const Color(0xFF7BC5D3),
+        //   enabled: selected,
+        //     // icon: Icons.volume_up_rounded,
+        //     SvgPicture.asset(ImagesLink.speakIcon,
+        //         width: 22, height: 22)
+        //
+        //     onTap: onSpeak),
+
+        _CaregiverBarButton(
+            color: const Color(0xFF7BC5D3),
+            onTap: onSpeak,
+            child: SvgPicture.asset(ImagesLink.speakIcon,
+                width: 22, height: 22)),
         SizedBox(width: compact ? 6 : 10),
-        _CgBarAction(size: buttonSize, color: const Color(0xFFE57373),
-          enabled: selected, icon: Icons.close_rounded, onTap: onClear),
+        _CaregiverBarButton(
+            color: const Color(0xFFE57373),
+            onTap: onClear,
+            child: SvgPicture.asset(ImagesLink.cancelIcon,
+                width: 22, height: 22)),
       ]);
     });
   }
@@ -561,6 +576,27 @@ void showCgCardLiftDialog({
         ),
       );
     },
+  );
+}
+
+class _CaregiverBarButton extends StatelessWidget {
+  final Color color;
+  final VoidCallback? onTap;
+  final Widget child;
+  const _CaregiverBarButton(
+      {required this.color, required this.onTap, required this.child});
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: onTap,
+    child: Container(
+      width: 46,
+      height: 46,
+      decoration: BoxDecoration(
+          color: onTap == null ? color.withOpacity(.45) : color,
+          borderRadius: BorderRadius.circular(12)),
+      child: Center(child: child),
+    ),
   );
 }
 
