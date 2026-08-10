@@ -75,6 +75,13 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
             );
           }
 
+          if (controller.loadError.value.isNotEmpty) {
+            return _DashboardLoadError(
+              message: controller.loadError.value,
+              onRetry: controller.loadContent,
+            );
+          }
+
           return OrientationBuilder(builder: (context, _) {
             final cols = _crossAxisCount(context);
 
@@ -131,6 +138,7 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
                       child: Obx(() => CommSpeakBar(
                         text: controller.quickSpeakText.value,
+                        imageUrl: controller.quickSpeakImage.value,
                         hint: 'select_quick_speak_hint'.tr,
                         onSpeak: controller.speakQuickSpeak,
                         onClear: controller.clearQuickSpeak,
@@ -322,6 +330,36 @@ class CommunicatorHomeScreen extends GetView<CommunicatorHomeController> {
   }
 }
 
+class _DashboardLoadError extends StatelessWidget {
+  final String message;
+  final Future<void> Function() onRetry;
+
+  const _DashboardLoadError({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.cloud_off_rounded, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(message, textAlign: TextAlign.center),
+            const SizedBox(height: 18),
+            ElevatedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text('retry'.tr),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 //  SHARED WIDGETS  (exported — used by all communicator screens)
 // ════════════════════════════════════════════════════════════════════════════
@@ -503,6 +541,7 @@ class CommSeeAllCard extends StatelessWidget {
 
 class CommSpeakBar extends StatelessWidget {
   final String text;
+  final String imageUrl;
   final String hint;
   final VoidCallback onSpeak;
   final VoidCallback onClear;
@@ -516,6 +555,7 @@ class CommSpeakBar extends StatelessWidget {
   const CommSpeakBar({
     super.key,
     required this.text,
+    this.imageUrl = '',
     required this.hint,
     required this.onSpeak,
     required this.onClear,
@@ -531,7 +571,7 @@ class CommSpeakBar extends StatelessWidget {
       Expanded(
         child: Container(
           height: 52,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
@@ -543,14 +583,32 @@ class CommSpeakBar extends StatelessWidget {
                   offset: const Offset(0, 4))
             ],
           ),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              hasText ? text : hint,
-              style: GoogleFonts.nunito(
-                  fontSize: 16,
-                  color: hasText ? Colors.black87 : Colors.grey[400]),
-            ),
+          child: Row(
+            children: [
+              if (hasText && imageUrl.isNotEmpty) ...[
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: CachedNetworkImage(
+                    imageUrl: imageUrl,
+                    width: 36,
+                    height: 36,
+                    fit: BoxFit.cover,
+                    errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                  ),
+                ),
+                const SizedBox(width: 10),
+              ],
+              Expanded(
+                child: Text(
+                  hasText ? text : hint,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.nunito(
+                      fontSize: 16,
+                      color: hasText ? Colors.black87 : Colors.grey[400]),
+                ),
+              ),
+            ],
           ),
         ),
       ),

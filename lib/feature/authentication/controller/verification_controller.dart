@@ -37,6 +37,7 @@ class VerificationController extends GetxController {
 
   // Email parameter (passed from signup)
   String? email;
+  String role = '';
 
   // Track if controller is disposed
   bool _isDisposed = false;
@@ -46,6 +47,7 @@ class VerificationController extends GetxController {
     super.onInit();
     // Get email from arguments
     email = Get.arguments?['email'] ?? '';
+    role = (Get.arguments?['role'] ?? '').toString().toLowerCase();
 
     // Initialize controllers and focus nodes
     _initializeOtpFields();
@@ -247,6 +249,11 @@ class VerificationController extends GetxController {
         isVerified = response.data!.isVerified;
 
         if (isVerified) {
+          await _authRepository.saveVerifiedSignupSession(
+            response: response.data!,
+            email: email!,
+            role: role,
+          );
           // Set navigating flag
           _isNavigating = true;
           _setLoading(false);
@@ -284,8 +291,12 @@ class VerificationController extends GetxController {
 
           await Future.delayed(const Duration(milliseconds: 300));
 
-          // Navigate to login
-          Get.offNamed(AppRoutes.SIGNINSCREEN);
+          // Signup only: finish the selected role's profile before Home.
+          Get.offAllNamed(
+            role == 'caregiver'
+                ? AppRoutes.CAREGIVERPROFILE
+                : AppRoutes.COMMUNICATORPROFILE,
+          );
         } else {
           _showErrorSnackbar(
             'Invalid Code',

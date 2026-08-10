@@ -60,11 +60,13 @@ class UserContentModel {
     final data = json['data'] ?? json;
     return UserContentModel(
       isCustomized: data['is_customized'] ?? false,
-      categories: (data['categories'] as List? ?? [])
-          .map((e) => CategoryModel.fromJson(e, lang: lang))
+      categories: (data['categories'] as List? ?? data['category_list'] as List? ?? [])
+          .whereType<Map>()
+          .map((e) => CategoryModel.fromJson(Map<String, dynamic>.from(e), lang: lang))
           .toList(),
-      quickSpeaks: (data['quickspeaks'] as List? ?? [])
-          .map((e) => QuickSpeakModel.fromJson(e, lang: lang))
+      quickSpeaks: (data['quickspeaks'] as List? ?? data['quick_speaks'] as List? ?? [])
+          .whereType<Map>()
+          .map((e) => QuickSpeakModel.fromJson(Map<String, dynamic>.from(e), lang: lang))
           .toList(),
     );
   }
@@ -102,8 +104,9 @@ class CategoryModel {
       color: json['color'] ?? '#B5CFD1',
       order: json['order'] ?? 0,
       isActive: json['is_active'] ?? true,
-      subCategories: (json['sub_categories'] as List? ?? [])
-          .map((e) => SubCategoryModel.fromJson(e, lang: lang))
+      subCategories: (json['sub_categories'] as List? ?? json['subcategories'] as List? ?? [])
+          .whereType<Map>()
+          .map((e) => SubCategoryModel.fromJson(Map<String, dynamic>.from(e), lang: lang))
           .toList(),
       items: (json['items'] as List? ?? json['direct_items'] as List? ?? [])
           .whereType<Map>()
@@ -146,8 +149,9 @@ class SubCategoryModel {
       color: json['color'] ?? '#B5CFD1',
       order: json['order'] ?? 0,
       isActive: json['is_active'] ?? true,
-      items: (json['items'] as List? ?? [])
-          .map((e) => ItemModel.fromJson(e, lang: lang))
+      items: (json['items'] as List? ?? json['direct_items'] as List? ?? [])
+          .whereType<Map>()
+          .map((e) => ItemModel.fromJson(Map<String, dynamic>.from(e), lang: lang))
           .toList(),
     );
   }

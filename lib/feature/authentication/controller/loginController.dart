@@ -121,7 +121,6 @@ class LoginController extends GetxController {
 
       if (response.isSuccess && response.data != null) {
         await _persistRememberedEmail();
-        final userData = response.data!.user;
 
         // Show success message
         Get.snackbar(
@@ -133,8 +132,9 @@ class LoginController extends GetxController {
           duration: const Duration(seconds: 2),
         );
 
-        // Navigate based on role
-        _navigateBasedOnProfile(userData);
+        // Every normal sign-in goes directly home. Profile Setup is reserved
+        // for signup completion and an explicit account switch.
+        Get.offAllNamed(AppRoutes.NAVIGATIONBAR);
       } else {
         // Handle specific error codes
         if (response.statusCode == 403) {
@@ -176,44 +176,6 @@ class LoginController extends GetxController {
       );
     } finally {
       isLoading.value = false;
-    }
-  }
-
-  // Navigate based on user role
-  void _navigateBasedOnProfile(dynamic user) {
-    final role = user.getRoleSafe();
-    final isComplete = user.isProfileCompleted == true;
-    if (isComplete) {
-      Get.offAllNamed(AppRoutes.NAVIGATIONBAR);
-      return;
-    }
-    switch (role.toLowerCase()) {
-      case 'communicator':
-      // Navigate to Communicator Profile Screen
-        Get.offAllNamed(AppRoutes.COMMUNICATORPROFILE);
-        break;
-
-      case 'caregiver':
-      // Navigate to Caregiver Profile Screen
-        Get.offAllNamed(AppRoutes.CAREGIVERPROFILE);
-        break;
-
-      default:
-      // If role is unknown or null, navigate to a default screen or role selection
-        Get.snackbar(
-          'Role Not Found',
-          'User role not set. Please contact support.',
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
-          duration: const Duration(seconds: 3),
-        );
-
-        // Fallback: Navigate to a default screen or role selection
-        // Get.offAllNamed(AppRoutes.ROLESELECTION);
-        // OR
-        Get.offAllNamed(AppRoutes.NAVIGATIONBAR);
-        break;
     }
   }
 

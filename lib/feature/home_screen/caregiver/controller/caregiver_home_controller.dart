@@ -36,6 +36,7 @@ class CaregiverHomeController extends GetxController {
   final AudioPlayer _audioPlayer = AudioPlayer();
 
   final RxBool isLoading = false.obs;
+  final RxString loadError = ''.obs;
   final RxBool isBuddyMode = false.obs;
   final RxBool isEditMode = false.obs;
   final RxBool isQsEditMode = false.obs;
@@ -121,9 +122,15 @@ class CaregiverHomeController extends GetxController {
 
   Future<void> loadContent() async {
     final communicatorId = CommunicatorSessionService.to.communicatorId.value;
-    if (communicatorId == 0) return;
+    if (communicatorId == 0) {
+      categories.clear();
+      quickSpeaks.clear();
+      loadError.value = 'Please select a communicator first.';
+      return;
+    }
 
     isLoading.value = true;
+    loadError.value = '';
     final lang = _currentLang;
 
     final response = isBuddyMode.value
@@ -135,6 +142,12 @@ class CaregiverHomeController extends GetxController {
     if (response.isSuccess && response.data != null) {
       categories.assignAll(response.data!.categories);
       quickSpeaks.assignAll(response.data!.quickSpeaks);
+    } else {
+      categories.clear();
+      quickSpeaks.clear();
+      loadError.value = response.message.isNotEmpty
+          ? response.message
+          : 'Failed to load content.';
     }
   }
 

@@ -97,6 +97,12 @@ class AuthRepository {
       );
       if (response.isSuccess && response.data != null) {
         final switched = LoginResponse.fromJson(response.data!);
+        if (!switched.user.isActive) {
+          return ApiResponse.error(
+            statusCode: 409,
+            message: 'This linked account is inactive. Please reactivate it before switching.',
+          );
+        }
         await _saveAuthData(switched);
         return ApiResponse.success(
           data: switched,
@@ -115,7 +121,8 @@ class AuthRepository {
     try {
       final response = await _apiClient.post<Map<String, dynamic>>(AppUrl.verifyEmail, data: {'email': email, 'otp': otp});
       if (response.isSuccess && response.data != null) {
-        return ApiResponse.success(data: VerifyEmailResponse.fromJson(response.data!), statusCode: response.statusCode, message: response.message);
+        final verified = VerifyEmailResponse.fromJson(response.data!);
+        return ApiResponse.success(data: verified, statusCode: response.statusCode, message: response.message);
       }
       return ApiResponse.error(statusCode: response.statusCode, message: response.message, errors: response.errors);
     } catch (e) {
@@ -326,12 +333,38 @@ class AuthRepository {
   }
 
   Future<void> _saveAuthData(LoginResponse loginResponse) async {
-    await _secureStorage.saveTokens(accessToken: loginResponse.accessToken, refreshToken: loginResponse.refreshToken);
-    await _secureStorage.saveUserId(loginResponse.user.id);
-    await _secureStorage.saveUserRole(loginResponse.user.role ?? 'user');
-    await _secureStorage.saveUserEmail(loginResponse.user.email);
-    await _storage.saveUserRole(loginResponse.user.role ?? 'user');
+    if (loginResponse.accessToken.isEmpty || loginResponse.refreshToken.isEmpty) {
+      throw StateError('Authentication response did not contain both tokens.');
+    }
+    final role = loginResponse.user.role ?? 'user';
+    await _secureStorage.saveAuthSession(
+      accessToken: loginResponse.accessToken,
+      refreshToken: loginResponse.refreshToken,
+      userId: loginResponse.user.id,
+      email: loginResponse.user.email,
+      role: role,
+    );
+    await _storage.saveUserRole(role);
     await _storage.saveUserName(loginResponse.user.fullName);
+    await _storage.setLoggedIn(true);
+  }
+
+  Future<void> saveVerifiedSignupSession({
+    required VerifyEmailResponse response,
+    required String email,
+    required String role,
+  }) async {
+    if (response.accessToken.isEmpty || response.refreshToken.isEmpty) {
+      throw StateError('Verification succeeded without authentication tokens.');
+    }
+    await _secureStorage.saveAuthSession(
+      accessToken: response.accessToken,
+      refreshToken: response.refreshToken,
+      userId: '',
+      email: email,
+      role: role,
+    );
+    await _storage.saveUserRole(role);
     await _storage.setLoggedIn(true);
   }
 

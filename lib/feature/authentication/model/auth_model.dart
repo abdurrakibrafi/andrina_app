@@ -50,6 +50,7 @@ class UserData {
   final bool isVerified;
   final bool isProfileCompleted;
   final bool isPro;
+  final bool isActive;
 
   UserData({
     required this.id,
@@ -59,6 +60,7 @@ class UserData {
     this.isVerified = false,
     this.isProfileCompleted = false,
     this.isPro = false,
+    this.isActive = true,
   });
 
   factory UserData.fromJson(Map<String, dynamic> json) {
@@ -70,6 +72,7 @@ class UserData {
       isVerified: json['is_verified'] ?? json['email_verified'] ?? false,
       isProfileCompleted: json['is_profile_completed'] ?? false,
       isPro: json['is_pro'] ?? false,
+      isActive: json['is_active'] ?? true,
     );
   }
 
@@ -82,6 +85,7 @@ class UserData {
       'is_verified': isVerified,
       'is_profile_completed': isProfileCompleted,
       'is_pro': isPro,
+      'is_active': isActive,
     };
   }
 
@@ -98,16 +102,24 @@ class UserData {
 class VerifyEmailResponse {
   final String message;
   final bool isVerified;
+  final String accessToken;
+  final String refreshToken;
 
   VerifyEmailResponse({
     required this.message,
     required this.isVerified,
+    this.accessToken = '',
+    this.refreshToken = '',
   });
 
   factory VerifyEmailResponse.fromJson(Map<String, dynamic> json) {
+    final nested = json['data'];
+    final data = nested is Map<String, dynamic> ? nested : json;
     return VerifyEmailResponse(
       message: json['message'] ?? 'Email verified successfully',
       isVerified: json['is_verified'] ?? true,
+      accessToken: data['access'] ?? '',
+      refreshToken: data['refresh'] ?? '',
     );
   }
 }

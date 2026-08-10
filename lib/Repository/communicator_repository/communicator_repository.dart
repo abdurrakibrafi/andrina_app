@@ -52,15 +52,20 @@ class CommunicatorRepository {
       if (response.isSuccess && response.data != null) {
         final body = response.data as Map<String, dynamic>;
 
-        if (body['success'] == true && body['data'] != null) {
+        // Backend versions in the wild return either {success, data},
+        // {data}, or the content object directly. A successful HTTP response
+        // must not be discarded only because the optional `success` flag is
+        // absent.
+        final rawData = body['data'] ?? body;
+        if (rawData is Map && body['success'] != false) {
           final model = CommunicatorContentModel.fromJson(
-            body['data'] as Map<String, dynamic>,
+            Map<String, dynamic>.from(rawData),
             lang: lang,
           );
           return ApiResponse.success(
             data: model,
             statusCode: response.statusCode,
-            message: body['message'] ?? 'Success',
+            message: body['message']?.toString() ?? 'Success',
           );
         }
 

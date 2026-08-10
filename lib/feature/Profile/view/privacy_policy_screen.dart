@@ -89,13 +89,14 @@ class PrivacyPolicyScreen extends GetView<PrivacyPolicyController> {
   }
 
   List<Widget> _buildContentParagraphs(String content) {
-    final paragraphs = content
+    final readableContent = _htmlToReadableText(content);
+    final paragraphs = readableContent
         .split('\n\n')
         .map((p) => p.trim())
         .where((p) => p.isNotEmpty)
         .toList();
 
-    if (paragraphs.isEmpty) return [_buildSectionContent(content)];
+    if (paragraphs.isEmpty) return const <Widget>[];
 
     final List<Widget> widgets = [];
     for (int i = 0; i < paragraphs.length; i++) {
@@ -103,6 +104,26 @@ class PrivacyPolicyScreen extends GetView<PrivacyPolicyController> {
       if (i < paragraphs.length - 1) widgets.add(const SizedBox(height: 16));
     }
     return widgets;
+  }
+
+  String _htmlToReadableText(String html) {
+    var text = html
+        .replaceAll(RegExp(r'<\s*br\s*/?\s*>', caseSensitive: false), '\n')
+        .replaceAll(RegExp(r'</\s*(p|div|h[1-6]|li|ul|ol|section|article)\s*>',
+            caseSensitive: false), '\n\n')
+        .replaceAll(RegExp(r'<\s*li(?:\s[^>]*)?>', caseSensitive: false), '• ')
+        .replaceAll(RegExp(r'<[^>]*>', multiLine: true), '')
+        .replaceAll('&nbsp;', ' ')
+        .replaceAll('&amp;', '&')
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .replaceAll('&quot;', '"')
+        .replaceAll('&#39;', "'");
+
+    return text
+        .replaceAll(RegExp(r'[ \t]+\n'), '\n')
+        .replaceAll(RegExp(r'\n{3,}'), '\n\n')
+        .trim();
   }
 
   Widget _buildSectionTitle(String title) {

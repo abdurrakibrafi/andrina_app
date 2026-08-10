@@ -23,6 +23,7 @@ class CommunicatorHomeController extends GetxController {
   // ── State ─────────────────────────────────────────────────────────────────
   final RxBool isLoading = true.obs;
   final RxBool isBuddyMode = false.obs;
+  final RxString loadError = ''.obs;
 
   // ── Data ──────────────────────────────────────────────────────────────────
   final RxList<CommCategoryModel> categories = <CommCategoryModel>[].obs;
@@ -30,6 +31,7 @@ class CommunicatorHomeController extends GetxController {
 
   // ── Quick Speak bar ───────────────────────────────────────────────────────
   final RxString quickSpeakText = ''.obs;
+  final RxString quickSpeakImage = ''.obs;
   final RxInt selectedQsId = (-1).obs;
 
   // ── Audio ─────────────────────────────────────────────────────────────────
@@ -62,6 +64,7 @@ class CommunicatorHomeController extends GetxController {
   // ── API call with buddy mode + lang routing ────────────────────────────────
   Future<void> loadContent() async {
     isLoading.value = true;
+    loadError.value = '';
 
     // 1️⃣ Profile থেকে buddy_mode check করো
     try {
@@ -85,16 +88,15 @@ class CommunicatorHomeController extends GetxController {
     isLoading.value = false;
 
     if (res.isSuccess && res.data != null) {
-      categories.value = res.data!.categories;
-      quickSpeaks.value = res.data!.quickSpeaks;
+      categories.assignAll(res.data!.categories);
+      quickSpeaks.assignAll(res.data!.quickSpeaks);
     } else {
-      Get.snackbar(
-        'error'.tr,
-        res.message,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.shade100,
-        colorText: Colors.red.shade900,
-      );
+      // Never keep another role/account's stale dashboard after a switch.
+      categories.clear();
+      quickSpeaks.clear();
+      loadError.value = res.message.isNotEmpty
+          ? res.message
+          : 'failed_to_load_content'.tr;
     }
   }
 
@@ -105,9 +107,11 @@ class CommunicatorHomeController extends GetxController {
     if (selectedQsId.value == qs.id) {
       selectedQsId.value = -1;
       quickSpeakText.value = '';
+      quickSpeakImage.value = '';
     } else {
       selectedQsId.value = qs.id;
       quickSpeakText.value = qs.word ?? '';
+      quickSpeakImage.value = AppUrl.mediaUrl(qs.imageIcon) ?? '';
     }
   }
 
@@ -139,6 +143,7 @@ class CommunicatorHomeController extends GetxController {
     TtsService.to.stop(); // TTS ও বন্ধ করো
     selectedQsId.value = -1;
     quickSpeakText.value = '';
+    quickSpeakImage.value = '';
     _cancelCooldown();
   }
   // ── Cooldown helpers ───────────────────────────────────────────────────────

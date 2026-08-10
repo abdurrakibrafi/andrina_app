@@ -3,6 +3,8 @@ import 'package:chatter_bee/config/app_colors.dart';
 import 'package:chatter_bee/config/imagesUrl.dart';
 import 'package:chatter_bee/feature/Notification/notification_screen.dart';
 import 'package:chatter_bee/feature/home_screen/caregiver/view/caregiver_home_screen.dart';
+import 'package:chatter_bee/feature/home_screen/communicator/view/communicator_home_screen.dart';
+import 'package:chatter_bee/services/storage/data_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -19,6 +21,9 @@ class NavigationController extends GetxController {
 class NavigationScreen extends GetView<NavigationController> {
   const NavigationScreen({super.key});
 
+  bool get _isCommunicator =>
+      StorageService().getUserRole()?.trim().toLowerCase() == 'communicator';
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -29,9 +34,11 @@ class NavigationScreen extends GetView<NavigationController> {
           // Main content
           Obx(() => IndexedStack(
             index: controller.selectedIndex.value,
-            children: const [
-              CaregiverHomeScreen(),
-              NotificationScreen(),
+            children: [
+              _isCommunicator
+                  ? const CommunicatorHomeScreen()
+                  : const CaregiverHomeScreen(),
+              const NotificationScreen(),
             ],
           )),
 

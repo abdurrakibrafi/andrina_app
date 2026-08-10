@@ -418,14 +418,6 @@ class CgQuickSpeakBar extends StatelessWidget {
               style: GoogleFonts.nunito(fontSize: 15, color: Colors.grey[400]))),
         )),
         SizedBox(width: compact ? 6 : 10),
-        // _CgBarAction(size: buttonSize, color: const Color(0xFF7BC5D3),
-        //   enabled: selected,
-        //     // icon: Icons.volume_up_rounded,
-        //     SvgPicture.asset(ImagesLink.speakIcon,
-        //         width: 22, height: 22)
-        //
-        //     onTap: onSpeak),
-
         _CaregiverBarButton(
             color: const Color(0xFF7BC5D3),
             onTap: onSpeak,

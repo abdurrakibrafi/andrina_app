@@ -14,17 +14,22 @@ class CommunicatorContentModel {
   });
 
   factory CommunicatorContentModel.fromJson(Map<String, dynamic> json, {String lang = 'en'}) {
+    final data = json['data'] is Map
+        ? Map<String, dynamic>.from(json['data'] as Map)
+        : json;
     return CommunicatorContentModel(
-      categories: (json['categories'] as List? ?? [])
-          .map((e) => CommCategoryModel.fromJson(e, lang: lang))
+      categories: (data['categories'] as List? ?? data['category_list'] as List? ?? [])
+          .whereType<Map>()
+          .map((e) => CommCategoryModel.fromJson(Map<String, dynamic>.from(e), lang: lang))
           .where((c) => !c.isDeleted && c.isActive)
           .toList(),
-      quickSpeaks: (json['quickspeaks'] as List? ?? [])
-          .map((e) => CommQuickSpeakModel.fromJson(e, lang: lang))
+      quickSpeaks: (data['quickspeaks'] as List? ?? data['quick_speaks'] as List? ?? [])
+          .whereType<Map>()
+          .map((e) => CommQuickSpeakModel.fromJson(Map<String, dynamic>.from(e), lang: lang))
           .where((q) => !q.isDeleted && q.isActive)
           .toList(),
-      totalCategories: json['total_categories'] ?? 0,
-      totalQuickSpeaks: json['total_quickspeaks'] ?? 0,
+      totalCategories: data['total_categories'] ?? 0,
+      totalQuickSpeaks: data['total_quickspeaks'] ?? data['total_quick_speaks'] ?? 0,
     );
   }
 }
@@ -113,8 +118,9 @@ class CommCategoryModel {
       isActive: json['is_active'] ?? true,
       isDeleted: json['is_deleted'] ?? false,
       subCategoriesCount: json['sub_categories_count'] ?? 0,
-      subCategories: (json['sub_categories'] as List? ?? [])
-          .map((e) => CommSubCategoryModel.fromJson(e, lang: lang))
+      subCategories: (json['sub_categories'] as List? ?? json['subcategories'] as List? ?? [])
+          .whereType<Map>()
+          .map((e) => CommSubCategoryModel.fromJson(Map<String, dynamic>.from(e), lang: lang))
           .where((s) => !s.isDeleted && s.isActive)
           .toList(),
       items: (json['items'] as List? ?? json['direct_items'] as List? ?? [])
@@ -167,8 +173,9 @@ class CommSubCategoryModel {
       isActive: json['is_active'] ?? true,
       isDeleted: json['is_deleted'] ?? false,
       itemsCount: json['items_count'] ?? 0,
-      items: (json['items'] as List? ?? [])
-          .map((e) => CommItemModel.fromJson(e, lang: lang))
+      items: (json['items'] as List? ?? json['direct_items'] as List? ?? [])
+          .whereType<Map>()
+          .map((e) => CommItemModel.fromJson(Map<String, dynamic>.from(e), lang: lang))
           .where((i) => !i.isDeleted && i.isActive)
           .toList(),
     );

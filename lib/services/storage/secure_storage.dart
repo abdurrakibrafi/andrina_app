@@ -49,8 +49,25 @@ class SecureStorageService {
     required String accessToken,
     required String refreshToken,
   }) async {
-    await saveAccessToken(accessToken);
-    await saveRefreshToken(refreshToken);
+    await _storage.write(key: _keyAccessToken, value: accessToken);
+    await _storage.write(key: _keyRefreshToken, value: refreshToken);
+  }
+
+  /// Replaces the complete authenticated identity together. This prevents
+  /// requests from seeing tokens for one account and metadata for another
+  /// while login/account-switch navigation is in progress.
+  Future<void> saveAuthSession({
+    required String accessToken,
+    required String refreshToken,
+    required String userId,
+    required String email,
+    required String role,
+  }) async {
+    await _storage.write(key: _keyAccessToken, value: accessToken);
+    await _storage.write(key: _keyRefreshToken, value: refreshToken);
+    await _storage.write(key: _keyUserId, value: userId);
+    await _storage.write(key: _keyUserEmail, value: email);
+    await _storage.write(key: _keyUserRole, value: role);
   }
 
   // ==================== USER DATA METHODS ====================

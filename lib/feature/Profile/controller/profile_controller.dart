@@ -92,14 +92,35 @@ class ProfileController extends GetxController {
   }
 
   Future<void> switchToUser(Map<String, dynamic> user) async {
+    if (user['is_active'] == false) {
+      Get.snackbar(
+        'error'.tr,
+        'This linked account is inactive. Please reactivate it before switching.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
     final id = int.tryParse(
         (user['_communicator_id'] ?? user['id']).toString());
     if (id == null) return;
     Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
     final response = await _authRepository.switchAccount(targetUserId: id);
     if (Get.isDialogOpen ?? false) Get.back();
-    if (response.isSuccess) {
-      Get.offAllNamed(AppRoutes.NAVIGATIONBAR);
+    if (response.isSuccess && response.data != null) {
+      final switched = response.data!;
+      final role = switched.user.getRoleSafe();
+      final name = switched.user.fullName.isNotEmpty
+          ? switched.user.fullName
+          : switched.user.email;
+      await CommunicatorSessionService.to.setSelected(id, name);
+
+      // A switch is an explicit identity transition. Do not start Home with
+      // controllers created for the previous role; finish Profile Setup first.
+      Get.offAllNamed(
+        role == 'caregiver'
+            ? AppRoutes.CAREGIVERPROFILE
+            : AppRoutes.COMMUNICATORPROFILE,
+      );
     } else if (response.statusCode == 404) {
       // Older production backends may not expose token switching yet.
       // Keep the caregiver authenticated and switch the active communicator

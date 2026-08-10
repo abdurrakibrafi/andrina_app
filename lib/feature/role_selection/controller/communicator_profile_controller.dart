@@ -149,7 +149,7 @@ class CommunicatorProfileController extends GetxController {
         Get.snackbar('success'.tr, 'profile_updated'.tr,
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: const Color(0xFFE8F5E9));
-        Get.offAllNamed(AppRoutes.COMMUNICATORHOMESCREEN);
+        Get.offAllNamed(AppRoutes.NAVIGATIONBAR);
       } else {
         Get.snackbar('error'.tr, response.message,
             snackPosition: SnackPosition.BOTTOM);
